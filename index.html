@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1A1A2E">
+<title>City Roots Farm — Inocuidad</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --green:#2E8B57;--dark:#1A1A2E;--lgreen:#EAF3DE;--lgray:#F5F5F5;
+    --bg:#ffffff;--bg2:#F8F8F6;--bg3:#F0EFE8;
+    --text:#1a1a1a;--text2:#555;--text3:#999;
+    --border:#E0E0E0;--border2:#C8C8C8;
+    --ok:#2E8B57;--warn:#BA7517;--danger:#E24B4A;--info:#185FA5;
+    --ok-bg:#EAF3DE;--warn-bg:#FFF8E1;--danger-bg:#FCEBEB;--info-bg:#E6F1FB;
+    --radius:10px;--radius-lg:14px;
+  }
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#1a1a1a;--bg2:#242424;--bg3:#2e2e2e;
+      --text:#f0f0f0;--text2:#aaa;--text3:#666;
+      --border:#333;--border2:#444;
+      --lgreen:#1a3a28;--lgray:#2a2a2a;
+      --ok-bg:#1a3a28;--warn-bg:#3a2e10;--danger-bg:#3a1a1a;--info-bg:#0e2a40;
+    }
+  }
+  html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text)}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative}
+  /* TOPBAR */
+  .topbar{background:var(--dark);padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+  .topbar-logo{width:34px;height:34px;background:var(--green);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .topbar-info{flex:1}
+  .topbar-title{font-size:15px;font-weight:600;color:#fff}
+  .topbar-sub{font-size:11px;color:#8888aa;margin-top:1px}
+  .sync-row{display:flex;align-items:center;gap:5px}
+  .sync-dot{width:7px;height:7px;border-radius:50%}
+  .sync-ok{background:#2E8B57}.sync-off{background:#666}.sync-ing{background:#F59E0B;animation:blink 1s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .sync-lbl{font-size:10px;color:#8888aa}
+  /* CONTENT */
+  .content{flex:1;overflow-y:auto;padding-bottom:76px}
+  /* NAV */
+  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+  .nav-btn{flex:1;padding:9px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;font-size:10px;color:var(--text3);font-family:inherit;transition:color .15s;position:relative}
+  .nav-btn.active{color:var(--green)}
+  .nav-btn .ni{font-size:20px}
+  .nav-badge{position:absolute;top:5px;right:calc(50% - 16px);width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--bg)}
+  /* CARDS */
+  .pad{padding:14px}
+  .greeting{font-size:20px;font-weight:600;color:var(--text);margin-bottom:1px}
+  .dateline{font-size:12px;color:var(--text2);margin-bottom:13px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px}
+  .stat{background:var(--bg2);border-radius:var(--radius);padding:10px;text-align:center}
+  .stat-n{font-size:22px;font-weight:700}
+  .stat-l{font-size:10px;color:var(--text2);margin-top:1px}
+  .n-ok{color:var(--ok)}.n-warn{color:var(--warn)}.n-info{color:var(--info)}
+  .sec{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .reg-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px}
+  .reg-card{background:var(--bg2);border-radius:var(--radius);padding:12px;cursor:pointer;border:1px solid var(--border);text-align:center;transition:all .15s;user-select:none}
+  .reg-card:active{transform:scale(.97)}
+  .reg-card.done{border-color:var(--green);background:var(--lgreen)}
+  .reg-icon{font-size:24px;margin-bottom:5px}
+  .reg-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.3}
+  .reg-code{font-size:10px;color:var(--text3);margin-top:1px}
+  .reg-st{font-size:10px;font-weight:500;margin-top:4px}
+  .s-done{color:var(--ok)}.s-pend{color:var(--warn)}
+  /* BANNERS */
+  .banner{border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;font-size:12px;display:flex;align-items:center;gap:8px;line-height:1.4}
+  .banner-warn{background:var(--warn-bg);border:1px solid #F59E0B;color:#854F0B}
+  .banner-ok{background:var(--ok-bg);border:1px solid var(--ok);color:#1B5E35}
+  .banner-info{background:var(--info-bg);border:1px solid #185FA5;color:#0e3a6a}
+  /* MODAL */
+  .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+  .modal{background:var(--bg);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:18px 16px 32px}
+  .modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
+  .modal-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:3px}
+  .modal-sub{font-size:12px;color:var(--text2);margin-bottom:16px}
+  /* FORM */
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:9px;font-size:15px;background:var(--bg);color:var(--text);font-family:inherit;-webkit-appearance:none;appearance:none}
+  .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+  .field textarea{resize:none;height:72px}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(46,139,87,.12)}
+  .lote-preview{font-size:11px;color:var(--ok);margin-top:4px;font-weight:500}
+  /* BUTTONS */
+  .btn-row{display:flex;gap:8px;margin-top:12px}
+  .btn{padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;transition:all .15s}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:var(--green);color:#fff}
+  .btn-primary:disabled{background:#9fc9b1;cursor:not-allowed}
+  .btn-secondary{background:var(--bg2);color:var(--text);border:1px solid var(--border2)}
+  .btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+  /* HISTORY */
+  .hist-item{padding:12px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px}
+  .hist-icon{width:36px;height:36px;border-radius:9px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .hist-title{font-size:13px;font-weight:600;color:var(--text)}
+  .hist-meta{font-size:11px;color:var(--text3);margin-top:2px}
+  .hist-lote{font-size:10px;font-weight:600;color:var(--ok);margin-top:2px;font-family:monospace}
+  .chip-row{display:flex;gap:5px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;-ms-overflow-style:none;scrollbar-width:none}
+  .chip-row::-webkit-scrollbar{display:none}
+  .chip{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+  .chip.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+  /* BADGES */
+  .badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px}
+  .badge-ok{background:var(--ok-bg);color:var(--ok)}
+  .badge-pend{background:var(--warn-bg);color:var(--warn)}
+  .badge-err{background:var(--danger-bg);color:var(--danger)}
+  .badge-conn{background:var(--ok-bg);color:var(--ok)}
+  .badge-noconn{background:var(--bg2);color:var(--text3);border:1px solid var(--border)}
+  /* TEMP */
+  .temp-ok{background:var(--ok-bg);color:var(--ok);padding:1px 7px;border-radius:5px;font-size:10px;font-weight:600}
+  .temp-bad{background:var(--danger-bg);color:var(--danger);padding:1px 7px;border-radius:5px;font-size:10px;font-weight:600}
+  /* ADMIN */
+  .setup-box{background:var(--bg2);border-radius:var(--radius);padding:14px;margin-bottom:12px;border:1px solid var(--border)}
+  .setup-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .url-input{width:100%;padding:9px 11px;border:1px solid var(--border2);border-radius:8px;font-size:12px;font-family:monospace;background:var(--bg);color:var(--text);word-break:break-all}
+  .url-input:focus{outline:none;border-color:var(--green)}
+  .exp-card{background:var(--bg2);border-radius:var(--radius);padding:13px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;border:1px solid var(--border);transition:all .15s}
+  .exp-card:active{transform:scale(.98)}
+  .exp-card:hover{border-color:var(--green)}
+  .exp-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .exp-title{font-size:13px;font-weight:600;color:var(--text)}
+  .exp-sub{font-size:11px;color:var(--text2);margin-top:1px}
+  .code-block{background:var(--bg3);border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:var(--text2);line-height:1.7;word-break:break-all;border:1px solid var(--border);margin:8px 0;max-height:200px;overflow-y:auto}
+  /* TOAST */
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;z-index:400;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+  .toast.show{opacity:1}
+  .empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px;line-height:1.6}
+  /* SPINNER */
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">🌱</div>
+    <div class="topbar-info">
+      <div class="topbar-title">City Roots Farm</div>
+      <div class="topbar-sub">Sistema de Inocuidad v1.0</div>
+    </div>
+    <div class="sync-row">
+      <div class="sync-dot sync-off" id="sdot"></div>
+      <span class="sync-lbl" id="slbl">Sin Sheets</span>
+    </div>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <nav class="nav">
+    <button class="nav-btn active" id="nb-inicio" onclick="goTo('inicio')">
+      <span class="ni">🏠</span>Inicio
+    </button>
+    <button class="nav-btn" id="nb-registrar" onclick="goTo('registrar')">
+      <span class="ni">✏️</span>Registrar
+    </button>
+    <button class="nav-btn" id="nb-historial" onclick="goTo('historial')">
+      <span class="ni" id="hist-ni">📋</span>Historial
+      <span id="pend-badge" class="nav-badge" style="display:none"></span>
+    </button>
+    <button class="nav-btn" id="nb-admin" onclick="goTo('admin')">
+      <span class="ni">⚙️</span>Admin
+    </button>
+  </nav>
+</div>
+
+<div id="modal-ov" class="modal-ov" style="display:none" onclick="closeOut(event)">
+  <div class="modal" id="modal-body"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATOS ────────────────────────────────────────────────────────────────────
+const REGS = [
+  {id:'temperatura',icon:'🌡️',name:'Temperatura',code:'HACCP-01',freq:'Diario',
+   fields:[
+    {id:'area',label:'Área',type:'select',req:true,opts:['Cuarto de producción','Refrigerador','Área de empaque','Transporte']},
+    {id:'temp',label:'Temperatura (°C)',type:'number',req:true,ph:'Ej. 3.5'},
+    {id:'horario',label:'Horario',type:'time',req:true},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Chofer']},
+    {id:'observacion',label:'Observación',type:'textarea',ph:'Normal / Acción correctiva tomada...'}
+  ]},
+  {id:'limpieza',icon:'🧹',name:'Limpieza',code:'P01–P10',freq:'Diario',
+   fields:[
+    {id:'area',label:'Área / Equipo',type:'select',req:true,opts:['Mesas de cosecha (POES-01)','Cuchillos (POES-02)','Racks de cultivo (POES-03)','Área de empaque (POES-04)','Cuarto producción ozono (POES-05)','Charolas de cultivo (POES-06)','Limpieza general cuarto (POES-08)','Refrigerador (POES-09)']},
+    {id:'producto',label:'Producto sanitizante utilizado',type:'text',req:true,ph:'Ej. Cloro grado alimenticio 200 ppm'},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción']},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Sin novedad / Incidencia encontrada...'}
+  ]},
+  {id:'higiene',icon:'🖐️',name:'Higiene personal',code:'POES-07',freq:'Diario',
+   fields:[
+    {id:'horario',label:'Horario de revisión',type:'time',req:true},
+    {id:'responsable',label:'Personal supervisado',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción','Todo el equipo']},
+    {id:'observacion',label:'Observación',type:'textarea',ph:'Cumplimiento correcto / Observación...'}
+  ]},
+  {id:'cosecha',icon:'🌱',name:'Cosecha semanal',code:'RES-COS',freq:'Semanal',
+   fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT (fresco)','Chícharo CT (vivo)','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
+    {id:'lote',label:'Lote (auto-generado)',type:'text',req:true,ph:'CRF-XXYY-VAR',auto:true},
+    {id:'charolas',label:'Charolas cosechadas',type:'number',req:true,ph:''},
+    {id:'gramos_est',label:'Cosecha estimada (g)',type:'number',ph:''},
+    {id:'gramos_real',label:'Cosecha real (g)',type:'number',req:true,ph:''},
+    {id:'comentarios',label:'Comentarios',type:'textarea',ph:'Sin novedad / Incidencia...'}
+  ]},
+  {id:'mermas',icon:'📉',name:'Mermas',code:'RES-MER',freq:'Por evento',
+   fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
+    {id:'lote',label:'Lote',type:'text',req:true,ph:'Ej. CRF-2612-CHI'},
+    {id:'gramos',label:'Merma en gramos',type:'number',req:true,ph:''},
+    {id:'causa',label:'Causa',type:'select',req:true,opts:['Hongo / moho','Crecimiento irregular','Temperatura incorrecta','Daño físico','Semilla defectuosa','Otro']},
+    {id:'comentarios',label:'Descripción',type:'textarea',ph:'Detalles de la causa...'}
+  ]},
+  {id:'semillas',icon:'🌾',name:'Recepción semillas',code:'REC-SEM',freq:'Por recepción',
+   fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
+    {id:'lote_proveedor',label:'Lote del proveedor',type:'text',req:true,ph:'Número de lote del proveedor'},
+    {id:'peso',label:'Peso recibido (kg)',type:'number',req:true,ph:'Ej. 5.0'},
+    {id:'calidad',label:'Calidad',type:'select',req:true,opts:['Aprobada — sin observaciones','Aprobada con observaciones','Rechazada']},
+    {id:'proveedor',label:'Proveedor',type:'text',req:true,ph:'Nombre del proveedor'},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']}
+  ]},
+  {id:'residuos',icon:'♻️',name:'Residuos orgánicos',code:'POES-10',freq:'Semanal',
+   fields:[
+    {id:'peso',label:'Peso (kg)',type:'number',req:true,ph:'Ej. 8.5'},
+    {id:'hora_creacion',label:'Hora de generación',type:'time',req:true},
+    {id:'hora_recoleccion',label:'Hora de recolección',type:'time'},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción']},
+    {id:'proveedor_rec',label:'Empresa recolectora',type:'text',ph:'Nombre del recolector'}
+  ]},
+  {id:'no_conforme',icon:'🚫',name:'Producto no conforme',code:'REG-PNC',freq:'Por evento',
+   fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
+    {id:'lote',label:'Lote',type:'text',req:true,ph:'Ej. CRF-2612-CHI'},
+    {id:'problema',label:'Problema detectado',type:'select',req:true,opts:['Moho / hongos','Contaminación visible','Daño físico','Temperatura fuera de rango','Mal olor','Crecimiento irregular','Otro']},
+    {id:'accion',label:'Acción tomada',type:'select',req:true,opts:['Descartado a composta','Segregado — en evaluación','Reprocesado','Retiro de producto activado']},
+    {id:'comentarios',label:'Descripción del incidente',type:'textarea',ph:'Detalles del problema...'}
+  ]},
+  {id:'transporte',icon:'🚗',name:'Transporte',code:'POES-11/12',freq:'Por entrega',
+   fields:[
+    {id:'tipo',label:'Tipo de registro',type:'select',req:true,opts:['Limpieza del vehículo (POES-11)','Temperatura de transporte (POES-12)','Ambos']},
+    {id:'temp',label:'Temperatura del compartimento (°C)',type:'number',req:true,ph:'Ej. 4.0'},
+    {id:'estado_limpieza',label:'Estado de limpieza',type:'select',req:true,opts:['Conforme — limpio y sanitizado','No conforme — se realizó limpieza adicional']},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Chofer asignado']},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Sin novedad / Acción tomada...'}
+  ]}
+];
+
+// ── STORAGE ───────────────────────────────────────────────────────────────────
+const SK = {url:'crf_sheet_url', rec:'crf_records_v2', pend:'crf_pending_v2'};
+const LS = {
+  get: k => { try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){return null;} },
+  set: (k,v) => { try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+const getURL   = ()  => LS.get(SK.url)||'';
+const setURL   = v   => LS.set(SK.url, v);
+const getRecs  = ()  => LS.get(SK.rec)||[];
+const setRecs  = v   => LS.set(SK.rec, v);
+const getPend  = ()  => LS.get(SK.pend)||[];
+const setPend  = v   => LS.set(SK.pend, v);
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const todayKey = () => new Date().toISOString().split('T')[0];
+const nowTime  = () => new Date().toTimeString().slice(0,5);
+const fmtDate  = iso => new Date(iso).toLocaleDateString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+function getWeek(){ const d=new Date(),s=new Date(d.getFullYear(),0,1); return Math.ceil(((d-s)/86400000+s.getDay()+1)/7); }
+function autoLote(v=''){ const y=new Date().getFullYear().toString().slice(2),w=getWeek().toString().padStart(2,'0'),c=(v||'GEN').substring(0,3).toUpperCase(); return `CRF-${y}${w}-${c}`; }
+
+// ── SYNC ──────────────────────────────────────────────────────────────────────
+function setSyncUI(state){
+  const dot=document.getElementById('sdot'), lbl=document.getElementById('slbl');
+  if(!dot) return;
+  dot.className='sync-dot';
+  if(state==='ok'){ dot.classList.add('sync-ok'); lbl.textContent='Sheets ✓'; }
+  else if(state==='ing'){ dot.classList.add('sync-ing'); lbl.textContent='Sincronizando...'; }
+  else { dot.classList.add('sync-off'); lbl.textContent='Sin Sheets'; }
+}
+
+async function pushToSheet(record){
+  const url=getURL(); if(!url) return false;
+  setSyncUI('ing');
+  try{
+    const flat={ id:record.id, fecha:record.fecha, tipo:record.tipo, codigo:REGS.find(r=>r.id===record.tipo)?.code||'', ...record.datos };
+    const res = await fetch(url, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'append', data:flat})
+    });
+    setSyncUI('ok'); return true;
+  }catch(e){ setSyncUI('off'); return false; }
+}
+
+async function flushPending(){
+  const url=getURL(); if(!url) return;
+  const pending=getPend(); if(!pending.length) return;
+  setSyncUI('ing');
+  const failed=[];
+  for(const rec of pending){
+    const ok=await pushToSheet(rec);
+    if(!ok) failed.push(rec);
+  }
+  setPend(failed);
+  setSyncUI(failed.length?'off':'ok');
+  if(failed.length<pending.length) toast(`${pending.length-failed.length} registros sincronizados ✓`);
+  updatePendBadge();
+}
+
+function updatePendBadge(){
+  const b=document.getElementById('pend-badge');
+  if(b) b.style.display=getPend().length?'block':'none';
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+let page='inicio', histFilter='todos';
+
+function goTo(p){
+  page=p;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const nb=document.getElementById('nb-'+p); if(nb) nb.classList.add('active');
+  render(p);
+}
+
+function render(p){
+  const el=document.getElementById('content');
+  if(p==='inicio')    renderInicio(el);
+  else if(p==='registrar') renderRegistrar(el);
+  else if(p==='historial') renderHistorial(el);
+  else if(p==='admin')     renderAdmin(el);
+  updatePendBadge();
+  const url=getURL(); setSyncUI(url?'ok':'off');
+}
+
+// ── INICIO ────────────────────────────────────────────────────────────────────
+function renderInicio(el){
+  const recs=getRecs(), pend=getPend();
+  const today=todayKey();
+  const doneIds=new Set(recs.filter(r=>r.fecha.startsWith(today)).map(r=>r.tipo));
+  const daily=REGS.filter(r=>r.freq==='Diario');
+  const doneC=daily.filter(r=>doneIds.has(r.id)).length;
+  const pendC=daily.length-doneC;
+  const hour=new Date().getHours();
+  const gr=hour<12?'Buenos días ☀️':hour<19?'Buenas tardes 🌤':'Buenas noches 🌙';
+
+  el.innerHTML=`<div class="pad">
+    <div class="greeting">${gr}</div>
+    <div class="dateline">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
+    ${pend.length?`<div class="banner banner-warn">📡 ${pend.length} registro${pend.length>1?'s':''} sin sincronizar con Sheets. <span style="text-decoration:underline;cursor:pointer;font-weight:600" onclick="flushPending().then(()=>render('inicio'))">Sincronizar ahora</span></div>`:''}
+    ${pendC?`<div class="banner banner-warn">⚠️ ${pendC} registro${pendC>1?'s diarios':' diario'} pendiente${pendC>1?'s':''} hoy</div>`:''}
+    ${!pendC&&doneC>=3?`<div class="banner banner-ok">✓ Registros diarios completos</div>`:''}
+    <div class="stats">
+      <div class="stat"><div class="stat-n n-ok">${doneC}</div><div class="stat-l">Hoy ✓</div></div>
+      <div class="stat"><div class="stat-n n-warn">${pendC}</div><div class="stat-l">Pendientes</div></div>
+      <div class="stat"><div class="stat-n n-info">${recs.length}</div><div class="stat-l">Total</div></div>
+    </div>
+    <div class="sec">Registros diarios</div>
+    <div class="reg-grid">${daily.map(r=>`
+      <div class="reg-card ${doneIds.has(r.id)?'done':''}" onclick="openForm('${r.id}')">
+        <div class="reg-icon">${r.icon}</div>
+        <div class="reg-name">${r.name}</div>
+        <div class="reg-code">${r.code}</div>
+        <div class="reg-st ${doneIds.has(r.id)?'s-done':'s-pend'}">${doneIds.has(r.id)?'✓ Registrado':'Pendiente'}</div>
+      </div>`).join('')}</div>
+    <div class="sec">Por evento / semanal</div>
+    <div class="reg-grid">${REGS.filter(r=>r.freq!=='Diario').map(r=>`
+      <div class="reg-card" onclick="openForm('${r.id}')">
+        <div class="reg-icon">${r.icon}</div>
+        <div class="reg-name">${r.name}</div>
+        <div class="reg-code">${r.code} · ${r.freq}</div>
+        <div class="reg-st s-pend">Registrar</div>
+      </div>`).join('')}</div>
+  </div>`;
+}
+
+// ── REGISTRAR ─────────────────────────────────────────────────────────────────
+function renderRegistrar(el){
+  const doneIds=new Set(getRecs().filter(r=>r.fecha.startsWith(todayKey())).map(r=>r.tipo));
+  el.innerHTML=`<div class="pad">
+    <div class="sec" style="margin-bottom:10px">Todos los registros</div>
+    <div class="reg-grid">${REGS.map(r=>`
+      <div class="reg-card ${doneIds.has(r.id)?'done':''}" onclick="openForm('${r.id}')">
+        <div class="reg-icon">${r.icon}</div>
+        <div class="reg-name">${r.name}</div>
+        <div class="reg-code">${r.code} · ${r.freq}</div>
+        <div class="reg-st ${doneIds.has(r.id)?'s-done':'s-pend'}">${doneIds.has(r.id)?'✓ Hoy':'Registrar'}</div>
+      </div>`).join('')}</div>
+  </div>`;
+}
+
+// ── HISTORIAL ─────────────────────────────────────────────────────────────────
+function renderHistorial(el){
+  const recs=getRecs(), pendIds=new Set(getPend().map(r=>r.id));
+  const filters=['todos',...REGS.map(r=>r.id)];
+  const labels=Object.fromEntries([['todos','Todos'],...REGS.map(r=>[r.id,r.name])]);
+  const filtered=histFilter==='todos'?recs:recs.filter(r=>r.tipo===histFilter);
+
+  el.innerHTML=`<div class="pad">
+    <div class="chip-row">${filters.map(f=>`<span class="chip ${histFilter===f?'active':''}" onclick="setHF('${f}')">${labels[f]||f}</span>`).join('')}</div>
+    ${filtered.length===0?`<div class="empty">Sin registros aún.<br>¡Empieza registrando hoy!</div>`:''}
+    ${filtered.map(r=>{
+      const reg=REGS.find(x=>x.id===r.tipo)||{icon:'📋',name:r.tipo};
+      const d=r.datos||{};
+      const temp=parseFloat(d.temp);
+      const tBadge=d.temp?`<span class="${temp<=4?'temp-ok':'temp-bad'}">${d.temp}°C</span> `:'';
+      const sBadge=pendIds.has(r.id)?`<span class="badge badge-pend">⏳ Pendiente</span>`:`<span class="badge badge-ok">✓ Sheets</span>`;
+      return `<div class="hist-item">
+        <div class="hist-icon">${reg.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div class="hist-title">${reg.name} ${tBadge}</div>
+          <div class="hist-meta">${fmtDate(r.fecha)} · ${d.responsable||''} ${sBadge}</div>
+          ${d.lote||d.lote_proveedor?`<div class="hist-lote">${d.lote||d.lote_proveedor}</div>`:''}
+          ${d.area||d.variedad?`<div class="hist-meta">${d.area||d.variedad}</div>`:''}
+          ${d.problema?`<div class="hist-meta" style="color:var(--danger)">${d.problema} → ${d.accion||''}</div>`:''}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+function setHF(f){ histFilter=f; goTo('historial'); }
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+function renderAdmin(el){
+  const recs=getRecs(), pend=getPend(), url=getURL();
+  const hoy=recs.filter(r=>r.fecha.startsWith(todayKey())).length;
+  const sem=recs.filter(r=>(new Date()-new Date(r.fecha))/86400000<=7).length;
+  const script=`function doPost(e){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var data = JSON.parse(e.postData.contents);
+  if(data.action === 'append'){
+    var sh = ss.getSheetByName(data.data.tipo) || ss.insertSheet(data.data.tipo);
+    if(sh.getLastRow() === 0) sh.appendRow(Object.keys(data.data));
+    sh.appendRow(Object.values(data.data));
+  }
+  return ContentService
+    .createTextOutput(JSON.stringify({ok:true}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+function doGet(){
+  return ContentService
+    .createTextOutput(JSON.stringify({ok:true,app:'CityRootsFarm'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+  el.innerHTML=`<div class="pad">
+    <div class="sec">Conexión con Google Sheets</div>
+    <div class="setup-box">
+      <div class="setup-title">URL del Apps Script
+        ${url?`<span class="badge badge-conn">✓ Configurado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Pega aquí la URL de tu implementación de Apps Script</div>
+      <input class="url-input" id="url-inp" type="url" placeholder="https://script.google.com/macros/s/..." value="${url||''}">
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn btn-primary" onclick="saveURL()">Guardar URL</button>
+        <button class="btn btn-secondary" onclick="testConn()">Probar</button>
+      </div>
+    </div>
+    ${pend.length?`<div class="banner banner-warn" style="margin-bottom:12px">📡 ${pend.length} registro${pend.length>1?'s':''} sin sincronizar
+      <button class="btn btn-primary" style="flex:0;padding:6px 14px;font-size:12px;margin-left:auto" onclick="flushPending().then(()=>render('admin'))">Sincronizar</button>
+    </div>`:''}
+    <div class="sec" style="margin-top:4px">Estadísticas</div>
+    <div class="stats" style="margin-bottom:14px">
+      <div class="stat"><div class="stat-n n-ok">${hoy}</div><div class="stat-l">Hoy</div></div>
+      <div class="stat"><div class="stat-n n-info">${sem}</div><div class="stat-l">Esta semana</div></div>
+      <div class="stat"><div class="stat-n" style="color:var(--text)">${recs.length}</div><div class="stat-l">Total</div></div>
+    </div>
+    <div class="sec">Exportar para certificador</div>
+    <div class="exp-card" onclick="exportCSV()">
+      <div class="exp-icon" style="background:var(--ok-bg)">📊</div>
+      <div><div class="exp-title">Exportar a Excel (.csv)</div><div class="exp-sub">Todos los registros · ${recs.length} entradas</div></div>
+    </div>
+    <div class="exp-card" onclick="exportPDF()">
+      <div class="exp-icon" style="background:var(--info-bg)">📄</div>
+      <div><div class="exp-title">Reporte PDF semanal</div><div class="exp-sub">Listo para imprimir y entregar al certificador</div></div>
+    </div>
+    <div class="exp-card" onclick="exportHoy()">
+      <div class="exp-icon" style="background:var(--warn-bg)">📋</div>
+      <div><div class="exp-title">Reporte del día</div><div class="exp-sub">${hoy} registros de hoy</div></div>
+    </div>
+    <div class="sec" style="margin-top:12px">Código Apps Script</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Copia este código en Extensiones → Apps Script de tu Google Sheet</div>
+    <div class="code-block" id="script-code">${script.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    <button class="btn btn-secondary" style="margin-bottom:14px" onclick="copyScript()">📋 Copiar código del script</button>
+    <div class="exp-card" onclick="confirmClear()" style="border-color:var(--danger)">
+      <div class="exp-icon" style="background:var(--danger-bg)">🗑️</div>
+      <div><div class="exp-title" style="color:var(--danger)">Limpiar registros locales</div><div class="exp-sub">Exporta primero. No borra datos en Sheets.</div></div>
+    </div>
+  </div>`;
+}
+
+// ── FORM ──────────────────────────────────────────────────────────────────────
+function openForm(id){
+  const reg=REGS.find(r=>r.id===id); if(!reg) return;
+  const body=document.getElementById('modal-body');
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">${reg.icon} ${reg.name}</div>
+    <div class="modal-sub">${reg.code} · ${new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})}</div>
+    ${reg.fields.map(f=>`<div class="field">
+      <label>${f.label}${f.req?` <span style="color:var(--danger)">*</span>`:''}</label>
+      ${f.type==='select'
+        ? `<select id="f_${f.id}" ${f.id==='variedad'?`onchange="updateLote(this.value,'${id}')"`:''}><option value="">Seleccionar...</option>${(f.opts||[]).map(o=>`<option>${o}</option>`).join('')}</select>`
+        : f.type==='textarea'
+        ? `<textarea id="f_${f.id}" placeholder="${f.ph||''}"></textarea>`
+        : f.type==='time'
+        ? `<input type="time" id="f_${f.id}" value="${nowTime()}">`
+        : `<input type="${f.type}" id="f_${f.id}" placeholder="${f.ph||''}">`}
+      ${f.auto?`<div class="lote-preview" id="lote-prev">Lote: ${autoLote()}</div>`:''}
+    </div>`).join('')}
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="save-btn" onclick="submitForm('${id}')">Guardar registro</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+  document.getElementById('modal-body').scrollTop=0;
+}
+
+function updateLote(val, regId){
+  const prev=document.getElementById('lote-prev'); if(!prev) return;
+  const lote=autoLote(val);
+  prev.textContent='Lote: '+lote;
+  const loteField=document.getElementById('f_lote'); if(loteField) loteField.value=lote;
+}
+
+async function submitForm(id){
+  const reg=REGS.find(r=>r.id===id);
+  const datos={};
+  let missing=[];
+  reg.fields.forEach(f=>{
+    const el=document.getElementById('f_'+f.id);
+    if(el){
+      if(f.auto && !el.value) el.value=autoLote();
+      datos[f.id]=el.value;
+      if(f.req && !el.value) missing.push(f.label);
+    }
+  });
+  if(missing.length){ toast('Completa: '+missing[0]); return; }
+  const btn=document.getElementById('save-btn');
+  if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin"></span> Guardando...'; }
+  const record={ id:Date.now().toString(), tipo:id, fecha:new Date().toISOString(), datos };
+  const recs=getRecs(); recs.unshift(record); setRecs(recs);
+  const synced=await pushToSheet(record);
+  if(!synced){ const p=getPend(); p.push(record); setPend(p); }
+  closeModal();
+  toast(synced?'✓ Guardado y enviado a Sheets':'Guardado localmente — se sincronizará con conexión');
+  render(page);
+}
+
+// ── ADMIN ACTIONS ─────────────────────────────────────────────────────────────
+function saveURL(){
+  const v=document.getElementById('url-inp')?.value?.trim();
+  if(!v||!v.startsWith('https://')){ toast('URL inválida'); return; }
+  setURL(v); setSyncUI('ok'); toast('URL guardada ✓ — probando conexión...');
+  testConn(); setTimeout(()=>flushPending(),800);
+}
+
+async function testConn(){
+  const url=getURL(); if(!url){ toast('Primero guarda la URL'); return; }
+  setSyncUI('ing');
+  try{
+    await fetch(url,{mode:'no-cors'});
+    setSyncUI('ok'); toast('Conexión con Sheets: OK ✓');
+  }catch(e){ setSyncUI('off'); toast('Sin conexión a internet'); }
+}
+
+function copyScript(){
+  const code=`function doPost(e){var ss=SpreadsheetApp.getActiveSpreadsheet();var data=JSON.parse(e.postData.contents);if(data.action==='append'){var sh=ss.getSheetByName(data.data.tipo)||ss.insertSheet(data.data.tipo);if(sh.getLastRow()===0)sh.appendRow(Object.keys(data.data));sh.appendRow(Object.values(data.data));}return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);}function doGet(){return ContentService.createTextOutput(JSON.stringify({ok:true,app:'CityRootsFarm'})).setMimeType(ContentService.MimeType.JSON);}`;
+  navigator.clipboard.writeText(code).then(()=>toast('Código copiado ✓')).catch(()=>{ document.getElementById('script-code').select?.(); toast('Copia el código manualmente'); });
+}
+
+function exportCSV(){
+  const recs=getRecs(); if(!recs.length){ toast('Sin registros'); return; }
+  const rows=[['ID','Fecha','Hora','Tipo','Código','Lote','Responsable','Área/Equipo','Temperatura (°C)','Observaciones','Detalle']];
+  recs.forEach(r=>{
+    const reg=REGS.find(x=>x.id===r.tipo)||{name:r.tipo,code:''};
+    const d=r.datos||{};
+    rows.push([r.id,new Date(r.fecha).toLocaleDateString('es-MX'),new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),reg.name,reg.code,d.lote||d.lote_proveedor||'',d.responsable||'',d.area||d.variedad||'',d.temp||'',d.observacion||d.observaciones||d.comentarios||d.problema||'',Object.entries(d).map(([k,v])=>`${k}:${v}`).join(' | ')]);
+  });
+  const csv=rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  dl('\uFEFF'+csv,'text/csv',`CityRootsFarm_Registros_${todayKey()}.csv`);
+  toast('Excel descargado ✓');
+}
+
+function exportHoy(){
+  const recs=getRecs().filter(r=>r.fecha.startsWith(todayKey()));
+  if(!recs.length){ toast('Sin registros hoy'); return; }
+  const rows=[['Fecha','Hora','Tipo','Código','Responsable','Detalle']];
+  recs.forEach(r=>{ const reg=REGS.find(x=>x.id===r.tipo)||{name:r.tipo,code:''}; const d=r.datos||{}; rows.push([new Date(r.fecha).toLocaleDateString('es-MX'),new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),reg.name,reg.code,d.responsable||'',Object.entries(d).map(([k,v])=>`${k}:${v}`).join(' | ')]); });
+  const csv=rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  dl('\uFEFF'+csv,'text/csv',`CityRootsFarm_Hoy_${todayKey()}.csv`);
+  toast('Reporte del día descargado ✓');
+}
+
+function exportPDF(){
+  const recs=getRecs(); const now=new Date();
+  const ws=new Date(now); ws.setDate(now.getDate()-now.getDay());
+  const sem=recs.filter(r=>new Date(r.fecha)>=ws);
+  const rows=sem.map(r=>{
+    const reg=REGS.find(x=>x.id===r.tipo)||{name:r.tipo};
+    const d=r.datos||{}, t=parseFloat(d.temp);
+    return `<tr><td>${new Date(r.fecha).toLocaleDateString('es-MX')}</td><td>${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td><td>${reg.name}</td><td>${d.responsable||'—'}</td><td style="font-family:monospace;font-size:11px">${d.lote||d.lote_proveedor||d.variedad||d.area||'—'}</td><td><span style="background:${t<=4?'#EAF3DE':'#FCEBEB'};color:${t<=4?'#1B5E35':'#A32D2D'};padding:1px 6px;border-radius:3px">${d.temp?d.temp+'°C':'—'}</span></td><td style="font-size:11px">${d.observacion||d.observaciones||d.comentarios||d.problema||d.accion||'—'}</td></tr>`;
+  }).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>City Roots Farm — Registros</title>
+  <style>body{font-family:Arial,sans-serif;margin:28px;color:#222;font-size:12px}h1{color:#2E8B57;font-size:18px;margin-bottom:3px}h2{color:#1A1A2E;font-weight:400;font-size:13px;margin-bottom:20px}table{width:100%;border-collapse:collapse}th{background:#1A1A2E;color:#fff;padding:7px 8px;text-align:left;font-size:11px}td{padding:6px 8px;border-bottom:0.5px solid #e0e0e0;vertical-align:top}tr:nth-child(even){background:#f9f9f9}.foot{margin-top:20px;font-size:10px;color:#888;border-top:0.5px solid #ddd;padding-top:10px}@media print{body{margin:12px}}</style></head>
+  <body><h1>🌱 City Roots Farm — Registros de Inocuidad</h1>
+  <h2>Semana del ${ws.toLocaleDateString('es-MX',{day:'numeric',month:'long'})} · Generado: ${now.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</h2>
+  ${sem.length?`<table><thead><tr><th>Fecha</th><th>Hora</th><th>Registro</th><th>Responsable</th><th>Lote / Área</th><th>Temp.</th><th>Observaciones</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>Sin registros esta semana.</p>'}
+  <div class="foot">City Roots Farm · Sinaloa #811 B, Nuevo Repueblo, Monterrey, N.L. · Manual Integrado de Inocuidad v1.0 · FSMA 21 CFR Part 117 · ${sem.length} registros</div>
+  <script>window.onload=()=>window.print()<\/script></body></html>`;
+  const w=window.open('','_blank');
+  if(!w){ toast('Permite ventanas emergentes para PDF'); return; }
+  w.document.write(html); w.document.close();
+}
+
+function dl(content, type, filename){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function confirmClear(){
+  if(confirm('¿Seguro? Los datos en Google Sheets NO se eliminan. Solo se limpian del dispositivo.')){ setRecs([]); toast('Registros locales eliminados'); render(page); }
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function closeModal(){ document.getElementById('modal-ov').style.display='none'; }
+function closeOut(e){ if(e.target===document.getElementById('modal-ov')) closeModal(); }
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+const url=getURL(); if(url){ setSyncUI('ok'); setTimeout(flushPending,500); }
+render('inicio');
+</script>
+</body>
+</html>
