@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1A1A2E">
+<title>City Roots Farm — Inocuidad</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --green:#2E8B57;--dark:#1A1A2E;--lgreen:#EAF3DE;--lgray:#F5F5F5;
+  --bg:#fff;--bg2:#F8F8F6;--bg3:#F0EFE8;
+  --text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#E0E0E0;--border2:#C8C8C8;
+  --ok:#2E8B57;--warn:#BA7517;--danger:#E24B4A;--info:#185FA5;
+  --ok-bg:#EAF3DE;--warn-bg:#FFF8E1;--danger-bg:#FCEBEB;--info-bg:#E6F1FB;
+  --amber:#EF9F27;--amber-bg:#FAEEDA;
+  --radius:10px;--radius-lg:14px;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1a1a1a;--bg2:#242424;--bg3:#2e2e2e;--text:#f0f0f0;--text2:#aaa;--text3:#666;--border:#333;--border2:#444;--lgreen:#1a3a28;--lgray:#2a2a2a;--ok-bg:#1a3a28;--warn-bg:#3a2e10;--danger-bg:#3a1a1a;--info-bg:#0e2a40;--amber-bg:#3a2a08;}
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text)}
+#app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);display:flex;flex-direction:column}
+.topbar{background:var(--dark);padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.topbar-logo{width:34px;height:34px;background:var(--green);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;color:#fff}
+.topbar-sub{font-size:11px;color:#8888aa;margin-top:1px}
+.sync-row{display:flex;align-items:center;gap:5px;margin-left:auto}
+.sync-dot{width:7px;height:7px;border-radius:50%}
+.sync-ok{background:#2E8B57}.sync-off{background:#666}.sync-ing{background:#F59E0B;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-lbl{font-size:10px;color:#8888aa}
+.content{flex:1;overflow-y:auto;padding-bottom:76px}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;padding:8px 2px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:none;background:none;font-size:9px;color:var(--text3);font-family:inherit;transition:color .15s;position:relative}
+.nav-btn.active{color:var(--green)}
+.nav-btn .ni{font-size:19px}
+.nav-badge{position:absolute;top:5px;right:calc(50% - 14px);width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--bg)}
+.pad{padding:14px}
+.greeting{font-size:19px;font-weight:600;color:var(--text);margin-bottom:1px}
+.dateline{font-size:12px;color:var(--text2);margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:13px}
+.stat{background:var(--bg2);border-radius:var(--radius);padding:9px;text-align:center}
+.stat-n{font-size:20px;font-weight:700}
+.stat-l{font-size:10px;color:var(--text2);margin-top:1px}
+.n-ok{color:var(--ok)}.n-warn{color:var(--warn)}.n-info{color:var(--info)}.n-amber{color:var(--amber)}
+.sec{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.reg-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:13px}
+.reg-card{background:var(--bg2);border-radius:var(--radius);padding:11px;cursor:pointer;border:1px solid var(--border);text-align:center;transition:all .15s;user-select:none}
+.reg-card:active{transform:scale(.97)}
+.reg-card.done{border-color:var(--green);background:var(--lgreen)}
+.reg-card.prod{border-color:var(--amber);background:var(--amber-bg)}
+.reg-icon{font-size:22px;margin-bottom:4px}
+.reg-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.3}
+.reg-code{font-size:10px;color:var(--text3);margin-top:1px}
+.reg-st{font-size:10px;font-weight:500;margin-top:3px}
+.s-done{color:var(--ok)}.s-pend{color:var(--warn)}.s-hoy{color:var(--amber)}
+.banner{border-radius:var(--radius);padding:9px 11px;margin-bottom:9px;font-size:12px;display:flex;align-items:center;gap:7px;line-height:1.4}
+.banner-warn{background:var(--warn-bg);border:1px solid #F59E0B;color:#854F0B}
+.banner-ok{background:var(--ok-bg);border:1px solid var(--ok);color:#1B5E35}
+.banner-amber{background:var(--amber-bg);border:1px solid var(--amber);color:#633806}
+/* MODALES */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:var(--bg);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:18px 16px 32px}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 14px}
+.modal-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:2px}
+.modal-sub{font-size:12px;color:var(--text2);margin-bottom:14px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:9px;font-size:15px;background:var(--bg);color:var(--text);font-family:inherit;-webkit-appearance:none}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.field textarea{resize:none;height:68px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(46,139,87,.12)}
+.field-hint{font-size:11px;color:var(--text3);margin-top:3px}
+.field-val{font-size:13px;font-weight:600;color:var(--green);margin-top:3px}
+.btn-row{display:flex;gap:8px;margin-top:12px}
+.btn{padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--green);color:#fff}
+.btn-primary:disabled{background:#9fc9b1;cursor:not-allowed}
+.btn-amber{background:var(--amber);color:#fff}
+.btn-secondary{background:var(--bg2);color:var(--text);border:1px solid var(--border2)}
+.btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+/* PRODUCCIÓN */
+.lote-group{margin-bottom:16px}
+.lote-header{background:var(--dark);border-radius:var(--radius);padding:10px 14px;display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer}
+.lote-code{font-size:14px;font-weight:700;color:#fff;font-family:monospace}
+.lote-cosecha{font-size:11px;color:#9999bb;margin-left:4px}
+.lote-badge{margin-left:auto;font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px}
+.lb-pend{background:rgba(239,159,39,.2);color:#EF9F27}
+.lb-sembrado{background:rgba(46,139,87,.2);color:#2E8B57}
+.lb-cosechado{background:rgba(24,95,165,.2);color:#4da3ff}
+.siembra-card{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);padding:12px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.siembra-card:active{transform:scale(.98)}
+.siembra-card.sembrado{border-color:var(--green);background:var(--lgreen)}
+.siembra-card.cosechado{border-color:var(--info);background:var(--info-bg)}
+.siembra-card.hoy-sembrar{border-color:var(--amber);background:var(--amber-bg)}
+.siembra-card.hoy-cosechar{border-color:var(--info);background:var(--info-bg);animation:pulse-border 2s infinite}
+@keyframes pulse-border{0%,100%{border-color:var(--info)}50%{border-color:#4da3ff}}
+.sc-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sc-variedad{font-size:14px;font-weight:700;color:var(--text)}
+.sc-tipo{font-size:10px;font-weight:500;padding:2px 7px;border-radius:5px;background:var(--bg3);color:var(--text2)}
+.sc-status{margin-left:auto;font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px}
+.ss-pend{background:var(--warn-bg);color:var(--warn)}
+.ss-sembrado{background:var(--ok-bg);color:var(--ok)}
+.ss-cosechado{background:var(--info-bg);color:var(--info)}
+.ss-hoy{background:var(--amber-bg);color:var(--amber)}
+.sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sc-dato{background:var(--bg);border-radius:7px;padding:7px 9px;border:0.5px solid var(--border)}
+.sc-dato-label{font-size:10px;color:var(--text3);margin-bottom:2px}
+.sc-dato-val{font-size:13px;font-weight:600;color:var(--text)}
+.sc-dato-val.highlight{color:var(--green)}
+.sc-dato-val.amber{color:var(--amber)}
+.sc-accion{margin-top:9px;padding:8px 10px;border-radius:8px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:none;width:100%;font-family:inherit;transition:all .15s}
+.sc-accion:active{transform:scale(.97)}
+.btn-sembrar{background:var(--amber);color:#fff}
+.btn-cosechar{background:var(--info);color:#fff}
+.btn-ver{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+/* HISTORIAL */
+.hist-item{padding:11px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:9px}
+.hist-icon{width:34px;height:34px;border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.hist-title{font-size:13px;font-weight:600;color:var(--text)}
+.hist-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.hist-lote{font-size:10px;font-weight:600;color:var(--ok);margin-top:2px;font-family:monospace}
+.chip-row{display:flex;gap:5px;overflow-x:auto;margin-bottom:11px;padding-bottom:2px;-ms-overflow-style:none;scrollbar-width:none}
+.chip-row::-webkit-scrollbar{display:none}
+.chip{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.chip.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+/* ADMIN */
+.setup-box{background:var(--bg2);border-radius:var(--radius);padding:13px;margin-bottom:11px;border:1px solid var(--border)}
+.setup-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.url-input{width:100%;padding:9px 11px;border:1px solid var(--border2);border-radius:8px;font-size:12px;font-family:monospace;background:var(--bg);color:var(--text)}
+.url-input:focus{outline:none;border-color:var(--green)}
+.exp-card{background:var(--bg2);border-radius:var(--radius);padding:12px;margin-bottom:7px;display:flex;align-items:center;gap:11px;cursor:pointer;border:1px solid var(--border);transition:all .15s}
+.exp-card:active{transform:scale(.98)}
+.exp-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.exp-title{font-size:13px;font-weight:600;color:var(--text)}
+.exp-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.code-block{background:var(--bg3);border-radius:8px;padding:11px;font-family:monospace;font-size:11px;color:var(--text2);line-height:1.7;word-break:break-all;border:1px solid var(--border);margin:7px 0;max-height:180px;overflow-y:auto}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px}
+.badge-ok{background:var(--ok-bg);color:var(--ok)}
+.badge-pend{background:var(--warn-bg);color:var(--warn)}
+.badge-noconn{background:var(--bg2);color:var(--text3);border:1px solid var(--border)}
+.temp-ok{background:var(--ok-bg);color:var(--ok);padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600}
+.temp-bad{background:var(--danger-bg);color:var(--danger);padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600}
+.empty{text-align:center;padding:36px 20px;color:var(--text3);font-size:13px;line-height:1.6}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;z-index:400;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.divider{height:1px;background:var(--border);margin:14px 0}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">🌱</div>
+    <div>
+      <div class="topbar-title">City Roots Farm</div>
+      <div class="topbar-sub">Sistema de Inocuidad v2.0</div>
+    </div>
+    <div class="sync-row">
+      <div class="sync-dot sync-off" id="sdot"></div>
+      <span class="sync-lbl" id="slbl">Sin Sheets</span>
+    </div>
+  </div>
+  <div class="content" id="content"></div>
+  <nav class="nav">
+    <button class="nav-btn active" id="nb-inicio" onclick="goTo('inicio')"><span class="ni">🏠</span>Inicio</button>
+    <button class="nav-btn" id="nb-produccion" onclick="goTo('produccion')"><span class="ni">🌱</span>Producción</button>
+    <button class="nav-btn" id="nb-registrar" onclick="goTo('registrar')"><span class="ni">✏️</span>Registrar</button>
+    <button class="nav-btn" id="nb-historial" onclick="goTo('historial')"><span class="ni">📋</span>Historial<span id="pend-badge" class="nav-badge" style="display:none"></span></button>
+    <button class="nav-btn" id="nb-admin" onclick="goTo('admin')"><span class="ni">⚙️</span>Admin</button>
+  </nav>
+</div>
+
+<div id="modal-ov" class="modal-ov" style="display:none" onclick="closeOut(event)">
+  <div class="modal" id="modal-body"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ REGISTROS DE INOCUIDAD ════════════════════════════════════════════════════
+const REGS = [
+  {id:'temperatura',icon:'🌡️',name:'Temperatura',code:'HACCP-01',freq:'Diario',fields:[
+    {id:'area',label:'Área',type:'select',req:true,opts:['Cuarto de producción','Refrigerador','Área de empaque','Transporte']},
+    {id:'temp',label:'Temperatura (°C)',type:'number',req:true,ph:'Ej. 3.5'},
+    {id:'horario',label:'Horario',type:'time',req:true},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Chofer']},
+    {id:'observacion',label:'Observación',type:'textarea',ph:'Normal / Acción correctiva...'}
+  ]},
+  {id:'limpieza',icon:'🧹',name:'Limpieza',code:'P01–P10',freq:'Diario',fields:[
+    {id:'area',label:'Área / Equipo',type:'select',req:true,opts:['Mesas de cosecha (POES-01)','Cuchillos (POES-02)','Racks de cultivo (POES-03)','Área de empaque (POES-04)','Cuarto producción ozono (POES-05)','Charolas de cultivo (POES-06)','Limpieza general cuarto (POES-08)','Refrigerador (POES-09)']},
+    {id:'producto',label:'Producto sanitizante',type:'text',req:true,ph:'Ej. Cloro grado alimenticio 200 ppm'},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción']},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Sin novedad / Incidencia...'}
+  ]},
+  {id:'higiene',icon:'🖐️',name:'Higiene personal',code:'POES-07',freq:'Diario',fields:[
+    {id:'horario',label:'Horario de revisión',type:'time',req:true},
+    {id:'responsable',label:'Personal supervisado',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción','Todo el equipo']},
+    {id:'observacion',label:'Observación',type:'textarea',ph:'Cumplimiento correcto / Observación...'}
+  ]},
+  {id:'mermas',icon:'📉',name:'Mermas',code:'RES-MER',freq:'Por evento',fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
+    {id:'lote',label:'Lote',type:'text',req:true,ph:'Ej. CRF-2612-CHI'},
+    {id:'gramos',label:'Merma en gramos',type:'number',req:true,ph:''},
+    {id:'causa',label:'Causa',type:'select',req:true,opts:['Hongo / moho','Crecimiento irregular','Temperatura incorrecta','Daño físico','Semilla defectuosa','Otro']},
+    {id:'comentarios',label:'Descripción',type:'textarea',ph:'Detalles...'}
+  ]},
+  {id:'semillas',icon:'🌾',name:'Recepción semillas',code:'REC-SEM',freq:'Por recepción',fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
+    {id:'lote_proveedor',label:'Lote del proveedor',type:'text',req:true,ph:'Número de lote'},
+    {id:'peso',label:'Peso recibido (kg)',type:'number',req:true,ph:'Ej. 5.0'},
+    {id:'calidad',label:'Calidad',type:'select',req:true,opts:['Aprobada — sin observaciones','Aprobada con observaciones','Rechazada']},
+    {id:'proveedor',label:'Proveedor',type:'text',req:true,ph:'Nombre del proveedor'},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']}
+  ]},
+  {id:'residuos',icon:'♻️',name:'Residuos orgánicos',code:'POES-10',freq:'Semanal',fields:[
+    {id:'peso',label:'Peso (kg)',type:'number',req:true,ph:'Ej. 8.5'},
+    {id:'hora_creacion',label:'Hora de generación',type:'time',req:true},
+    {id:'hora_recoleccion',label:'Hora de recolección',type:'time'},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción']},
+    {id:'proveedor_rec',label:'Empresa recolectora',type:'text',ph:'Nombre del recolector'}
+  ]},
+  {id:'no_conforme',icon:'🚫',name:'Producto no conforme',code:'REG-PNC',freq:'Por evento',fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
+    {id:'lote',label:'Lote',type:'text',req:true,ph:'Ej. CRF-2612-CHI'},
+    {id:'problema',label:'Problema detectado',type:'select',req:true,opts:['Moho / hongos','Contaminación visible','Daño físico','Temperatura fuera de rango','Mal olor','Crecimiento irregular','Otro']},
+    {id:'accion',label:'Acción tomada',type:'select',req:true,opts:['Descartado a composta','Segregado — en evaluación','Reprocesado','Retiro de producto activado']},
+    {id:'comentarios',label:'Descripción',type:'textarea',ph:'Detalles del problema...'}
+  ]},
+  {id:'transporte',icon:'🚗',name:'Transporte',code:'POES-11/12',freq:'Por entrega',fields:[
+    {id:'tipo',label:'Tipo de registro',type:'select',req:true,opts:['Limpieza del vehículo (POES-11)','Temperatura de transporte (POES-12)','Ambos']},
+    {id:'temp',label:'Temperatura del compartimento (°C)',type:'number',req:true,ph:'Ej. 4.0'},
+    {id:'estado_limpieza',label:'Estado de limpieza',type:'select',req:true,opts:['Conforme — limpio y sanitizado','No conforme — se realizó limpieza adicional']},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Chofer asignado']},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Sin novedad...'}
+  ]}
+];
+
+// ══ STORAGE ═══════════════════════════════════════════════════════════════════
+const SK = {url:'crf_sheet_url',rec:'crf_records_v2',pend:'crf_pending_v2',lotes:'crf_lotes_v2'};
+const LS = {
+  get: k => { try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;} },
+  set: (k,v) => { try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+};
+const getURL  = () => LS.get(SK.url)||'';
+const setURL  = v  => LS.set(SK.url,v);
+const getRecs = () => LS.get(SK.rec)||[];
+const setRecs = v  => LS.set(SK.rec,v);
+const getPend = () => LS.get(SK.pend)||[];
+const setPend = v  => LS.set(SK.pend,v);
+const getLotes= () => LS.get(SK.lotes)||[];
+const setLotes= v  => LS.set(SK.lotes,v);
+
+// ══ UTILS ══════════════════════════════════════════════════════════════════════
+const todayKey = () => new Date().toISOString().split('T')[0];
+const nowTime  = () => new Date().toTimeString().slice(0,5);
+const fmtDate  = iso => new Date(iso).toLocaleDateString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+const fmtDateShort = iso => {
+  if(!iso) return '';
+  const dp = iso.split('T')[0];
+  const [y,m,d] = dp.split('-').map(Number);
+  return new Date(y,m-1,d).toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+};
+function getWeek(){const d=new Date(),s=new Date(d.getFullYear(),0,1);return Math.ceil(((d-s)/86400000+s.getDay()+1)/7);}
+function autoLote(v=''){const y=new Date().getFullYear().toString().slice(2),w=getWeek().toString().padStart(2,'0'),c=(v||'GEN').substring(0,3).toUpperCase();return `CRF-${y}${w}-${c}`;}
+function isToday(dateStr){return dateStr&&dateStr.split('T')[0]===todayKey();}
+function isPast(dateStr){if(!dateStr)return false; const d=dateStr.split('T')[0]; return d<todayKey();}
+function isFuture(dateStr){if(!dateStr)return false; const d=dateStr.split('T')[0]; return d>todayKey();}
+
+// ══ SYNC ═══════════════════════════════════════════════════════════════════════
+function setSyncUI(s){
+  const dot=document.getElementById('sdot'),lbl=document.getElementById('slbl');
+  if(!dot)return;
+  dot.className='sync-dot';
+  if(s==='ok'){dot.classList.add('sync-ok');lbl.textContent='Sheets ✓';}
+  else if(s==='ing'){dot.classList.add('sync-ing');lbl.textContent='Sincronizando...';}
+  else{dot.classList.add('sync-off');lbl.textContent='Sin Sheets';}
+}
+async function pushToSheet(record,sheetName){
+  const url=getURL();if(!url)return false;
+  setSyncUI('ing');
+  try{
+    const flat={id:record.id,fecha:record.fecha,tipo:record.tipo||sheetName,codigo:REGS.find(r=>r.id===record.tipo)?.code||sheetName||'PROD',...record.datos};
+    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'append',data:flat})});
+    setSyncUI('ok');return true;
+  }catch(e){setSyncUI('off');return false;}
+}
+async function flushPending(){
+  const url=getURL();if(!url)return;
+  const pending=getPend();if(!pending.length)return;
+  setSyncUI('ing');
+  const failed=[];
+  for(const rec of pending){const ok=await pushToSheet(rec);if(!ok)failed.push(rec);}
+  setPend(failed);setSyncUI(failed.length?'off':'ok');
+  if(failed.length<pending.length)toast(`${pending.length-failed.length} registros sincronizados ✓`);
+  updatePendBadge();
+}
+function updatePendBadge(){
+  const b=document.getElementById('pend-badge');
+  if(b)b.style.display=getPend().length?'block':'none';
+}
+
+// ══ NAVEGACIÓN ═════════════════════════════════════════════════════════════════
+let page='inicio',histFilter='todos',prodFilter='todos';
+function goTo(p){
+  page=p;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const nb=document.getElementById('nb-'+p);if(nb)nb.classList.add('active');
+  render(p);
+}
+function render(p){
+  const el=document.getElementById('content');
+  if(p==='inicio')renderInicio(el);
+  else if(p==='produccion')renderProduccion(el);
+  else if(p==='registrar')renderRegistrar(el);
+  else if(p==='historial')renderHistorial(el);
+  else if(p==='admin')renderAdmin(el);
+  updatePendBadge();
+  setSyncUI(getURL()?'ok':'off');
+}
+
+// ══ INICIO ══════════════════════════════════════════════════════════════════════
+function renderInicio(el){
+  const recs=getRecs(),pend=getPend(),lotes=getLotes();
+  const today=todayKey();
+  const doneIds=new Set(recs.filter(r=>r.fecha.startsWith(today)).map(r=>r.tipo));
+  const daily=REGS.filter(r=>r.freq==='Diario');
+  const doneC=daily.filter(r=>doneIds.has(r.id)).length;
+  const pendC=daily.length-doneC;
+  const hour=new Date().getHours();
+  const gr=hour<12?'Buenos días ☀️':hour<19?'Buenas tardes 🌤':'Buenas noches 🌙';
+
+  // Siembras y cosechas de hoy
+  const sembrarHoy=lotes.filter(l=>l.fecha_siembra&&l.fecha_siembra.split('T')[0]===today&&!l.sembrado_confirmado);
+  const cosecharHoy=lotes.filter(l=>l.fecha_cosecha&&l.fecha_cosecha.split('T')[0]===today&&l.sembrado_confirmado&&!l.cosecha_real);
+
+  el.innerHTML=`<div class="pad">
+    <div class="greeting">${gr}</div>
+    <div class="dateline">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
+    ${pend.length?`<div class="banner banner-warn">📡 ${pend.length} registro${pend.length>1?'s':''} sin sincronizar. <span style="text-decoration:underline;cursor:pointer;font-weight:600" onclick="flushPending().then(()=>render('inicio'))">Sincronizar</span></div>`:''}
+    ${sembrarHoy.length?`<div class="banner banner-amber" style="cursor:pointer" onclick="goTo('produccion')">🌾 ${sembrarHoy.length} variedad${sembrarHoy.length>1?'es':''} por sembrar hoy — toca para ver</div>`:''}
+    ${cosecharHoy.length?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;cursor:pointer" onclick="goTo('produccion')">✂️ ${cosecharHoy.length} variedad${cosecharHoy.length>1?'es':''} por cosechar hoy — toca para ver</div>`:''}
+    <div class="stats">
+      <div class="stat"><div class="stat-n n-ok">${doneC}</div><div class="stat-l">Registros ✓</div></div>
+      <div class="stat"><div class="stat-n n-warn">${pendC}</div><div class="stat-l">Pendientes</div></div>
+      <div class="stat"><div class="stat-n n-amber">${sembrarHoy.length+cosecharHoy.length}</div><div class="stat-l">Prod. hoy</div></div>
+    </div>
+    <div class="sec">Registros diarios</div>
+    <div class="reg-grid">${daily.map(r=>`
+      <div class="reg-card ${doneIds.has(r.id)?'done':''}" onclick="openForm('${r.id}')">
+        <div class="reg-icon">${r.icon}</div>
+        <div class="reg-name">${r.name}</div>
+        <div class="reg-code">${r.code}</div>
+        <div class="reg-st ${doneIds.has(r.id)?'s-done':'s-pend'}">${doneIds.has(r.id)?'✓ Registrado':'Pendiente'}</div>
+      </div>`).join('')}</div>
+    <div class="sec">Por evento</div>
+    <div class="reg-grid">${REGS.filter(r=>r.freq!=='Diario').map(r=>`
+      <div class="reg-card" onclick="openForm('${r.id}')">
+        <div class="reg-icon">${r.icon}</div>
+        <div class="reg-name">${r.name}</div>
+        <div class="reg-code">${r.code} · ${r.freq}</div>
+        <div class="reg-st s-pend">Registrar</div>
+      </div>`).join('')}
+      <div class="reg-card prod" onclick="goTo('produccion')">
+        <div class="reg-icon">🌱</div>
+        <div class="reg-name">Producción</div>
+        <div class="reg-code">Siembras · Cosechas</div>
+        <div class="reg-st s-hoy">${sembrarHoy.length+cosecharHoy.length} tarea${sembrarHoy.length+cosecharHoy.length!==1?'s':''} hoy</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ══ PRODUCCIÓN ══════════════════════════════════════════════════════════════════
+function renderProduccion(el){
+  const lotes=getLotes();
+  const today=todayKey();
+
+  // Agrupar por lote (semana)
+  const grouped={};
+  lotes.forEach(l=>{
+    if(!grouped[l.lote_semana])grouped[l.lote_semana]=[];
+    grouped[l.lote_semana].push(l);
+  });
+
+  const filtros=['todos','hoy','pendiente','sembrado','cosechado'];
+  const labelsFil={'todos':'Todos','hoy':'Hoy','pendiente':'Por sembrar','sembrado':'Sembrado','cosechado':'Cosechado'};
+
+  function matchFilter(l){
+    if(prodFilter==='todos')return true;
+    if(prodFilter==='hoy')return(l.fecha_siembra&&l.fecha_siembra.split('T')[0]===today)||(l.fecha_cosecha&&l.fecha_cosecha.split('T')[0]===today&&l.sembrado_confirmado);
+    if(prodFilter==='pendiente')return !l.sembrado_confirmado;
+    if(prodFilter==='sembrado')return l.sembrado_confirmado&&!l.cosecha_real;
+    if(prodFilter==='cosechado')return !!l.cosecha_real;
+    return true;
+  }
+
+  const sortedLotes=Object.keys(grouped).sort((a,b)=>b.localeCompare(a));
+
+  el.innerHTML=`<div class="pad">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="sec" style="margin-bottom:0">Plan de producción</div>
+      <button class="btn btn-primary" style="flex:0;padding:7px 14px;font-size:12px" onclick="openNuevoLote()">+ Nuevo lote</button>
+    </div>
+    <div class="chip-row">${filtros.map(f=>`<span class="chip ${prodFilter===f?'active':''}" onclick="setProdFilter('${f}')">${labelsFil[f]}</span>`).join('')}</div>
+    ${lotes.length===0?`<div class="empty">Sin lotes registrados.<br>Toca <b>"+ Nuevo lote"</b> para agregar siembras.</div>`:''}
+    ${sortedLotes.map(semana=>{
+      const items=grouped[semana].filter(matchFilter);
+      if(!items.length)return '';
+      const allCosechados=grouped[semana].every(l=>l.cosecha_real);
+      const allSembrados=grouped[semana].every(l=>l.sembrado_confirmado);
+      const badgeClass=allCosechados?'lb-cosechado':allSembrados?'lb-sembrado':'lb-pend';
+      const badgeTxt=allCosechados?'Cosechado completo':allSembrados?'Sembrado':'En proceso';
+      // Fecha cosecha del grupo
+      const fechaCos=grouped[semana][0]?.fecha_cosecha;
+      return `<div class="lote-group">
+        <div class="lote-header">
+          <span class="lote-code">Semana ${semana}</span>
+          ${fechaCos?`<span class="lote-cosecha">Cosecha: ${fmtDateShort(fechaCos)}</span>`:''}
+          <span class="lote-badge ${badgeClass}">${badgeTxt}</span>
+        </div>
+        ${items.map(l=>siembraCard(l,today)).join('')}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function siembraCard(l,today){
+  const fechaSiembra=l.fecha_siembra?l.fecha_siembra.split('T')[0]:'';
+  const fechaCosecha=l.fecha_cosecha?l.fecha_cosecha.split('T')[0]:'';
+  const esHoySembrar=fechaSiembra===today&&!l.sembrado_confirmado;
+  const esHoyCosechar=fechaCosecha===today&&l.sembrado_confirmado&&!l.cosecha_real;
+  let cardClass='siembra-card';
+  if(l.cosecha_real)cardClass+=' cosechado';
+  else if(esHoyCosechar)cardClass+=' hoy-cosechar';
+  else if(l.sembrado_confirmado)cardClass+=' sembrado';
+  else if(esHoySembrar)cardClass+=' hoy-sembrar';
+
+  let statusTxt='',statusClass='ss-pend';
+  if(l.cosecha_real){statusTxt='✓ Cosechado';statusClass='ss-cosechado';}
+  else if(esHoyCosechar){statusTxt='✂️ Cosechar HOY';statusClass='ss-hoy';}
+  else if(l.sembrado_confirmado){statusTxt='🌱 Sembrado';statusClass='ss-sembrado';}
+  else if(esHoySembrar){statusTxt='🌾 Sembrar HOY';statusClass='ss-hoy';}
+  else if(isPast(l.fecha_siembra)&&!l.sembrado_confirmado){statusTxt='⚠️ Siembra pendiente';statusClass='ss-pend';}
+  else{statusTxt='Programado';statusClass='ss-pend';}
+
+  const cosEst=l.gr_semilla&&l.charolas_planificadas?`${l.charolas_planificadas * (l.cosecha_est_charola||0)}g`:'—';
+  const charConf=l.charolas_confirmadas||l.charolas_planificadas;
+  const varIcon={'Chícharo':'🫛','Chícharo CT':'🫛','Betabel':'🟣','Rábano':'🔴','Cilantro':'🌿','Girasol':'🌻','Spicy Mix':'🌶️'}[l.variedad]||'🌱';
+
+  let accionBtn='';
+  if(!l.sembrado_confirmado){
+    accionBtn=`<button class="sc-accion btn-sembrar" onclick="event.stopPropagation();confirmarSiembra('${l.id}')">🌾 Confirmar siembra</button>`;
+  }else if(!l.cosecha_real){
+    accionBtn=`<button class="sc-accion btn-cosechar" onclick="event.stopPropagation();registrarCosecha('${l.id}')">✂️ Registrar cosecha</button>`;
+  }else{
+    accionBtn=`<button class="sc-accion btn-ver" onclick="event.stopPropagation();verDetalle('${l.id}')">Ver detalle</button>`;
+  }
+
+  return `<div class="${cardClass}" onclick="verDetalle('${l.id}')">
+    <div class="sc-top">
+      <span style="font-size:18px">${varIcon}</span>
+      <span class="sc-variedad">${l.variedad}</span>
+      <span class="sc-tipo">${l.tipo||'Fresco'}</span>
+      <span class="sc-status ${statusClass}">${statusTxt}</span>
+    </div>
+    <div class="sc-grid">
+      <div class="sc-dato"><div class="sc-dato-label">Lote</div><div class="sc-dato-val" style="font-family:monospace;font-size:11px">${l.lote||'—'}</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Charolas</div><div class="sc-dato-val highlight">${charConf} charolas</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Semilla / charola</div><div class="sc-dato-val">${l.gr_semilla||'—'} g</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Días de cultivo</div><div class="sc-dato-val">${l.dias_cultivo||'—'} días</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Siembra</div><div class="sc-dato-val ${esHoySembrar?'amber':''}">${l.dia_siembra||''} ${fechaSiembra?fmtDateShort(l.fecha_siembra):''}</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Cosecha</div><div class="sc-dato-val ${esHoyCosechar?'amber':''}">${l.dia_cosecha||''} ${fechaCosecha?fmtDateShort(l.fecha_cosecha):''}</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Est. / charola</div><div class="sc-dato-val">${l.cosecha_est_charola||'—'} g</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Cosecha estimada</div><div class="sc-dato-val">${l.cosecha_estimada||'—'} g</div></div>
+      ${l.cosecha_real?`<div class="sc-dato"><div class="sc-dato-label">Cosecha real</div><div class="sc-dato-val highlight">${l.cosecha_real} g</div></div>`:''}
+      ${l.charolas_cosechadas?`<div class="sc-dato"><div class="sc-dato-label">Charolas cosechadas</div><div class="sc-dato-val highlight">${l.charolas_cosechadas}</div></div>`:''}
+    </div>
+    ${accionBtn}
+  </div>`;
+}
+
+function setProdFilter(f){prodFilter=f;goTo('produccion');}
+
+// ══ NUEVO LOTE (encargado registra la siembra planificada) ═════════════════════
+function openNuevoLote(){
+  const body=document.getElementById('modal-body');
+  const today=todayKey();
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">🌾 Nuevo lote de siembra</div>
+    <div class="modal-sub">Registra las charolas planificadas para esta semana</div>
+    <div class="field"><label>Variedad <span style="color:var(--danger)">*</span></label>
+      <select id="nl-variedad" onchange="updateNLLote()">
+        <option value="">Seleccionar...</option>
+        ${['Chícharo','Chícharo CT (fresco)','Chícharo CT (vivo)','Betabel','Rábano','Cilantro','Girasol','Spicy Mix'].map(v=>`<option>${v}</option>`).join('')}
+      </select></div>
+    <div class="field"><label>Tipo</label>
+      <select id="nl-tipo"><option value="Fresco">Fresco</option><option value="Vivo">Vivo</option></select></div>
+    <div class="field"><label>Lote <span style="color:var(--danger)">*</span></label>
+      <input id="nl-lote" type="text" placeholder="CRF-XXYY-VAR">
+      <div class="field-hint">Se genera automático al elegir variedad</div></div>
+    <div class="field"><label>Charolas a sembrar <span style="color:var(--danger)">*</span></label>
+      <input id="nl-charolas" type="number" placeholder="Ej. 10" oninput="calcNL()"></div>
+    <div class="field"><label>Día de siembra</label>
+      <select id="nl-dia-siembra">
+        <option value="">Seleccionar...</option>
+        ${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map(d=>`<option>${d}</option>`).join('')}
+      </select></div>
+    <div class="field"><label>Fecha de siembra <span style="color:var(--danger)">*</span></label>
+      <input id="nl-fecha-siembra" type="date" value="${today}"></div>
+    <div class="field"><label>Gramos de semilla por charola <span style="color:var(--danger)">*</span></label>
+      <input id="nl-gr-semilla" type="number" placeholder="Ej. 120" oninput="calcNL()"></div>
+    <div class="field"><label>Total semilla (g)</label>
+      <div class="field-val" id="nl-total-semilla">—</div></div>
+    <div class="field"><label>Días de cultivo</label>
+      <input id="nl-dias" type="number" placeholder="Ej. 10" oninput="calcFechaCosecha()"></div>
+    <div class="field"><label>Día de cosecha</label>
+      <select id="nl-dia-cosecha">
+        <option value="">Seleccionar...</option>
+        ${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map(d=>`<option>${d}</option>`).join('')}
+      </select></div>
+    <div class="field"><label>Fecha de cosecha</label>
+      <input id="nl-fecha-cosecha" type="date"></div>
+    <div class="field"><label>Cosecha estimada por charola (g)</label>
+      <input id="nl-cos-est" type="number" placeholder="Ej. 200" oninput="calcNL()"></div>
+    <div class="field"><label>Cosecha estimada total (g)</label>
+      <div class="field-val" id="nl-cos-total">—</div></div>
+    <div class="field"><label>Comentarios</label>
+      <textarea id="nl-comentarios" placeholder="Observaciones del lote..."></textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarNuevoLote()">Guardar lote</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+}
+
+function updateNLLote(){
+  const v=document.getElementById('nl-variedad')?.value||'';
+  const loteEl=document.getElementById('nl-lote');
+  if(loteEl&&v)loteEl.value=autoLote(v);
+}
+function calcNL(){
+  const ch=parseFloat(document.getElementById('nl-charolas')?.value)||0;
+  const gr=parseFloat(document.getElementById('nl-gr-semilla')?.value)||0;
+  const est=parseFloat(document.getElementById('nl-cos-est')?.value)||0;
+  const tot=document.getElementById('nl-total-semilla');
+  const cosT=document.getElementById('nl-cos-total');
+  if(tot)tot.textContent=ch&&gr?`${ch*gr} g`:'—';
+  if(cosT)cosT.textContent=ch&&est?`${ch*est} g`:'—';
+}
+function calcFechaCosecha(){
+  const fs=document.getElementById('nl-fecha-siembra')?.value;
+  const dias=parseInt(document.getElementById('nl-dias')?.value)||0;
+  const fc=document.getElementById('nl-fecha-cosecha');
+  if(fs&&dias&&fc){
+    const d=new Date(fs);d.setDate(d.getDate()+dias);
+    fc.value=d.toISOString().split('T')[0];
+  }
+}
+
+async function guardarNuevoLote(){
+  const v=document.getElementById('nl-variedad')?.value;
+  const lote=document.getElementById('nl-lote')?.value;
+  const charolas=document.getElementById('nl-charolas')?.value;
+  const fs=document.getElementById('nl-fecha-siembra')?.value;
+  const grSemilla=document.getElementById('nl-gr-semilla')?.value;
+  if(!v||!lote||!charolas||!fs||!grSemilla){toast('Completa los campos obligatorios');return;}
+
+  const ch=parseFloat(charolas),gr=parseFloat(grSemilla);
+  const est=parseFloat(document.getElementById('nl-cos-est')?.value)||0;
+  const dias=parseInt(document.getElementById('nl-dias')?.value)||0;
+
+  // Extraer semana del lote para agrupar
+  const loteNum=lote.replace('CRF-','').split('-')[0]||getWeek().toString().padStart(4,'0');
+
+  const nuevoLote={
+    id: Date.now().toString(),
+    lote_semana: loteNum,
+    lote,
+    variedad: v,
+    tipo: document.getElementById('nl-tipo')?.value||'Fresco',
+    charolas_planificadas: ch,
+    dia_siembra: document.getElementById('nl-dia-siembra')?.value||'',
+    fecha_siembra: fs,
+    gr_semilla: gr,
+    total_semilla: ch*gr,
+    dias_cultivo: dias,
+    dia_cosecha: document.getElementById('nl-dia-cosecha')?.value||'',
+    fecha_cosecha: document.getElementById('nl-fecha-cosecha')?.value||'',
+    cosecha_est_charola: est,
+    cosecha_estimada: ch*est,
+    comentarios: document.getElementById('nl-comentarios')?.value||'',
+    sembrado_confirmado: false,
+    charolas_confirmadas: null,
+    cosecha_real: null,
+    charolas_cosechadas: null,
+    fecha_registro: new Date().toISOString()
+  };
+
+  const lotes=getLotes();lotes.unshift(nuevoLote);setLotes(lotes);
+  await pushToSheet({id:nuevoLote.id,tipo:'lotes_produccion',fecha:nuevoLote.fecha_registro,datos:nuevoLote},'lotes_produccion');
+  closeModal();
+  toast('Lote registrado ✓');
+  goTo('produccion');
+}
+
+// ══ CONFIRMAR SIEMBRA ════════════════════════════════════════════════════════
+function confirmarSiembra(id){
+  const lote=getLotes().find(l=>l.id===id);if(!lote)return;
+  const body=document.getElementById('modal-body');
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">🌾 Confirmar siembra</div>
+    <div class="modal-sub">${lote.variedad} · ${lote.lote}</div>
+    <div style="background:var(--bg2);border-radius:var(--radius);padding:12px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div style="font-size:10px;color:var(--text3)">Planificadas</div><div style="font-size:18px;font-weight:700;color:var(--text)">${lote.charolas_planificadas} charolas</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Semilla/charola</div><div style="font-size:18px;font-weight:700;color:var(--text)">${lote.gr_semilla} g</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Total semilla</div><div style="font-size:14px;font-weight:600;color:var(--green)">${lote.total_semilla} g</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Cosecha estimada</div><div style="font-size:14px;font-weight:600;color:var(--green)">${lote.cosecha_estimada||'—'} g</div></div>
+      </div>
+    </div>
+    <div class="field"><label>Charolas sembradas (real) <span style="color:var(--danger)">*</span></label>
+      <input id="cs-charolas" type="number" value="${lote.charolas_planificadas}" placeholder="${lote.charolas_planificadas}">
+      <div class="field-hint">Confirma o ajusta si hubo diferencia</div></div>
+    <div class="field"><label>Responsable <span style="color:var(--danger)">*</span></label>
+      <select id="cs-responsable">
+        <option value="">Seleccionar...</option>
+        ${['José Carlos','Encargado de producción','Personal de producción'].map(o=>`<option>${o}</option>`).join('')}
+      </select></div>
+    <div class="field"><label>Observaciones</label>
+      <textarea id="cs-obs" placeholder="Sin novedad / Observación..."></textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-amber" onclick="guardarSiembra('${id}')">✓ Confirmar siembra</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+}
+
+async function guardarSiembra(id){
+  const charolas=document.getElementById('cs-charolas')?.value;
+  const resp=document.getElementById('cs-responsable')?.value;
+  if(!charolas||!resp){toast('Completa todos los campos');return;}
+  const lotes=getLotes();
+  const idx=lotes.findIndex(l=>l.id===id);if(idx<0)return;
+  lotes[idx].sembrado_confirmado=true;
+  lotes[idx].charolas_confirmadas=parseFloat(charolas);
+  lotes[idx].responsable_siembra=resp;
+  lotes[idx].obs_siembra=document.getElementById('cs-obs')?.value||'';
+  lotes[idx].fecha_siembra_confirmada=new Date().toISOString();
+  setLotes(lotes);
+  const rec={id:Date.now().toString(),tipo:'siembra_confirmada',fecha:new Date().toISOString(),datos:{lote:lotes[idx].lote,variedad:lotes[idx].variedad,charolas_confirmadas:charolas,responsable:resp,observaciones:lotes[idx].obs_siembra}};
+  const recs=getRecs();recs.unshift(rec);setRecs(recs);
+  await pushToSheet(rec,'siembra_confirmada');
+  closeModal();
+  toast('Siembra confirmada ✓');
+  goTo('produccion');
+}
+
+// ══ REGISTRAR COSECHA ═══════════════════════════════════════════════════════
+function registrarCosecha(id){
+  const lote=getLotes().find(l=>l.id===id);if(!lote)return;
+  const body=document.getElementById('modal-body');
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">✂️ Registrar cosecha</div>
+    <div class="modal-sub">${lote.variedad} · ${lote.lote}</div>
+    <div style="background:var(--bg2);border-radius:var(--radius);padding:12px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div style="font-size:10px;color:var(--text3)">Sembradas</div><div style="font-size:18px;font-weight:700;color:var(--text)">${lote.charolas_confirmadas||lote.charolas_planificadas} charolas</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Cosecha estimada</div><div style="font-size:18px;font-weight:700;color:var(--green)">${lote.cosecha_estimada||'—'} g</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Est. por charola</div><div style="font-size:14px;font-weight:600;color:var(--text)">${lote.cosecha_est_charola||'—'} g</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Días de cultivo</div><div style="font-size:14px;font-weight:600;color:var(--text)">${lote.dias_cultivo||'—'} días</div></div>
+      </div>
+    </div>
+    <div class="field"><label>Charolas cosechadas <span style="color:var(--danger)">*</span></label>
+      <input id="rc-charolas" type="number" value="${lote.charolas_confirmadas||lote.charolas_planificadas}" oninput="calcPromedio()"></div>
+    <div class="field"><label>Cosecha real en gramos <span style="color:var(--danger)">*</span></label>
+      <input id="rc-gramos" type="number" placeholder="Total gramos cosechados" oninput="calcPromedio()"></div>
+    <div class="field"><label>Promedio por charola</label>
+      <div class="field-val" id="rc-promedio">— g/charola</div></div>
+    <div class="field"><label>Contenedores 50g</label>
+      <div class="field-val" id="rc-contenedores">—</div></div>
+    <div class="field"><label>Responsable <span style="color:var(--danger)">*</span></label>
+      <select id="rc-responsable">
+        <option value="">Seleccionar...</option>
+        ${['José Carlos','Encargado de producción','Personal de producción'].map(o=>`<option>${o}</option>`).join('')}
+      </select></div>
+    <div class="field"><label>Comentarios</label>
+      <textarea id="rc-comentarios" placeholder="Sin novedad / Incidencia..."></textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--info)" onclick="guardarCosecha('${id}')">✓ Guardar cosecha</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+}
+
+function calcPromedio(){
+  const ch=parseFloat(document.getElementById('rc-charolas')?.value)||0;
+  const gr=parseFloat(document.getElementById('rc-gramos')?.value)||0;
+  const prom=document.getElementById('rc-promedio');
+  const cont=document.getElementById('rc-contenedores');
+  if(prom)prom.textContent=ch&&gr?`${Math.round(gr/ch)} g/charola`:'— g/charola';
+  if(cont)cont.textContent=gr?`${Math.round(gr/50)} contenedores de 50g`:'—';
+}
+
+async function guardarCosecha(id){
+  const charolas=document.getElementById('rc-charolas')?.value;
+  const gramos=document.getElementById('rc-gramos')?.value;
+  const resp=document.getElementById('rc-responsable')?.value;
+  if(!charolas||!gramos||!resp){toast('Completa todos los campos');return;}
+  const lotes=getLotes();
+  const idx=lotes.findIndex(l=>l.id===id);if(idx<0)return;
+  const ch=parseFloat(charolas),gr=parseFloat(gramos);
+  lotes[idx].cosecha_real=gr;
+  lotes[idx].charolas_cosechadas=ch;
+  lotes[idx].promedio_cosecha=Math.round(gr/ch);
+  lotes[idx].contenedores_50g=Math.round(gr/50);
+  lotes[idx].responsable_cosecha=resp;
+  lotes[idx].comentarios_cosecha=document.getElementById('rc-comentarios')?.value||'';
+  lotes[idx].fecha_cosecha_real=new Date().toISOString();
+  setLotes(lotes);
+  // Guardar como registro de cosecha semanal
+  const rec={id:Date.now().toString(),tipo:'cosecha',fecha:new Date().toISOString(),datos:{variedad:lotes[idx].variedad,lote:lotes[idx].lote,charolas:charolas,gramos_real:gramos,promedio:lotes[idx].promedio_cosecha,contenedores_50g:lotes[idx].contenedores_50g,responsable:resp,comentarios:lotes[idx].comentarios_cosecha}};
+  const recs=getRecs();recs.unshift(rec);setRecs(recs);
+  await pushToSheet(rec,'cosecha_semanal');
+  closeModal();
+  toast(`Cosecha registrada: ${gr}g ✓`);
+  goTo('produccion');
+}
+
+// ══ VER DETALLE ═══════════════════════════════════════════════════════════════
+function verDetalle(id){
+  const l=getLotes().find(x=>x.id===id);if(!l)return;
+  const body=document.getElementById('modal-body');
+  const varIcon={'Chícharo':'🫛','Chícharo CT (fresco)':'🫛','Chícharo CT (vivo)':'🫛','Betabel':'🟣','Rábano':'🔴','Cilantro':'🌿','Girasol':'🌻','Spicy Mix':'🌶️'}[l.variedad]||'🌱';
+  const rendimiento=l.cosecha_real&&l.cosecha_estimada?Math.round((l.cosecha_real/l.cosecha_estimada)*100):null;
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">${varIcon} ${l.variedad}</div>
+    <div class="modal-sub" style="font-family:monospace">${l.lote} · ${l.tipo||'Fresco'}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      ${[
+        ['Charolas planificadas',l.charolas_planificadas],
+        ['Charolas confirmadas',l.charolas_confirmadas||'—'],
+        ['Semilla/charola',`${l.gr_semilla} g`],
+        ['Total semilla',`${l.total_semilla} g`],
+        ['Días de cultivo',`${l.dias_cultivo} días`],
+        ['Cosecha est./charola',`${l.cosecha_est_charola||'—'} g`],
+        ['Cosecha estimada total',`${l.cosecha_estimada||'—'} g`],
+        ['Siembra',`${l.dia_siembra||''} ${l.fecha_siembra?fmtDateShort(l.fecha_siembra):''}`],
+        ['Cosecha programada',`${l.dia_cosecha||''} ${l.fecha_cosecha?fmtDateShort(l.fecha_cosecha):''}`],
+        l.cosecha_real?['Cosecha REAL',`${l.cosecha_real} g`]:['Cosecha real','Pendiente'],
+        l.charolas_cosechadas?['Charolas cosechadas',l.charolas_cosechadas]:null,
+        l.promedio_cosecha?['Promedio/charola',`${l.promedio_cosecha} g`]:null,
+        l.contenedores_50g?['Contenedores 50g',l.contenedores_50g]:null,
+        rendimiento?['Rendimiento',`${rendimiento}%`]:null,
+      ].filter(Boolean).map(([label,val],i)=>`
+        <div style="background:${i%2===0?'var(--bg2)':'var(--bg3)'};border-radius:8px;padding:8px 10px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">${label}</div>
+          <div style="font-size:13px;font-weight:600;color:${label.includes('REAL')||label.includes('Rendimiento')?'var(--ok)':'var(--text)'}">${val}</div>
+        </div>`).join('')}
+    </div>
+    ${l.comentarios?`<div style="background:var(--bg2);border-radius:8px;padding:10px;font-size:12px;color:var(--text2);margin-bottom:12px"><b>Comentarios:</b> ${l.comentarios}</div>`:''}
+    <div class="btn-row">
+      ${!l.sembrado_confirmado?`<button class="btn btn-amber" onclick="closeModal();confirmarSiembra('${l.id}')">🌾 Confirmar siembra</button>`:''}
+      ${l.sembrado_confirmado&&!l.cosecha_real?`<button class="btn btn-primary" style="background:var(--info)" onclick="closeModal();registrarCosecha('${l.id}')">✂️ Registrar cosecha</button>`:''}
+      <button class="btn btn-secondary" onclick="closeModal();editarLote('${l.id}')">✏️ Editar</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+}
+
+// ══ REGISTRAR (inocuidad) ════════════════════════════════════════════════════
+function renderRegistrar(el){
+  const doneIds=new Set(getRecs().filter(r=>r.fecha.startsWith(todayKey())).map(r=>r.tipo));
+  el.innerHTML=`<div class="pad">
+    <div class="sec" style="margin-bottom:10px">Registros de inocuidad</div>
+    <div class="reg-grid">${REGS.map(r=>`
+      <div class="reg-card ${doneIds.has(r.id)?'done':''}" onclick="openForm('${r.id}')">
+        <div class="reg-icon">${r.icon}</div>
+        <div class="reg-name">${r.name}</div>
+        <div class="reg-code">${r.code} · ${r.freq}</div>
+        <div class="reg-st ${doneIds.has(r.id)?'s-done':'s-pend'}">${doneIds.has(r.id)?'✓ Hoy':'Registrar'}</div>
+      </div>`).join('')}</div>
+  </div>`;
+}
+
+// ══ HISTORIAL ════════════════════════════════════════════════════════════════
+function renderHistorial(el){
+  const recs=getRecs(),pendIds=new Set(getPend().map(r=>r.id));
+  const filters=['todos',...REGS.map(r=>r.id),'cosecha','siembra_confirmada'];
+  const labels=Object.fromEntries([['todos','Todos'],...REGS.map(r=>[r.id,r.name]),['cosecha','Cosecha'],['siembra_confirmada','Siembras']]);
+  const filtered=histFilter==='todos'?recs:recs.filter(r=>r.tipo===histFilter);
+  const iconMap=Object.fromEntries(REGS.map(r=>[r.id,r.icon]));
+  iconMap['cosecha']='🌱';iconMap['siembra_confirmada']='🌾';
+  el.innerHTML=`<div class="pad">
+    <div class="chip-row">${filters.map(f=>`<span class="chip ${histFilter===f?'active':''}" onclick="setHF('${f}')">${labels[f]||f}</span>`).join('')}</div>
+    ${filtered.length===0?`<div class="empty">Sin registros aún.</div>`:''}
+    ${filtered.map(r=>{
+      const icon=iconMap[r.tipo]||'📋';
+      const name=labels[r.tipo]||r.tipo;
+      const d=r.datos||{};
+      const temp=parseFloat(d.temp);
+      const tBadge=d.temp?`<span class="${temp<=4?'temp-ok':'temp-bad'}">${d.temp}°C</span> `:'';
+      const sBadge=pendIds.has(r.id)?`<span class="badge badge-pend">⏳</span>`:`<span class="badge badge-ok">✓</span>`;
+      return `<div class="hist-item">
+        <div class="hist-icon">${icon}</div>
+        <div style="flex:1;min-width:0">
+          <div class="hist-title">${name} ${tBadge}${sBadge}</div>
+          <div class="hist-meta">${fmtDate(r.fecha)} · ${d.responsable||''}</div>
+          ${d.lote||d.lote_proveedor?`<div class="hist-lote">${d.lote||d.lote_proveedor}</div>`:''}
+          ${d.area||d.variedad?`<div class="hist-meta">${d.area||d.variedad}</div>`:''}
+          ${d.gramos_real?`<div class="hist-meta" style="color:var(--ok)">Cosecha real: ${d.gramos_real}g · Promedio: ${d.promedio}g/charola</div>`:''}
+          ${d.problema?`<div class="hist-meta" style="color:var(--danger)">${d.problema}</div>`:''}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+function setHF(f){histFilter=f;goTo('historial');}
+
+// ══ ADMIN ════════════════════════════════════════════════════════════════════
+function renderAdmin(el){
+  const recs=getRecs(),pend=getPend(),url=getURL(),lotes=getLotes();
+  const hoy=recs.filter(r=>r.fecha.startsWith(todayKey())).length;
+  const sem=recs.filter(r=>(new Date()-new Date(r.fecha))/86400000<=7).length;
+  const script=`function doPost(e){
+  var ss=SpreadsheetApp.getActiveSpreadsheet();
+  var data=JSON.parse(e.postData.contents);
+  if(data.action==='append'){
+    var sh=ss.getSheetByName(data.data.tipo)||ss.insertSheet(data.data.tipo);
+    if(sh.getLastRow()===0)sh.appendRow(Object.keys(data.data));
+    sh.appendRow(Object.values(data.data));
+  }
+  return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);
+}
+function doGet(){
+  return ContentService.createTextOutput(JSON.stringify({ok:true,app:'CityRootsFarm'})).setMimeType(ContentService.MimeType.JSON);
+}`;
+  el.innerHTML=`<div class="pad">
+    <div class="sec">Conexión con Google Sheets</div>
+    <div class="setup-box">
+      <div class="setup-title">URL del Apps Script
+        ${url?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Pega aquí la URL de tu Apps Script</div>
+      <input class="url-input" id="url-inp" type="url" placeholder="https://script.google.com/macros/s/..." value="${url||''}">
+      <div class="btn-row" style="margin-top:9px">
+        <button class="btn btn-primary" onclick="saveURL()">Guardar URL</button>
+        <button class="btn btn-secondary" onclick="testConn()">Probar</button>
+      </div>
+    </div>
+    ${pend.length?`<div class="banner banner-warn" style="margin-bottom:10px">📡 ${pend.length} pendiente${pend.length>1?'s':''}
+      <button class="btn btn-primary" style="flex:0;padding:5px 12px;font-size:11px;margin-left:auto" onclick="flushPending().then(()=>render('admin'))">Sincronizar</button>
+    </div>`:''}
+    <div class="sec" style="margin-top:4px">Estadísticas</div>
+    <div class="stats" style="margin-bottom:13px">
+      <div class="stat"><div class="stat-n n-ok">${hoy}</div><div class="stat-l">Hoy</div></div>
+      <div class="stat"><div class="stat-n n-info">${sem}</div><div class="stat-l">Semana</div></div>
+      <div class="stat"><div class="stat-n n-amber">${lotes.length}</div><div class="stat-l">Lotes</div></div>
+    </div>
+    <div class="sec">Manual de Inocuidad</div>
+    <div class="exp-card" onclick="abrirManual()"><div class="exp-icon" style="background:#E8F5E9">📘</div><div><div class="exp-title">Manual Integrado de Inocuidad</div><div class="exp-sub">BPM · POES · HACCP · Food Safety Plan v1.0</div></div></div>
+    <div class="sec" style="margin-top:4px">Exportar para certificador</div>
+    <div class="exp-card" onclick="exportCSV()"><div class="exp-icon" style="background:var(--ok-bg)">📊</div><div><div class="exp-title">Exportar registros a Excel</div><div class="exp-sub">Todos los registros de inocuidad · ${recs.length} entradas</div></div></div>
+    <div class="exp-card" onclick="exportLotesCSV()"><div class="exp-icon" style="background:var(--amber-bg)">🌱</div><div><div class="exp-title">Exportar bitácora de producción</div><div class="exp-sub">Todos los lotes de siembra y cosecha · ${lotes.length} lotes</div></div></div>
+    <div class="exp-card" onclick="exportPDF()"><div class="exp-icon" style="background:var(--info-bg)">📄</div><div><div class="exp-title">Reporte PDF semanal</div><div class="exp-sub">Listo para imprimir y entregar al certificador</div></div></div>
+    <div class="sec" style="margin-top:12px">Código Apps Script</div>
+    <div class="code-block">${script.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    <button class="btn btn-secondary" style="margin-bottom:12px" onclick="copyScript()">📋 Copiar código</button>
+    <div class="exp-card" onclick="confirmClear()" style="border-color:var(--danger)"><div class="exp-icon" style="background:var(--danger-bg)">🗑️</div><div><div class="exp-title" style="color:var(--danger)">Limpiar registros locales</div><div class="exp-sub">Exporta primero. No borra Sheets.</div></div></div>
+  </div>`;
+}
+
+// ══ FORMS (inocuidad) ════════════════════════════════════════════════════════
+function openForm(id){
+  const reg=REGS.find(r=>r.id===id);if(!reg)return;
+  const body=document.getElementById('modal-body');
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">${reg.icon} ${reg.name}</div>
+    <div class="modal-sub">${reg.code} · ${new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})}</div>
+    ${reg.fields.map(f=>`<div class="field">
+      <label>${f.label}${f.req?` <span style="color:var(--danger)">*</span>`:''}</label>
+      ${f.type==='select'?`<select id="f_${f.id}"><option value="">Seleccionar...</option>${(f.opts||[]).map(o=>`<option>${o}</option>`).join('')}</select>`:
+        f.type==='textarea'?`<textarea id="f_${f.id}" placeholder="${f.ph||''}"></textarea>`:
+        f.type==='time'?`<input type="time" id="f_${f.id}" value="${nowTime()}">`:
+        `<input type="${f.type}" id="f_${f.id}" placeholder="${f.ph||''}">`}
+    </div>`).join('')}
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="save-btn" onclick="submitForm('${id}')">Guardar registro</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+}
+
+async function submitForm(id){
+  const reg=REGS.find(r=>r.id===id);
+  const datos={};let missing=[];
+  reg.fields.forEach(f=>{
+    const el=document.getElementById('f_'+f.id);
+    if(el)datos[f.id]=el.value;
+    if(f.req&&el&&!el.value)missing.push(f.label);
+  });
+  if(missing.length){toast('Completa: '+missing[0]);return;}
+  const btn=document.getElementById('save-btn');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span>';}
+  const record={id:Date.now().toString(),tipo:id,fecha:new Date().toISOString(),datos};
+  const recs=getRecs();recs.unshift(record);setRecs(recs);
+  await pushToSheet(record);
+  closeModal();
+  toast('✓ Guardado' + (getURL()?' y enviado a Sheets':''));
+  render(page);
+}
+
+// ══ ADMIN ACTIONS ════════════════════════════════════════════════════════════
+function saveURL(){
+  const v=document.getElementById('url-inp')?.value?.trim();
+  if(!v||!v.startsWith('https://')){toast('URL inválida');return;}
+  setURL(v);setSyncUI('ok');toast('URL guardada ✓');
+  testConn();setTimeout(()=>flushPending(),800);
+}
+async function testConn(){
+  const url=getURL();if(!url){toast('Primero guarda la URL');return;}
+  setSyncUI('ing');
+  try{await fetch(url,{mode:'no-cors'});setSyncUI('ok');toast('Conexión con Sheets: OK ✓');}
+  catch(e){setSyncUI('off');toast('Sin conexión a internet');}
+}
+function copyScript(){
+  const code=`function doPost(e){var ss=SpreadsheetApp.getActiveSpreadsheet();var data=JSON.parse(e.postData.contents);if(data.action==='append'){var sh=ss.getSheetByName(data.data.tipo)||ss.insertSheet(data.data.tipo);if(sh.getLastRow()===0)sh.appendRow(Object.keys(data.data));sh.appendRow(Object.values(data.data));}return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);}function doGet(){return ContentService.createTextOutput(JSON.stringify({ok:true,app:'CityRootsFarm'})).setMimeType(ContentService.MimeType.JSON);}`;
+  navigator.clipboard.writeText(code).then(()=>toast('Código copiado ✓')).catch(()=>toast('Copia el código manualmente'));
+}
+function exportCSV(){
+  const recs=getRecs();if(!recs.length){toast('Sin registros');return;}
+  const rows=[['ID','Fecha','Hora','Tipo','Código','Lote','Responsable','Área','Temperatura','Observaciones','Detalle']];
+  recs.forEach(r=>{const reg=REGS.find(x=>x.id===r.tipo)||{name:r.tipo,code:''};const d=r.datos||{};rows.push([r.id,new Date(r.fecha).toLocaleDateString('es-MX'),new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),reg.name,reg.code||r.tipo,d.lote||d.lote_proveedor||'',d.responsable||'',d.area||d.variedad||'',d.temp||'',d.observacion||d.observaciones||d.comentarios||d.problema||'',Object.entries(d).map(([k,v])=>`${k}:${v}`).join('|')]);});
+  dl('\uFEFF'+rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv',`CityRootsFarm_Registros_${todayKey()}.csv`);
+  toast('Excel descargado ✓');
+}
+function exportLotesCSV(){
+  const lotes=getLotes();if(!lotes.length){toast('Sin lotes');return;}
+  const rows=[['Lote','Semana','Variedad','Tipo','Charolas Plan.','Charolas Conf.','Semilla/charola (g)','Total Semilla (g)','Días Cultivo','Día Siembra','Fecha Siembra','Día Cosecha','Fecha Cosecha','Est./charola (g)','Cosecha Estimada (g)','Charolas Cosechadas','Cosecha Real (g)','Promedio (g/charola)','Contenedores 50g','Responsable Siembra','Responsable Cosecha','Comentarios']];
+  lotes.forEach(l=>rows.push([l.lote,l.lote_semana,l.variedad,l.tipo,l.charolas_planificadas,l.charolas_confirmadas||'',l.gr_semilla,l.total_semilla,l.dias_cultivo,l.dia_siembra,l.fecha_siembra?new Date(l.fecha_siembra).toLocaleDateString('es-MX'):'',l.dia_cosecha,l.fecha_cosecha?new Date(l.fecha_cosecha).toLocaleDateString('es-MX'):'',l.cosecha_est_charola||'',l.cosecha_estimada||'',l.charolas_cosechadas||'',l.cosecha_real||'',l.promedio_cosecha||'',l.contenedores_50g||'',l.responsable_siembra||'',l.responsable_cosecha||'',l.comentarios||'']));
+  dl('\uFEFF'+rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv',`CityRootsFarm_Produccion_${todayKey()}.csv`);
+  toast('Bitácora de producción descargada ✓');
+}
+function exportPDF(){
+  const recs=getRecs();const now=new Date();
+  const ws=new Date(now);ws.setDate(now.getDate()-now.getDay());
+  const sem=recs.filter(r=>new Date(r.fecha)>=ws);
+  const lotesActivos=getLotes().filter(l=>!l.cosecha_real);
+  const rows=sem.map(r=>{const reg=REGS.find(x=>x.id===r.tipo)||{name:r.tipo};const d=r.datos||{},t=parseFloat(d.temp);return `<tr><td>${new Date(r.fecha).toLocaleDateString('es-MX')}</td><td>${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td><td>${reg.name}</td><td>${d.responsable||'—'}</td><td style="font-family:monospace;font-size:11px">${d.lote||d.variedad||d.area||'—'}</td><td><span style="background:${t<=4?'#EAF3DE':'#FCEBEB'};color:${t<=4?'#1B5E35':'#A32D2D'};padding:1px 6px;border-radius:3px">${d.temp?d.temp+'°C':'—'}</span></td><td style="font-size:11px">${d.observacion||d.observaciones||d.comentarios||d.problema||d.accion||'—'}</td></tr>`;}).join('');
+  const lotesRows=lotesActivos.map(l=>`<tr><td style="font-family:monospace">${l.lote}</td><td>${l.variedad}</td><td>${l.charolas_planificadas}</td><td>${l.charolas_confirmadas||'—'}</td><td>${l.cosecha_estimada||'—'}g</td><td>${l.fecha_siembra?new Date(l.fecha_siembra).toLocaleDateString('es-MX'):''}</td><td>${l.fecha_cosecha?new Date(l.fecha_cosecha).toLocaleDateString('es-MX'):''}</td><td>${l.sembrado_confirmado?'✓ Sembrado':'Pendiente'}</td></tr>`).join('');
+  const w=window.open('','_blank');if(!w){toast('Permite ventanas emergentes');return;}
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>City Roots Farm</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#222;font-size:12px}h1{color:#2E8B57;font-size:17px;margin-bottom:2px}h2{color:#1A1A2E;font-weight:400;font-size:12px;margin-bottom:16px}h3{color:#1A1A2E;font-size:13px;margin:16px 0 6px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#1A1A2E;color:#fff;padding:6px 7px;text-align:left;font-size:11px}td{padding:5px 7px;border-bottom:0.5px solid #e0e0e0;vertical-align:top}tr:nth-child(even){background:#f9f9f9}.foot{margin-top:16px;font-size:10px;color:#888;border-top:0.5px solid #ddd;padding-top:8px}@media print{body{margin:10px}}</style></head>
+  <body><h1>🌱 City Roots Farm — Reporte Semanal</h1><h2>Semana del ${ws.toLocaleDateString('es-MX',{day:'numeric',month:'long'})} · ${now.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</h2>
+  <h3>Registros de inocuidad (${sem.length})</h3>
+  ${sem.length?`<table><thead><tr><th>Fecha</th><th>Hora</th><th>Registro</th><th>Responsable</th><th>Lote/Área</th><th>Temp.</th><th>Observaciones</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>Sin registros esta semana.</p>'}
+  ${lotesActivos.length?`<h3>Lotes de producción activos (${lotesActivos.length})</h3><table><thead><tr><th>Lote</th><th>Variedad</th><th>Charolas Plan.</th><th>Charolas Conf.</th><th>Cosecha Est.</th><th>F. Siembra</th><th>F. Cosecha</th><th>Estado</th></tr></thead><tbody>${lotesRows}</tbody></table>`:''}
+  <div class="foot">City Roots Farm · Sinaloa #811 B, Nuevo Repueblo, Monterrey, N.L. · Manual Integrado de Inocuidad v1.0 · FSMA 21 CFR Part 117</div>
+  <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+function dl(content,type,filename){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);}
+function confirmClear(){if(confirm('¿Seguro? Los datos en Google Sheets NO se eliminan.')){setRecs([]);setLotes([]);toast('Registros locales eliminados');render(page);}}
+
+function abrirManual(){
+  window.open('https://docs.google.com/document/d/1hnbkpkwb32KEbaOiyKwFqtuKtlZRxRnT/edit','_blank');
+}
+function abrirManualInfo(){
+  const body=document.getElementById('modal-body');
+  const partes=[
+    ['I','Food Safety Plan (FSP) — FSMA 21 CFR Part 117'],
+    ['II','Manual de Buenas Prácticas de Manufactura (BPM)'],
+    ['III','Procedimientos POES-01 al POES-12'],
+    ['IV','Manual HACCP — Puntos Críticos de Control'],
+    ['V','Procedimiento de Retiro de Producto (Recall)'],
+    ['VI','Manejo de Producto No Conforme'],
+    ['VII','Matriz de Riesgos de Inocuidad'],
+  ];
+  const partesHTML=partes.map(function(p){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border)">'
+      +'<div style="width:26px;height:26px;border-radius:6px;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+p[0]+'</div>'
+      +'<div style="font-size:13px;color:var(--text)">'+p[1]+'</div>'
+      +'</div>';
+  }).join('');
+  body.innerHTML=
+    '<div class="modal-handle"></div>'
+    +'<div class="modal-title">&#x1F4D8; Manual Integrado de Inocuidad</div>'
+    +'<div class="modal-sub">City Roots Farm &middot; v1.0 &middot; Marzo 2026</div>'
+    +'<div style="background:var(--bg2);border-radius:var(--radius);padding:14px;margin-bottom:12px">'
+    +'<div style="font-size:13px;color:var(--text2);line-height:1.8">El manual completo est&aacute; guardado como archivo Word (.docx) en tu computadora:<br>'
+    +'<span style="font-family:monospace;font-size:12px;color:var(--green);font-weight:600">ManualIntegrado_Inocuidad_CityRootsFarm.docx</span></div></div>'
+    +'<div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Contenido del manual</div>'
+    +partesHTML
+    +'<div style="background:var(--info-bg);border-radius:var(--radius);padding:11px 13px;margin-top:12px;font-size:12px;color:var(--info);line-height:1.5">'
+    +'&#x1F4A1; Para consultarlo en el celular, s&uacute;belo a Google Drive y ab&iacute;relo desde ah&iacute;.</div>'
+    +'<div class="btn-row" style="margin-top:14px">'
+    +'<button class="btn btn-secondary" onclick="closeModal()">Cerrar</button></div>';
+  document.getElementById('modal-ov').style.display='flex';
+}
+function editarLote(id){
+  const l=getLotes().find(x=>x.id===id);if(!l)return;
+  const body=document.getElementById('modal-body');
+  const varIcon={'Chícharo':'🫛','Chícharo CT (fresco)':'🫛','Chícharo CT (vivo)':'🫛','Betabel':'🟣','Rábano':'🔴','Cilantro':'🌿','Girasol':'🌻','Spicy Mix':'🌶️'}[l.variedad]||'🌱';
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">${varIcon} Editar lote</div>
+    <div class="modal-sub" style="font-family:monospace">${l.lote} · ${l.variedad}</div>
+    <div class="field">
+      <label>Charolas planificadas</label>
+      <input id="el-charolas" type="number" value="${l.charolas_planificadas||''}">
+      <div class="field-hint">Total semilla: <span id="el-total-sem">${l.total_semilla||0}g</span> · Cosecha est.: <span id="el-cos-est-total">${l.cosecha_estimada||0}g</span></div>
+    </div>
+    <div class="field">
+      <label>Comentarios</label>
+      <textarea id="el-comentarios">${l.comentarios||''}</textarea>
+    </div>
+    <div style="background:var(--warn-bg);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--warn);margin-bottom:4px">
+      ⚠️ Solo puedes editar mientras el lote no haya sido confirmado como sembrado.
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEdicionLote('${l.id}')">Guardar cambios</button>
+    </div>`;
+  // Recalcular en tiempo real
+  document.getElementById('el-charolas').addEventListener('input', function(){
+    const ch=parseFloat(this.value)||0;
+    const ts=document.getElementById('el-total-sem');
+    const ce=document.getElementById('el-cos-est-total');
+    if(ts)ts.textContent=(ch*(l.gr_semilla||0))+'g';
+    if(ce)ce.textContent=(ch*(l.cosecha_est_charola||0))+'g';
+  });
+  document.getElementById('modal-ov').style.display='flex';
+}
+
+async function guardarEdicionLote(id){
+  const ch=parseFloat(document.getElementById('el-charolas')?.value);
+  const comentarios=document.getElementById('el-comentarios')?.value||'';
+  if(!ch||ch<=0){toast('Ingresa una cantidad válida de charolas');return;}
+  const lotes=getLotes();
+  const idx=lotes.findIndex(l=>l.id===id);if(idx<0)return;
+  // Actualizar campos
+  const gr=lotes[idx].gr_semilla||0;
+  const est=lotes[idx].cosecha_est_charola||0;
+  lotes[idx].charolas_planificadas=ch;
+  lotes[idx].total_semilla=ch*gr;
+  lotes[idx].cosecha_estimada=ch*est;
+  lotes[idx].comentarios=comentarios;
+  lotes[idx].fecha_edicion=new Date().toISOString();
+  setLotes(lotes);
+  await pushToSheet({id:lotes[idx].id,tipo:'lotes_produccion',fecha:new Date().toISOString(),datos:{...lotes[idx],accion:'edicion'}});
+  closeModal();
+  toast('Lote actualizado ✓');
+  goTo('produccion');
+}
+function closeModal(){document.getElementById('modal-ov').style.display='none';}
+function closeOut(e){if(e.target===document.getElementById('modal-ov'))closeModal();}
+let toastTimer;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);}
+
+// ══ INIT ══════════════════════════════════════════════════════════════════════
+const _url=getURL();if(_url){setSyncUI('ok');}
+render('inicio');
+</script>
+</body>
+</html>
