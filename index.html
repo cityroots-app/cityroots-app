@@ -260,12 +260,17 @@ const setLotes= v  => LS.set(SK.lotes,v);
 const todayKey = () => new Date().toISOString().split('T')[0];
 const nowTime  = () => new Date().toTimeString().slice(0,5);
 const fmtDate  = iso => new Date(iso).toLocaleDateString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-const fmtDateShort = iso => new Date(iso).toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+const fmtDateShort = iso => {
+  if(!iso) return '';
+  const dp = iso.split('T')[0];
+  const [y,m,d] = dp.split('-').map(Number);
+  return new Date(y,m-1,d).toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+};
 function getWeek(){const d=new Date(),s=new Date(d.getFullYear(),0,1);return Math.ceil(((d-s)/86400000+s.getDay()+1)/7);}
 function autoLote(v=''){const y=new Date().getFullYear().toString().slice(2),w=getWeek().toString().padStart(2,'0'),c=(v||'GEN').substring(0,3).toUpperCase();return `CRF-${y}${w}-${c}`;}
 function isToday(dateStr){return dateStr&&dateStr.split('T')[0]===todayKey();}
-function isPast(dateStr){return dateStr&&dateStr.split('T')[0]<todayKey();}
-function isFuture(dateStr){return dateStr&&dateStr.split('T')[0]>todayKey();}
+function isPast(dateStr){if(!dateStr)return false; const d=dateStr.split('T')[0]; return d<todayKey();}
+function isFuture(dateStr){if(!dateStr)return false; const d=dateStr.split('T')[0]; return d>todayKey();}
 
 // ══ SYNC ═══════════════════════════════════════════════════════════════════════
 function setSyncUI(s){
@@ -582,12 +587,12 @@ async function guardarNuevoLote(){
     tipo: document.getElementById('nl-tipo')?.value||'Fresco',
     charolas_planificadas: ch,
     dia_siembra: document.getElementById('nl-dia-siembra')?.value||'',
-    fecha_siembra: fs+'T00:00:00.000Z',
+    fecha_siembra: fs,
     gr_semilla: gr,
     total_semilla: ch*gr,
     dias_cultivo: dias,
     dia_cosecha: document.getElementById('nl-dia-cosecha')?.value||'',
-    fecha_cosecha: (document.getElementById('nl-fecha-cosecha')?.value||'')?document.getElementById('nl-fecha-cosecha').value+'T00:00:00.000Z':'',
+    fecha_cosecha: document.getElementById('nl-fecha-cosecha')?.value||'',
     cosecha_est_charola: est,
     cosecha_estimada: ch*est,
     comentarios: document.getElementById('nl-comentarios')?.value||'',
@@ -599,8 +604,7 @@ async function guardarNuevoLote(){
   };
 
   const lotes=getLotes();lotes.unshift(nuevoLote);setLotes(lotes);
-  const synced=await pushToSheet({id:nuevoLote.id,tipo:'lotes_produccion',fecha:nuevoLote.fecha_registro,datos:nuevoLote},'lotes_produccion');
-  if(!synced){const p=getPend();p.push({id:nuevoLote.id,tipo:'lotes_produccion',fecha:nuevoLote.fecha_registro,datos:nuevoLote});setPend(p);}
+  await pushToSheet({id:nuevoLote.id,tipo:'lotes_produccion',fecha:nuevoLote.fecha_registro,datos:nuevoLote},'lotes_produccion');
   closeModal();
   toast('Lote registrado ✓');
   goTo('produccion');
@@ -653,10 +657,7 @@ async function guardarSiembra(id){
   setLotes(lotes);
   const rec={id:Date.now().toString(),tipo:'siembra_confirmada',fecha:new Date().toISOString(),datos:{lote:lotes[idx].lote,variedad:lotes[idx].variedad,charolas_confirmadas:charolas,responsable:resp,observaciones:lotes[idx].obs_siembra}};
   const recs=getRecs();recs.unshift(rec);setRecs(recs);
-  const synced=await pushToSheet(rec,'siembra_confirmada');
-  if(!synced){const p=getPend();p.push(rec);setPend(p);}
-  // Actualizar lote en sheets
-  await pushToSheet({id:lotes[idx].id,tipo:'lotes_produccion',fecha:new Date().toISOString(),datos:lotes[idx]},'lotes_produccion');
+  await pushToSheet(rec,'siembra_confirmada');
   closeModal();
   toast('Siembra confirmada ✓');
   goTo('produccion');
@@ -728,9 +729,7 @@ async function guardarCosecha(id){
   // Guardar como registro de cosecha semanal
   const rec={id:Date.now().toString(),tipo:'cosecha',fecha:new Date().toISOString(),datos:{variedad:lotes[idx].variedad,lote:lotes[idx].lote,charolas:charolas,gramos_real:gramos,promedio:lotes[idx].promedio_cosecha,contenedores_50g:lotes[idx].contenedores_50g,responsable:resp,comentarios:lotes[idx].comentarios_cosecha}};
   const recs=getRecs();recs.unshift(rec);setRecs(recs);
-  const synced=await pushToSheet(rec,'cosecha_semanal');
-  if(!synced){const p=getPend();p.push(rec);setPend(p);}
-  await pushToSheet({id:lotes[idx].id,tipo:'lotes_produccion',fecha:new Date().toISOString(),datos:lotes[idx]},'lotes_produccion');
+  await pushToSheet(rec,'cosecha_semanal');
   closeModal();
   toast(`Cosecha registrada: ${gr}g ✓`);
   goTo('produccion');
@@ -772,6 +771,7 @@ function verDetalle(id){
     <div class="btn-row">
       ${!l.sembrado_confirmado?`<button class="btn btn-amber" onclick="closeModal();confirmarSiembra('${l.id}')">🌾 Confirmar siembra</button>`:''}
       ${l.sembrado_confirmado&&!l.cosecha_real?`<button class="btn btn-primary" style="background:var(--info)" onclick="closeModal();registrarCosecha('${l.id}')">✂️ Registrar cosecha</button>`:''}
+      <button class="btn btn-secondary" onclick="closeModal();editarLote('${l.id}')">✏️ Editar</button>
       <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
     </div>`;
   document.getElementById('modal-ov').style.display='flex';
@@ -866,7 +866,9 @@ function doGet(){
       <div class="stat"><div class="stat-n n-info">${sem}</div><div class="stat-l">Semana</div></div>
       <div class="stat"><div class="stat-n n-amber">${lotes.length}</div><div class="stat-l">Lotes</div></div>
     </div>
-    <div class="sec">Exportar para certificador</div>
+    <div class="sec">Manual de Inocuidad</div>
+    <div class="exp-card" onclick="abrirManual()"><div class="exp-icon" style="background:#E8F5E9">📘</div><div><div class="exp-title">Manual Integrado de Inocuidad</div><div class="exp-sub">BPM · POES · HACCP · Food Safety Plan v1.0</div></div></div>
+    <div class="sec" style="margin-top:4px">Exportar para certificador</div>
     <div class="exp-card" onclick="exportCSV()"><div class="exp-icon" style="background:var(--ok-bg)">📊</div><div><div class="exp-title">Exportar registros a Excel</div><div class="exp-sub">Todos los registros de inocuidad · ${recs.length} entradas</div></div></div>
     <div class="exp-card" onclick="exportLotesCSV()"><div class="exp-icon" style="background:var(--amber-bg)">🌱</div><div><div class="exp-title">Exportar bitácora de producción</div><div class="exp-sub">Todos los lotes de siembra y cosecha · ${lotes.length} lotes</div></div></div>
     <div class="exp-card" onclick="exportPDF()"><div class="exp-icon" style="background:var(--info-bg)">📄</div><div><div class="exp-title">Reporte PDF semanal</div><div class="exp-sub">Listo para imprimir y entregar al certificador</div></div></div>
@@ -912,10 +914,9 @@ async function submitForm(id){
   if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span>';}
   const record={id:Date.now().toString(),tipo:id,fecha:new Date().toISOString(),datos};
   const recs=getRecs();recs.unshift(record);setRecs(recs);
-  const synced=await pushToSheet(record);
-  if(!synced){const p=getPend();p.push(record);setPend(p);}
+  await pushToSheet(record);
   closeModal();
-  toast(synced?'✓ Guardado y enviado a Sheets':'Guardado — se sincronizará con conexión');
+  toast('✓ Guardado' + (getURL()?' y enviado a Sheets':''));
   render(page);
 }
 
@@ -969,13 +970,101 @@ function exportPDF(){
 }
 function dl(content,type,filename){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);}
 function confirmClear(){if(confirm('¿Seguro? Los datos en Google Sheets NO se eliminan.')){setRecs([]);setLotes([]);toast('Registros locales eliminados');render(page);}}
+
+function abrirManual(){
+  const body=document.getElementById('modal-body');
+  const partes=[
+    ['I','Food Safety Plan (FSP) — FSMA 21 CFR Part 117'],
+    ['II','Manual de Buenas Prácticas de Manufactura (BPM)'],
+    ['III','Procedimientos POES-01 al POES-12'],
+    ['IV','Manual HACCP — Puntos Críticos de Control'],
+    ['V','Procedimiento de Retiro de Producto (Recall)'],
+    ['VI','Manejo de Producto No Conforme'],
+    ['VII','Matriz de Riesgos de Inocuidad'],
+  ];
+  const partesHTML=partes.map(function(p){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border)">'
+      +'<div style="width:26px;height:26px;border-radius:6px;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+p[0]+'</div>'
+      +'<div style="font-size:13px;color:var(--text)">'+p[1]+'</div>'
+      +'</div>';
+  }).join('');
+  body.innerHTML=
+    '<div class="modal-handle"></div>'
+    +'<div class="modal-title">&#x1F4D8; Manual Integrado de Inocuidad</div>'
+    +'<div class="modal-sub">City Roots Farm &middot; v1.0 &middot; Marzo 2026</div>'
+    +'<div style="background:var(--bg2);border-radius:var(--radius);padding:14px;margin-bottom:12px">'
+    +'<div style="font-size:13px;color:var(--text2);line-height:1.8">El manual completo est&aacute; guardado como archivo Word (.docx) en tu computadora:<br>'
+    +'<span style="font-family:monospace;font-size:12px;color:var(--green);font-weight:600">ManualIntegrado_Inocuidad_CityRootsFarm.docx</span></div></div>'
+    +'<div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Contenido del manual</div>'
+    +partesHTML
+    +'<div style="background:var(--info-bg);border-radius:var(--radius);padding:11px 13px;margin-top:12px;font-size:12px;color:var(--info);line-height:1.5">'
+    +'&#x1F4A1; Para consultarlo en el celular, s&uacute;belo a Google Drive y ab&iacute;relo desde ah&iacute;.</div>'
+    +'<div class="btn-row" style="margin-top:14px">'
+    +'<button class="btn btn-secondary" onclick="closeModal()">Cerrar</button></div>';
+  document.getElementById('modal-ov').style.display='flex';
+}
+function editarLote(id){
+  const l=getLotes().find(x=>x.id===id);if(!l)return;
+  const body=document.getElementById('modal-body');
+  const varIcon={'Chícharo':'🫛','Chícharo CT (fresco)':'🫛','Chícharo CT (vivo)':'🫛','Betabel':'🟣','Rábano':'🔴','Cilantro':'🌿','Girasol':'🌻','Spicy Mix':'🌶️'}[l.variedad]||'🌱';
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">${varIcon} Editar lote</div>
+    <div class="modal-sub" style="font-family:monospace">${l.lote} · ${l.variedad}</div>
+    <div class="field">
+      <label>Charolas planificadas</label>
+      <input id="el-charolas" type="number" value="${l.charolas_planificadas||''}">
+      <div class="field-hint">Total semilla: <span id="el-total-sem">${l.total_semilla||0}g</span> · Cosecha est.: <span id="el-cos-est-total">${l.cosecha_estimada||0}g</span></div>
+    </div>
+    <div class="field">
+      <label>Comentarios</label>
+      <textarea id="el-comentarios">${l.comentarios||''}</textarea>
+    </div>
+    <div style="background:var(--warn-bg);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--warn);margin-bottom:4px">
+      ⚠️ Solo puedes editar mientras el lote no haya sido confirmado como sembrado.
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEdicionLote('${l.id}')">Guardar cambios</button>
+    </div>`;
+  // Recalcular en tiempo real
+  document.getElementById('el-charolas').addEventListener('input', function(){
+    const ch=parseFloat(this.value)||0;
+    const ts=document.getElementById('el-total-sem');
+    const ce=document.getElementById('el-cos-est-total');
+    if(ts)ts.textContent=(ch*(l.gr_semilla||0))+'g';
+    if(ce)ce.textContent=(ch*(l.cosecha_est_charola||0))+'g';
+  });
+  document.getElementById('modal-ov').style.display='flex';
+}
+
+async function guardarEdicionLote(id){
+  const ch=parseFloat(document.getElementById('el-charolas')?.value);
+  const comentarios=document.getElementById('el-comentarios')?.value||'';
+  if(!ch||ch<=0){toast('Ingresa una cantidad válida de charolas');return;}
+  const lotes=getLotes();
+  const idx=lotes.findIndex(l=>l.id===id);if(idx<0)return;
+  // Actualizar campos
+  const gr=lotes[idx].gr_semilla||0;
+  const est=lotes[idx].cosecha_est_charola||0;
+  lotes[idx].charolas_planificadas=ch;
+  lotes[idx].total_semilla=ch*gr;
+  lotes[idx].cosecha_estimada=ch*est;
+  lotes[idx].comentarios=comentarios;
+  lotes[idx].fecha_edicion=new Date().toISOString();
+  setLotes(lotes);
+  await pushToSheet({id:lotes[idx].id,tipo:'lotes_produccion',fecha:new Date().toISOString(),datos:{...lotes[idx],accion:'edicion'}});
+  closeModal();
+  toast('Lote actualizado ✓');
+  goTo('produccion');
+}
 function closeModal(){document.getElementById('modal-ov').style.display='none';}
 function closeOut(e){if(e.target===document.getElementById('modal-ov'))closeModal();}
 let toastTimer;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);}
 
 // ══ INIT ══════════════════════════════════════════════════════════════════════
-const _url=getURL();if(_url){setSyncUI('ok');setTimeout(flushPending,600);}
+const _url=getURL();if(_url){setSyncUI('ok');}
 render('inicio');
 </script>
 </body>
