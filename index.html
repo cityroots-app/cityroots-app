@@ -246,6 +246,18 @@ const REGS = [
   ]}
 ];
 
+
+// ══ DATOS FIJOS POR VARIEDAD ══════════════════════════════════════════════════
+const VARIEDAD_DEFAULTS = {
+  'Chícharo':            {gr_semilla:120, dia_cosecha:'Lunes', cosecha_est_charola:200, dias_cultivo:20},
+  'Chícharo CT (fresco)':{gr_semilla:170, dia_cosecha:'Lunes', cosecha_est_charola:200, dias_cultivo:13},
+  'Chícharo CT (vivo)':  {gr_semilla:25,  dia_cosecha:'Lunes', cosecha_est_charola:null,dias_cultivo:11},
+  'Betabel':             {gr_semilla:25,  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:13},
+  'Rábano':              {gr_semilla:25,  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:11},
+  'Girasol':             {gr_semilla:100, dia_cosecha:'Lunes', cosecha_est_charola:300, dias_cultivo:10},
+  'Cilantro':            {gr_semilla:25,  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:17},
+  'Spicy Mix':           {gr_semilla:13,  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:11},
+};
 // ══ STORAGE ═══════════════════════════════════════════════════════════════════
 const SK = {url:'crf_sheet_url',rec:'crf_records_v2',pend:'crf_pending_v2',lotes:'crf_lotes_v2'};
 const LS = {
@@ -522,11 +534,11 @@ function openNuevoLote(){
     <div class="field"><label>Fecha de siembra <span style="color:var(--danger)">*</span></label>
       <input id="nl-fecha-siembra" type="date" value="${today}"></div>
     <div class="field"><label>Gramos de semilla por charola <span style="color:var(--danger)">*</span></label>
-      <input id="nl-gr-semilla" type="number" placeholder="Ej. 120" oninput="calcNL()"></div>
+      <input id="nl-gr-semilla" type="number" placeholder="Auto según variedad" oninput="calcNL()"></div>
     <div class="field"><label>Total semilla (g)</label>
       <div class="field-val" id="nl-total-semilla">—</div></div>
     <div class="field"><label>Días de cultivo</label>
-      <input id="nl-dias" type="number" placeholder="Ej. 10" oninput="calcFechaCosecha()"></div>
+      <input id="nl-dias" type="number" placeholder="Auto según variedad" oninput="calcFechaCosecha()"></div>
     <div class="field"><label>Día de cosecha</label>
       <select id="nl-dia-cosecha">
         <option value="">Seleccionar...</option>
@@ -535,7 +547,7 @@ function openNuevoLote(){
     <div class="field"><label>Fecha de cosecha</label>
       <input id="nl-fecha-cosecha" type="date"></div>
     <div class="field"><label>Cosecha estimada por charola (g)</label>
-      <input id="nl-cos-est" type="number" placeholder="Ej. 200" oninput="calcNL()"></div>
+      <input id="nl-cos-est" type="number" placeholder="Auto según variedad" oninput="calcNL()"></div>
     <div class="field"><label>Cosecha estimada total (g)</label>
       <div class="field-val" id="nl-cos-total">—</div></div>
     <div class="field"><label>Comentarios</label>
@@ -551,6 +563,18 @@ function updateNLLote(){
   const v=document.getElementById('nl-variedad')?.value||'';
   const loteEl=document.getElementById('nl-lote');
   if(loteEl&&v)loteEl.value=autoLote(v);
+  const def=VARIEDAD_DEFAULTS[v];
+  if(!def)return;
+  const grEl=document.getElementById('nl-gr-semilla');
+  const diasEl=document.getElementById('nl-dias');
+  const cosEstEl=document.getElementById('nl-cos-est');
+  const diaCosEl=document.getElementById('nl-dia-cosecha');
+  if(grEl){grEl.value=def.gr_semilla;grEl.style.background='var(--lgreen)';}
+  if(diasEl){diasEl.value=def.dias_cultivo;diasEl.style.background='var(--lgreen)';}
+  if(cosEstEl&&def.cosecha_est_charola){cosEstEl.value=def.cosecha_est_charola;cosEstEl.style.background='var(--lgreen)';}
+  if(diaCosEl)diaCosEl.value=def.dia_cosecha;
+  calcNL();
+  calcFechaCosecha();
 }
 function calcNL(){
   const ch=parseFloat(document.getElementById('nl-charolas')?.value)||0;
