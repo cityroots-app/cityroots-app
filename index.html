@@ -291,8 +291,10 @@ async function pushToSheet(record,sheetName){
   setSyncUI('ing');
   try{
     const flat={id:record.id,fecha:record.fecha,tipo:record.tipo||sheetName,codigo:REGS.find(r=>r.id===record.tipo)?.code||sheetName||'PROD',...record.datos};
-    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'append',data:flat})});
-    setSyncUI('ok');return true;
+    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'append',data:flat})});
+    const json=await res.json();
+    if(json.ok){setSyncUI('ok');return true;}
+    setSyncUI('off');return false;
   }catch(e){setSyncUI('off');return false;}
 }
 async function flushPending(){
@@ -609,7 +611,8 @@ async function guardarNuevoLote(){
   };
 
   const lotes=getLotes();lotes.unshift(nuevoLote);setLotes(lotes);
-  await pushToSheet({id:nuevoLote.id,tipo:'lotes_produccion',fecha:nuevoLote.fecha_registro,datos:nuevoLote},'lotes_produccion');
+  const syncedL=await pushToSheet({id:nuevoLote.id,tipo:'lotes_produccion',fecha:nuevoLote.fecha_registro,datos:nuevoLote},'lotes_produccion');
+  if(!syncedL&&getURL()){const p=getPend();p.push({id:nuevoLote.id,tipo:'lotes_produccion',fecha:nuevoLote.fecha_registro,datos:nuevoLote});setPend(p);updatePendBadge();}
   closeModal();
   toast('Lote registrado ✓');
   goTo('produccion');
@@ -662,7 +665,8 @@ async function guardarSiembra(id){
   setLotes(lotes);
   const rec={id:Date.now().toString(),tipo:'siembra_confirmada',fecha:new Date().toISOString(),datos:{lote:lotes[idx].lote,variedad:lotes[idx].variedad,charolas_confirmadas:charolas,responsable:resp,observaciones:lotes[idx].obs_siembra}};
   const recs=getRecs();recs.unshift(rec);setRecs(recs);
-  await pushToSheet(rec,'siembra_confirmada');
+  const syncedS=await pushToSheet(rec,'siembra_confirmada');
+  if(!syncedS&&getURL()){const p=getPend();p.push(rec);setPend(p);updatePendBadge();}
   closeModal();
   toast('Siembra confirmada ✓');
   goTo('produccion');
@@ -734,7 +738,8 @@ async function guardarCosecha(id){
   // Guardar como registro de cosecha semanal
   const rec={id:Date.now().toString(),tipo:'cosecha',fecha:new Date().toISOString(),datos:{variedad:lotes[idx].variedad,lote:lotes[idx].lote,charolas:charolas,gramos_real:gramos,promedio:lotes[idx].promedio_cosecha,contenedores_50g:lotes[idx].contenedores_50g,responsable:resp,comentarios:lotes[idx].comentarios_cosecha}};
   const recs=getRecs();recs.unshift(rec);setRecs(recs);
-  await pushToSheet(rec,'cosecha_semanal');
+  const syncedC=await pushToSheet(rec,'cosecha_semanal');
+  if(!syncedC&&getURL()){const p=getPend();p.push(rec);setPend(p);updatePendBadge();}
   closeModal();
   toast(`Cosecha registrada: ${gr}g ✓`);
   goTo('produccion');
@@ -919,9 +924,10 @@ async function submitForm(id){
   if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span>';}
   const record={id:Date.now().toString(),tipo:id,fecha:new Date().toISOString(),datos};
   const recs=getRecs();recs.unshift(record);setRecs(recs);
-  await pushToSheet(record);
+  const synced=await pushToSheet(record);
+  if(!synced&&getURL()){const p=getPend();p.push(record);setPend(p);updatePendBadge();}
   closeModal();
-  toast('✓ Guardado' + (getURL()?' y enviado a Sheets':''));
+  toast(synced?'✓ Guardado y enviado a Sheets':'✓ Guardado localmente');
   render(page);
 }
 
@@ -935,7 +941,7 @@ function saveURL(){
 async function testConn(){
   const url=getURL();if(!url){toast('Primero guarda la URL');return;}
   setSyncUI('ing');
-  try{await fetch(url,{mode:'no-cors'});setSyncUI('ok');toast('Conexión con Sheets: OK ✓');}
+  try{const r=await fetch(url);const j=await r.json();if(j.ok){setSyncUI('ok');toast('Conexión con Sheets: OK ✓');}else{setSyncUI('off');toast('Error en el script');}}
   catch(e){setSyncUI('off');toast('Sin conexión a internet');}
 }
 function copyScript(){
