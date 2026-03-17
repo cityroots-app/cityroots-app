@@ -972,6 +972,9 @@ function dl(content,type,filename){const a=document.createElement('a');a.href=UR
 function confirmClear(){if(confirm('¿Seguro? Los datos en Google Sheets NO se eliminan.')){setRecs([]);setLotes([]);toast('Registros locales eliminados');render(page);}}
 
 function abrirManual(){
+  window.open('https://docs.google.com/document/d/1hnbkpkwb32KEbaOiyKwFqtuKtlZRxRnT/edit','_blank');
+}
+function abrirManualInfo(){
   const body=document.getElementById('modal-body');
   const partes=[
     ['I','Food Safety Plan (FSP) — FSMA 21 CFR Part 117'],
