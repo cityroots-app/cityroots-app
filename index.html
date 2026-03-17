@@ -232,6 +232,11 @@ const REGS = [
     {id:'accion',label:'Acción tomada',type:'select',req:true,opts:['Descartado a composta','Segregado — en evaluación','Reprocesado','Retiro de producto activado']},
     {id:'comentarios',label:'Descripción',type:'textarea',ph:'Detalles del problema...'}
   ]},
+  {id:'inventario',icon:'📦',name:'Inventario semanal',code:'INV-SEM',freq:'Por evento',fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT (fresco)','Chícharo CT (vivo)','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
+    {id:'lote',label:'Lote',type:'text',req:true,ph:'Ej. CRF-2612-CHI'},
+    {id:'cantidad',label:'Cantidad en gramos',type:'number',req:true,ph:'Ej. 500'}
+  ]},
   {id:'transporte',icon:'🚗',name:'Transporte',code:'POES-11/12',freq:'Por entrega',fields:[
     {id:'tipo',label:'Tipo de registro',type:'select',req:true,opts:['Limpieza del vehículo (POES-11)','Temperatura de transporte (POES-12)','Ambos']},
     {id:'temp',label:'Temperatura del compartimento (°C)',type:'number',req:true,ph:'Ej. 4.0'},
