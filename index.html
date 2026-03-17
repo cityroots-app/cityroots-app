@@ -542,7 +542,7 @@ function openNuevoLote(){
       <textarea id="nl-comentarios" placeholder="Observaciones del lote..."></textarea></div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarNuevoLote()">Guardar lote</button>
+      <button class="btn btn-primary" id="nl-save-btn" onclick="this.disabled=true;this.textContent='Guardando...';guardarNuevoLote()">Guardar lote</button>
     </div>`;
   document.getElementById('modal-ov').style.display='flex';
 }
@@ -571,7 +571,10 @@ function calcFechaCosecha(){
   }
 }
 
+let _savingLote=false;
 async function guardarNuevoLote(){
+  if(_savingLote)return;
+  _savingLote=true;
   const v=document.getElementById('nl-variedad')?.value;
   const lote=document.getElementById('nl-lote')?.value;
   const charolas=document.getElementById('nl-charolas')?.value;
@@ -613,6 +616,7 @@ async function guardarNuevoLote(){
   const lotes=getLotes();lotes.unshift(nuevoLote);setLotes(lotes);
   const syncedL=await pushToSheet({id:nuevoLote.id,tipo:'lotes_produccion',fecha:nuevoLote.fecha_registro,datos:nuevoLote},'lotes_produccion');
   if(!syncedL&&getURL()){const p=getPend();p.push({id:nuevoLote.id,tipo:'lotes_produccion',fecha:nuevoLote.fecha_registro,datos:nuevoLote});setPend(p);updatePendBadge();}
+  _savingLote=false;
   closeModal();
   toast('Lote registrado ✓');
   goTo('produccion');
@@ -651,7 +655,10 @@ function confirmarSiembra(id){
   document.getElementById('modal-ov').style.display='flex';
 }
 
+let _savingSiembra=false;
 async function guardarSiembra(id){
+  if(_savingSiembra)return;
+  _savingSiembra=true;
   const charolas=document.getElementById('cs-charolas')?.value;
   const resp=document.getElementById('cs-responsable')?.value;
   if(!charolas||!resp){toast('Completa todos los campos');return;}
@@ -667,6 +674,7 @@ async function guardarSiembra(id){
   const recs=getRecs();recs.unshift(rec);setRecs(recs);
   const syncedS=await pushToSheet(rec,'siembra_confirmada');
   if(!syncedS&&getURL()){const p=getPend();p.push(rec);setPend(p);updatePendBadge();}
+  _savingSiembra=false;
   closeModal();
   toast('Siembra confirmada ✓');
   goTo('produccion');
@@ -719,7 +727,10 @@ function calcPromedio(){
   if(cont)cont.textContent=gr?`${Math.round(gr/50)} contenedores de 50g`:'—';
 }
 
+let _savingCosecha=false;
 async function guardarCosecha(id){
+  if(_savingCosecha)return;
+  _savingCosecha=true;
   const charolas=document.getElementById('rc-charolas')?.value;
   const gramos=document.getElementById('rc-gramos')?.value;
   const resp=document.getElementById('rc-responsable')?.value;
@@ -740,8 +751,9 @@ async function guardarCosecha(id){
   const recs=getRecs();recs.unshift(rec);setRecs(recs);
   const syncedC=await pushToSheet(rec,'cosecha_semanal');
   if(!syncedC&&getURL()){const p=getPend();p.push(rec);setPend(p);updatePendBadge();}
+  _savingCosecha=false;
   closeModal();
-  toast(`Cosecha registrada: ${gr}g ✓`);
+  toast('Cosecha registrada: '+gr+'g ✓');
   goTo('produccion');
 }
 
@@ -911,7 +923,10 @@ function openForm(id){
   document.getElementById('modal-ov').style.display='flex';
 }
 
+let _savingForm=false;
 async function submitForm(id){
+  if(_savingForm)return;
+  _savingForm=true;
   const reg=REGS.find(r=>r.id===id);
   const datos={};let missing=[];
   reg.fields.forEach(f=>{
@@ -926,6 +941,7 @@ async function submitForm(id){
   const recs=getRecs();recs.unshift(record);setRecs(recs);
   const synced=await pushToSheet(record);
   if(!synced&&getURL()){const p=getPend();p.push(record);setPend(p);updatePendBadge();}
+  _savingForm=false;
   closeModal();
   toast(synced?'✓ Guardado y enviado a Sheets':'✓ Guardado localmente');
   render(page);
