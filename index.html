@@ -309,6 +309,44 @@ async function pushToSheet(record,sheetName){
     setSyncUI('off');return false;
   }catch(e){setSyncUI('off');return false;}
 }
+
+async function fetchLotesFromSheet(){
+  const url=getURL();if(!url)return [];
+  try{
+    const res=await fetch(url+'?action=getLotes');
+    const json=await res.json();
+    if(json.ok&&json.lotes)return json.lotes;
+    return [];
+  }catch(e){return [];}
+}
+
+async function syncLotesFromSheet(){
+  const remoteLotes=await fetchLotesFromSheet();
+  if(!remoteLotes.length)return;
+  const localLotes=getLotes();
+  const localIds=new Set(localLotes.map(l=>l.id));
+  // Merge: add remote lotes that don't exist locally
+  const merged=[...localLotes];
+  let added=0;
+  remoteLotes.forEach(r=>{
+    if(!localIds.has(r.id)){merged.push(r);added++;}
+    else{
+      // Update local with remote data (remote is source of truth for confirmations)
+      const idx=merged.findIndex(l=>l.id===r.id);
+      if(idx>=0){
+        // Only update confirmation fields from remote, preserve local edits
+        if(r.sembrado_confirmado)merged[idx].sembrado_confirmado=r.sembrado_confirmado;
+        if(r.charolas_confirmadas)merged[idx].charolas_confirmadas=r.charolas_confirmadas;
+        if(r.cosecha_real)merged[idx].cosecha_real=r.cosecha_real;
+        if(r.charolas_cosechadas)merged[idx].charolas_cosechadas=r.charolas_cosechadas;
+        if(r.promedio_cosecha)merged[idx].promedio_cosecha=r.promedio_cosecha;
+      }
+    }
+  });
+  setLotes(merged);
+  if(added>0){toast(added+' lote'+( added>1?'s':'')+' descargado'+( added>1?'s':'')+' de Sheets ✓');render(page);}
+  setSyncUI('ok');
+}
 async function flushPending(){
   const url=getURL();if(!url)return;
   const pending=getPend();if(!pending.length)return;
@@ -424,7 +462,10 @@ function renderProduccion(el){
   el.innerHTML=`<div class="pad">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div class="sec" style="margin-bottom:0">Plan de producción</div>
-      <button class="btn btn-primary" style="flex:0;padding:7px 14px;font-size:12px" onclick="openNuevoLote()">+ Nuevo lote</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-secondary" style="flex:0;padding:7px 12px;font-size:12px" onclick="syncLotesFromSheet().then(()=>render('produccion'))">↓ Sincronizar</button>
+        <button class="btn btn-primary" style="flex:0;padding:7px 14px;font-size:12px" onclick="openNuevoLote()">+ Nuevo lote</button>
+      </div>
     </div>
     <div class="chip-row">${filtros.map(f=>`<span class="chip ${prodFilter===f?'active':''}" onclick="setProdFilter('${f}')">${labelsFil[f]}</span>`).join('')}</div>
     ${lotes.length===0?`<div class="empty">Sin lotes registrados.<br>Toca <b>"+ Nuevo lote"</b> para agregar siembras.</div>`:''}
@@ -1120,7 +1161,11 @@ let toastTimer;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);}
 
 // ══ INIT ══════════════════════════════════════════════════════════════════════
-const _url=getURL();if(_url){setSyncUI('ok');}
+const _url=getURL();
+if(_url){
+  setSyncUI('ok');
+  syncLotesFromSheet();
+}
 render('inicio');
 </script>
 </body>
