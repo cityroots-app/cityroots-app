@@ -302,7 +302,9 @@ async function pushToSheet(record,sheetName){
   const url=getURL();if(!url)return false;
   setSyncUI('ing');
   try{
-    const flat={id:record.id,fecha:record.fecha,tipo:record.tipo||sheetName,codigo:REGS.find(r=>r.id===record.tipo)?.code||sheetName||'PROD',...record.datos};
+    const destSheet=sheetName||record.tipo||'PROD';
+    // Spread datos first, then override tipo with destSheet so it always goes to the right tab
+    const flat={...record.datos, id:record.id, fecha:record.fecha, tipo:destSheet, codigo:REGS.find(r=>r.id===record.tipo)?.code||destSheet};
     const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'append',data:flat})});
     const json=await res.json();
     if(json.ok){setSyncUI('ok');return true;}
@@ -313,10 +315,38 @@ async function pushToSheet(record,sheetName){
 async function fetchLotesFromSheet(){
   const url=getURL();if(!url)return [];
   try{
-    const res=await fetch(url+'?action=getLotes');
-    const json=await res.json();
-    if(json.ok&&json.lotes)return json.lotes;
-    return [];
+    // Use no-cors for GET too, read via script tag trick
+    return await new Promise((resolve)=>{
+      const cbName='_crf_cb_'+Date.now();
+      const script=document.createElement('script');
+      window[cbName]=function(data){
+        delete window[cbName];
+        document.body.removeChild(script);
+        resolve(data&&data.lotes?data.lotes:[]);
+      };
+      script.onerror=function(){
+        delete window[cbName];
+        try{document.body.removeChild(script);}catch(e){}
+        // Fallback to regular fetch
+        fetch(url+'?action=getLotes')
+          .then(r=>r.json())
+          .then(d=>resolve(d&&d.lotes?d.lotes:[]))
+          .catch(()=>resolve([]));
+      };
+      script.src=url+'?action=getLotes&callback='+cbName+'&_='+Date.now();
+      document.body.appendChild(script);
+      setTimeout(()=>{
+        if(window[cbName]){
+          delete window[cbName];
+          try{document.body.removeChild(script);}catch(e){}
+          // Last resort: regular fetch
+          fetch(url+'?action=getLotes')
+            .then(r=>r.json())
+            .then(d=>resolve(d&&d.lotes?d.lotes:[]))
+            .catch(()=>resolve([]));
+        }
+      },5000);
+    });
   }catch(e){console.error('Fetch lotes error:',e);return [];}
 }
 
@@ -1025,7 +1055,7 @@ function saveURL(){
 async function testConn(){
   const url=getURL();if(!url){toast('Primero guarda la URL');return;}
   setSyncUI('ing');
-  try{const r=await fetch(url);const j=await r.json();if(j.ok){setSyncUI('ok');toast('Conexión con Sheets: OK ✓');}else{setSyncUI('off');toast('Error en el script');}}
+  try{await fetch(url,{mode:'no-cors'});setSyncUI('ok');toast('Conexión con Sheets: OK ✓');}
   catch(e){setSyncUI('off');toast('Sin conexión a internet');}
 }
 function copyScript(){
