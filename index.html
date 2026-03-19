@@ -351,31 +351,65 @@ async function fetchLotesFromSheet(){
 }
 
 
+function parseLoteFromSheet(r){
+  // Normalize fields from Sheets — convert empty strings and parse numbers
+  const n=v=>v===''||v===null||v===undefined?null:(isNaN(v)?v:parseFloat(v));
+  const b=v=>v===true||v==='TRUE'||v==='true'||v===1||v==='1';
+  return {
+    id:String(r.id||''),
+    lote_semana:r.lote_semana||'',
+    lote:r.lote||'',
+    variedad:r.variedad||'',
+    tipo:r.tipo_variedad||r.tipoVariedad||r.tipo_charola||'Fresco',
+    charolas_planificadas:n(r.charolas_planificadas),
+    dia_siembra:r.dia_siembra||'',
+    fecha_siembra:r.fecha_siembra||'',
+    gr_semilla:n(r.gr_semilla),
+    total_semilla:n(r.total_semilla),
+    dias_cultivo:n(r.dias_cultivo),
+    dia_cosecha:r.dia_cosecha||'',
+    fecha_cosecha:r.fecha_cosecha||'',
+    cosecha_est_charola:n(r.cosecha_est_charola),
+    cosecha_estimada:n(r.cosecha_estimada),
+    comentarios:r.comentarios||'',
+    sembrado_confirmado:b(r.sembrado_confirmado),
+    charolas_confirmadas:n(r.charolas_confirmadas),
+    cosecha_real:n(r.cosecha_real),
+    charolas_cosechadas:n(r.charolas_cosechadas),
+    promedio_cosecha:n(r.promedio_cosecha),
+    contenedores_50g:n(r.contenedores_50g),
+    responsable_siembra:r.responsable_siembra||'',
+    responsable_cosecha:r.responsable_cosecha||'',
+    fecha_registro:r.fecha_registro||r.fecha||''
+  };
+}
+
 async function syncLotesFromSheet(){
   const remoteLotes=await fetchLotesFromSheet();
   if(!remoteLotes.length)return;
   const localLotes=getLotes();
   const localIds=new Set(localLotes.map(l=>l.id));
-  // Merge: add remote lotes that don't exist locally
   const merged=[...localLotes];
   let added=0;
   remoteLotes.forEach(r=>{
-    if(!localIds.has(r.id)){merged.push(r);added++;}
-    else{
-      // Update local with remote data (remote is source of truth for confirmations)
-      const idx=merged.findIndex(l=>l.id===r.id);
+    const parsed=parseLoteFromSheet(r);
+    if(!parsed.id)return;
+    if(!localIds.has(parsed.id)){
+      merged.push(parsed);added++;
+    } else {
+      // Update confirmation fields from remote
+      const idx=merged.findIndex(l=>l.id===parsed.id);
       if(idx>=0){
-        // Only update confirmation fields from remote, preserve local edits
-        if(r.sembrado_confirmado)merged[idx].sembrado_confirmado=r.sembrado_confirmado;
-        if(r.charolas_confirmadas)merged[idx].charolas_confirmadas=r.charolas_confirmadas;
-        if(r.cosecha_real)merged[idx].cosecha_real=r.cosecha_real;
-        if(r.charolas_cosechadas)merged[idx].charolas_cosechadas=r.charolas_cosechadas;
-        if(r.promedio_cosecha)merged[idx].promedio_cosecha=r.promedio_cosecha;
+        if(parsed.sembrado_confirmado)merged[idx].sembrado_confirmado=parsed.sembrado_confirmado;
+        if(parsed.charolas_confirmadas)merged[idx].charolas_confirmadas=parsed.charolas_confirmadas;
+        if(parsed.cosecha_real)merged[idx].cosecha_real=parsed.cosecha_real;
+        if(parsed.charolas_cosechadas)merged[idx].charolas_cosechadas=parsed.charolas_cosechadas;
+        if(parsed.promedio_cosecha)merged[idx].promedio_cosecha=parsed.promedio_cosecha;
       }
     }
   });
   setLotes(merged);
-  if(added>0){toast(added+' lote'+( added>1?'s':'')+' descargado'+( added>1?'s':'')+' de Sheets ✓');render(page);}
+  if(added>0){toast(added+' lote'+(added>1?'s':'')+' descargado'+(added>1?'s':'')+' ✓');render(page);}
   setSyncUI('ok');
 }
 async function flushPending(){
@@ -557,7 +591,7 @@ function siembraCard(l,today){
     <div class="sc-top">
       <span style="font-size:18px">${varIcon}</span>
       <span class="sc-variedad">${l.variedad}</span>
-      <span class="sc-tipo">${l.tipo||'Fresco'}</span>
+      <span class="sc-tipo">${l.tipo_variedad||l.tipo||'Fresco'}</span>
       <span class="sc-status ${statusClass}">${statusTxt}</span>
     </div>
     <div class="sc-grid">
@@ -692,7 +726,7 @@ async function guardarNuevoLote(){
     lote_semana: loteNum,
     lote,
     variedad: v,
-    tipo: document.getElementById('nl-tipo')?.value||'Fresco',
+    tipo_variedad: document.getElementById('nl-tipo')?.value||'Fresco',
     charolas_planificadas: ch,
     dia_siembra: document.getElementById('nl-dia-siembra')?.value||'',
     fecha_siembra: fs,
@@ -722,7 +756,8 @@ async function guardarNuevoLote(){
 
 // ══ CONFIRMAR SIEMBRA ════════════════════════════════════════════════════════
 function confirmarSiembra(id){
-  const lote=getLotes().find(l=>l.id===id);if(!lote)return;
+  const sid=String(id);
+  const lote=getLotes().find(l=>String(l.id)===sid);if(!lote)return;
   const body=document.getElementById('modal-body');
   body.innerHTML=`
     <div class="modal-handle"></div>
@@ -761,7 +796,7 @@ async function guardarSiembra(id){
   const resp=document.getElementById('cs-responsable')?.value;
   if(!charolas||!resp){toast('Completa todos los campos');return;}
   const lotes=getLotes();
-  const idx=lotes.findIndex(l=>l.id===id);if(idx<0)return;
+  const idx=lotes.findIndex(l=>String(l.id)===String(id));if(idx<0)return;
   lotes[idx].sembrado_confirmado=true;
   lotes[idx].charolas_confirmadas=parseFloat(charolas);
   lotes[idx].responsable_siembra=resp;
@@ -780,7 +815,8 @@ async function guardarSiembra(id){
 
 // ══ REGISTRAR COSECHA ═══════════════════════════════════════════════════════
 function registrarCosecha(id){
-  const lote=getLotes().find(l=>l.id===id);if(!lote)return;
+  const sid=String(id);
+  const lote=getLotes().find(l=>String(l.id)===sid);if(!lote)return;
   const body=document.getElementById('modal-body');
   body.innerHTML=`
     <div class="modal-handle"></div>
@@ -834,7 +870,7 @@ async function guardarCosecha(id){
   const resp=document.getElementById('rc-responsable')?.value;
   if(!charolas||!gramos||!resp){toast('Completa todos los campos');return;}
   const lotes=getLotes();
-  const idx=lotes.findIndex(l=>l.id===id);if(idx<0)return;
+  const idx=lotes.findIndex(l=>String(l.id)===String(id));if(idx<0)return;
   const ch=parseFloat(charolas),gr=parseFloat(gramos);
   lotes[idx].cosecha_real=gr;
   lotes[idx].charolas_cosechadas=ch;
@@ -857,14 +893,15 @@ async function guardarCosecha(id){
 
 // ══ VER DETALLE ═══════════════════════════════════════════════════════════════
 function verDetalle(id){
-  const l=getLotes().find(x=>x.id===id);if(!l)return;
+  const sid=String(id);
+  const l=getLotes().find(x=>String(x.id)===sid);if(!l)return;
   const body=document.getElementById('modal-body');
   const varIcon={'Chícharo':'🫛','Chícharo CT (fresco)':'🫛','Chícharo CT (vivo)':'🫛','Betabel':'🟣','Rábano':'🔴','Cilantro':'🌿','Girasol':'🌻','Spicy Mix':'🌶️'}[l.variedad]||'🌱';
   const rendimiento=l.cosecha_real&&l.cosecha_estimada?Math.round((l.cosecha_real/l.cosecha_estimada)*100):null;
   body.innerHTML=`
     <div class="modal-handle"></div>
     <div class="modal-title">${varIcon} ${l.variedad}</div>
-    <div class="modal-sub" style="font-family:monospace">${l.lote} · ${l.tipo||'Fresco'}</div>
+    <div class="modal-sub" style="font-family:monospace">${l.lote} · ${l.tipo_variedad||l.tipo||'Fresco'}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       ${[
         ['Charolas planificadas',l.charolas_planificadas],
@@ -1171,7 +1208,7 @@ async function guardarEdicionLote(id){
   const comentarios=document.getElementById('el-comentarios')?.value||'';
   if(!ch||ch<=0){toast('Ingresa una cantidad válida de charolas');return;}
   const lotes=getLotes();
-  const idx=lotes.findIndex(l=>l.id===id);if(idx<0)return;
+  const idx=lotes.findIndex(l=>String(l.id)===String(id));if(idx<0)return;
   // Actualizar campos
   const gr=lotes[idx].gr_semilla||0;
   const est=lotes[idx].cosecha_est_charola||0;
