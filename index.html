@@ -311,13 +311,13 @@ async function pushToSheet(record,sheetName){
 }
 
 async function fetchLotesFromSheet(){
-  const url=getURL();if(!url)return [];
   try{
-    const res=await fetch(url+'?action=getLotes');
+    const url='https://script.google.com/macros/s/AKfycbwWOHWORz7mvHaNAPGT2YHZzn8qhd-ldaEJ4KWRhRNlqAbA5T8rRDqzxtS-SzWhqSsvxg/exec?action=getLotes&cb='+Date.now();
+    const res=await fetch(url);
     const json=await res.json();
     if(json.ok&&json.lotes)return json.lotes;
     return [];
-  }catch(e){return [];}
+  }catch(e){console.error('Fetch lotes error:',e);return [];}
 }
 
 async function syncLotesFromSheet(){
@@ -1161,6 +1161,9 @@ let toastTimer;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);}
 
 // ══ INIT ══════════════════════════════════════════════════════════════════════
+// Set default Workspace URL if none saved
+const _defaultURL='https://script.google.com/macros/s/AKfycbwWOHWORz7mvHaNAPGT2YHZzn8qhd-ldaEJ4KWRhRNlqAbA5T8rRDqzxtS-SzWhqSsvxg/exec';
+if(!getURL())setURL(_defaultURL);
 const _url=getURL();
 if(_url){
   setSyncUI('ok');
