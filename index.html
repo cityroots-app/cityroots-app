@@ -311,14 +311,15 @@ async function pushToSheet(record,sheetName){
 }
 
 async function fetchLotesFromSheet(){
+  const url=getURL();if(!url)return [];
   try{
-    const url='https://script.google.com/macros/s/AKfycbwWOHWORz7mvHaNAPGT2YHZzn8qhd-ldaEJ4KWRhRNlqAbA5T8rRDqzxtS-SzWhqSsvxg/exec?action=getLotes&cb='+Date.now();
-    const res=await fetch(url);
+    const res=await fetch(url+'?action=getLotes');
     const json=await res.json();
     if(json.ok&&json.lotes)return json.lotes;
     return [];
   }catch(e){console.error('Fetch lotes error:',e);return [];}
 }
+
 
 async function syncLotesFromSheet(){
   const remoteLotes=await fetchLotesFromSheet();
