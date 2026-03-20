@@ -352,23 +352,35 @@ async function fetchLotesFromSheet(){
 
 
 function parseLoteFromSheet(r){
-  // Normalize fields from Sheets — convert empty strings and parse numbers
-  const n=v=>v===''||v===null||v===undefined?null:(isNaN(v)?v:parseFloat(v));
+  // Parse number: if value looks like a date string, return null
+  const n=v=>{
+    if(v===''||v===null||v===undefined)return null;
+    if(typeof v==='string'&&(v.includes('T')||v.includes('-')&&v.length>10))return null;
+    const p=parseFloat(v);
+    return isNaN(p)?null:p;
+  };
   const b=v=>v===true||v==='TRUE'||v==='true'||v===1||v==='1';
+  // Clean date: keep only YYYY-MM-DD part
+  const d=v=>{
+    if(!v)return '';
+    const s=String(v);
+    if(s.includes('T'))return s.split('T')[0];
+    return s;
+  };
   return {
     id:String(r.id||''),
-    lote_semana:r.lote_semana||'',
+    lote_semana:String(r.lote_semana||''),
     lote:r.lote||'',
     variedad:r.variedad||'',
-    tipo:r.tipo_variedad||r.tipoVariedad||r.tipo_charola||'Fresco',
+    tipo_variedad:r.tipo_variedad||'Fresco',
     charolas_planificadas:n(r.charolas_planificadas),
     dia_siembra:r.dia_siembra||'',
-    fecha_siembra:r.fecha_siembra||'',
+    fecha_siembra:d(r.fecha_siembra),
     gr_semilla:n(r.gr_semilla),
     total_semilla:n(r.total_semilla),
     dias_cultivo:n(r.dias_cultivo),
     dia_cosecha:r.dia_cosecha||'',
-    fecha_cosecha:r.fecha_cosecha||'',
+    fecha_cosecha:d(r.fecha_cosecha),
     cosecha_est_charola:n(r.cosecha_est_charola),
     cosecha_estimada:n(r.cosecha_estimada),
     comentarios:r.comentarios||'',
@@ -394,18 +406,25 @@ async function syncLotesFromSheet(){
   remoteLotes.forEach(r=>{
     const parsed=parseLoteFromSheet(r);
     if(!parsed.id)return;
-    if(!localIds.has(parsed.id)){
-      merged.push(parsed);added++;
-    } else {
+    // Check by id first, then by lote code to avoid duplicates
+    const byId=merged.findIndex(l=>String(l.id)===String(parsed.id));
+    const byLote=merged.findIndex(l=>l.lote===parsed.lote&&l.variedad===parsed.variedad);
+    if(byId>=0){
       // Update confirmation fields from remote
-      const idx=merged.findIndex(l=>l.id===parsed.id);
-      if(idx>=0){
-        if(parsed.sembrado_confirmado)merged[idx].sembrado_confirmado=parsed.sembrado_confirmado;
-        if(parsed.charolas_confirmadas)merged[idx].charolas_confirmadas=parsed.charolas_confirmadas;
-        if(parsed.cosecha_real)merged[idx].cosecha_real=parsed.cosecha_real;
-        if(parsed.charolas_cosechadas)merged[idx].charolas_cosechadas=parsed.charolas_cosechadas;
-        if(parsed.promedio_cosecha)merged[idx].promedio_cosecha=parsed.promedio_cosecha;
-      }
+      if(parsed.sembrado_confirmado)merged[byId].sembrado_confirmado=parsed.sembrado_confirmado;
+      if(parsed.charolas_confirmadas)merged[byId].charolas_confirmadas=parsed.charolas_confirmadas;
+      if(parsed.cosecha_real)merged[byId].cosecha_real=parsed.cosecha_real;
+      if(parsed.charolas_cosechadas)merged[byId].charolas_cosechadas=parsed.charolas_cosechadas;
+      if(parsed.promedio_cosecha)merged[byId].promedio_cosecha=parsed.promedio_cosecha;
+    } else if(byLote>=0){
+      // Same lote but different id — update confirmations, keep local id
+      if(parsed.sembrado_confirmado)merged[byLote].sembrado_confirmado=parsed.sembrado_confirmado;
+      if(parsed.charolas_confirmadas)merged[byLote].charolas_confirmadas=parsed.charolas_confirmadas;
+      if(parsed.cosecha_real)merged[byLote].cosecha_real=parsed.cosecha_real;
+      if(parsed.charolas_cosechadas)merged[byLote].charolas_cosechadas=parsed.charolas_cosechadas;
+      if(parsed.promedio_cosecha)merged[byLote].promedio_cosecha=parsed.promedio_cosecha;
+    } else {
+      merged.push(parsed);added++;
     }
   });
   setLotes(merged);
@@ -602,7 +621,7 @@ function siembraCard(l,today){
       <div class="sc-dato"><div class="sc-dato-label">Siembra</div><div class="sc-dato-val ${esHoySembrar?'amber':''}">${l.dia_siembra||''} ${fechaSiembra?fmtDateShort(l.fecha_siembra):''}</div></div>
       <div class="sc-dato"><div class="sc-dato-label">Cosecha</div><div class="sc-dato-val ${esHoyCosechar?'amber':''}">${l.dia_cosecha||''} ${fechaCosecha?fmtDateShort(l.fecha_cosecha):''}</div></div>
       <div class="sc-dato"><div class="sc-dato-label">Est. / charola</div><div class="sc-dato-val">${l.cosecha_est_charola||'—'} g</div></div>
-      <div class="sc-dato"><div class="sc-dato-label">Cosecha estimada</div><div class="sc-dato-val">${l.cosecha_estimada||'—'} g</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Cosecha estimada</div><div class="sc-dato-val">${(typeof l.cosecha_estimada==='number'?l.cosecha_estimada:'')||'—'} g</div></div>
       ${l.cosecha_real?`<div class="sc-dato"><div class="sc-dato-label">Cosecha real</div><div class="sc-dato-val highlight">${l.cosecha_real} g</div></div>`:''}
       ${l.charolas_cosechadas?`<div class="sc-dato"><div class="sc-dato-label">Charolas cosechadas</div><div class="sc-dato-val highlight">${l.charolas_cosechadas}</div></div>`:''}
     </div>
