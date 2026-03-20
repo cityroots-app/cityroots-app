@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1a3a1a">
-<title>City Roots Farm — Inocuidad</title>
+<title>City Roots Farm ‚Äî Inocuidad</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -215,7 +215,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="topbar-logo">🌱</div>
+    <div class="topbar-logo">üå±</div>
     <div>
       <div class="topbar-title">City Roots Farm</div>
       <div class="topbar-sub">Sistema de Inocuidad v2.0</div>
@@ -227,11 +227,11 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
   </div>
   <div class="content" id="content"></div>
   <nav class="nav">
-    <button class="nav-btn active" id="nb-inicio" onclick="goTo('inicio')"><span class="ni">🏠</span>Inicio</button>
-    <button class="nav-btn" id="nb-produccion" onclick="goTo('produccion')"><span class="ni">🌱</span>Producción</button>
-    <button class="nav-btn" id="nb-registrar" onclick="goTo('registrar')"><span class="ni">✏️</span>Registrar</button>
-    <button class="nav-btn" id="nb-historial" onclick="goTo('historial')"><span class="ni">📋</span>Historial<span id="pend-badge" class="nav-badge" style="display:none"></span></button>
-    <button class="nav-btn" id="nb-admin" onclick="goTo('admin')"><span class="ni">⚙️</span>Admin</button>
+    <button class="nav-btn active" id="nb-inicio" onclick="goTo('inicio')"><span class="ni">üè†</span>Inicio</button>
+    <button class="nav-btn" id="nb-produccion" onclick="goTo('produccion')"><span class="ni">üå±</span>Producci√≥n</button>
+    <button class="nav-btn" id="nb-registrar" onclick="goTo('registrar')"><span class="ni">‚úèÔ∏è</span>Registrar</button>
+    <button class="nav-btn" id="nb-historial" onclick="goTo('historial')"><span class="ni">üìã</span>Historial<span id="pend-badge" class="nav-badge" style="display:none"></span></button>
+    <button class="nav-btn" id="nb-admin" onclick="goTo('admin')"><span class="ni">‚öôÔ∏è</span>Admin</button>
   </nav>
 </div>
 
@@ -241,82 +241,82 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 <div class="toast" id="toast"></div>
 
 <script>
-// ══ REGISTROS DE INOCUIDAD ════════════════════════════════════════════════════
+// ‚ïê‚ïê REGISTROS DE INOCUIDAD ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 const REGS = [
-  {id:'temperatura',icon:'🌡️',name:'Temperatura',code:'HACCP-01',freq:'Diario',fields:[
-    {id:'area',label:'Área',type:'select',req:true,opts:['Cuarto de producción','Refrigerador','Área de empaque','Transporte']},
-    {id:'temp',label:'Temperatura (°C)',type:'number',req:true,ph:'Ej. 3.5'},
+  {id:'temperatura',icon:'üå°Ô∏è',name:'Temperatura',code:'HACCP-01',freq:'Diario',fields:[
+    {id:'area',label:'√Årea',type:'select',req:true,opts:['Cuarto de producci√≥n','Refrigerador','√Årea de empaque','Transporte']},
+    {id:'temp',label:'Temperatura (¬∞C)',type:'number',req:true,ph:'Ej. 3.5'},
     {id:'horario',label:'Horario',type:'time',req:true},
-    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Chofer']},
-    {id:'observacion',label:'Observación',type:'textarea',ph:'Normal / Acción correctiva...'}
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['Jos√© Carlos','Encargado de producci√≥n','Chofer']},
+    {id:'observacion',label:'Observaci√≥n',type:'textarea',ph:'Normal / Acci√≥n correctiva...'}
   ]},
-  {id:'limpieza',icon:'🧹',name:'Limpieza',code:'P01–P10',freq:'Diario',fields:[
-    {id:'area',label:'Área / Equipo',type:'select',req:true,opts:['Mesas de cosecha (POES-01)','Cuchillos (POES-02)','Racks de cultivo (POES-03)','Área de empaque (POES-04)','Cuarto producción ozono (POES-05)','Charolas de cultivo (POES-06)','Limpieza general cuarto (POES-08)','Refrigerador (POES-09)']},
+  {id:'limpieza',icon:'üßπ',name:'Limpieza',code:'P01‚ÄìP10',freq:'Diario',fields:[
+    {id:'area',label:'√Årea / Equipo',type:'select',req:true,opts:['Mesas de cosecha (POES-01)','Cuchillos (POES-02)','Racks de cultivo (POES-03)','√Årea de empaque (POES-04)','Cuarto producci√≥n ozono (POES-05)','Charolas de cultivo (POES-06)','Limpieza general cuarto (POES-08)','Refrigerador (POES-09)']},
     {id:'producto',label:'Producto sanitizante',type:'text',req:true,ph:'Ej. Cloro grado alimenticio 200 ppm'},
-    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción']},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['Jos√© Carlos','Encargado de producci√≥n','Personal de producci√≥n']},
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Sin novedad / Incidencia...'}
   ]},
-  {id:'higiene',icon:'🖐️',name:'Higiene personal',code:'POES-07',freq:'Diario',fields:[
-    {id:'horario',label:'Horario de revisión',type:'time',req:true},
-    {id:'responsable',label:'Personal supervisado',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción','Todo el equipo']},
-    {id:'observacion',label:'Observación',type:'textarea',ph:'Cumplimiento correcto / Observación...'}
+  {id:'higiene',icon:'üñêÔ∏è',name:'Higiene personal',code:'POES-07',freq:'Diario',fields:[
+    {id:'horario',label:'Horario de revisi√≥n',type:'time',req:true},
+    {id:'responsable',label:'Personal supervisado',type:'select',req:true,opts:['Jos√© Carlos','Encargado de producci√≥n','Personal de producci√≥n','Todo el equipo']},
+    {id:'observacion',label:'Observaci√≥n',type:'textarea',ph:'Cumplimiento correcto / Observaci√≥n...'}
   ]},
-  {id:'mermas',icon:'📉',name:'Mermas',code:'RES-MER',freq:'Por evento',fields:[
-    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
+  {id:'mermas',icon:'üìâ',name:'Mermas',code:'RES-MER',freq:'Por evento',fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Ch√≠charo','Ch√≠charo CT','Betabel','R√°bano','Cilantro','Girasol','Spicy Mix']},
     {id:'lote',label:'Lote',type:'text',req:true,ph:'Ej. CRF-2612-CHI'},
     {id:'gramos',label:'Merma en gramos',type:'number',req:true,ph:''},
-    {id:'causa',label:'Causa',type:'select',req:true,opts:['Hongo / moho','Crecimiento irregular','Temperatura incorrecta','Daño físico','Semilla defectuosa','Otro']},
-    {id:'comentarios',label:'Descripción',type:'textarea',ph:'Detalles...'}
+    {id:'causa',label:'Causa',type:'select',req:true,opts:['Hongo / moho','Crecimiento irregular','Temperatura incorrecta','Da√±o f√≠sico','Semilla defectuosa','Otro']},
+    {id:'comentarios',label:'Descripci√≥n',type:'textarea',ph:'Detalles...'}
   ]},
-  {id:'semillas',icon:'🌾',name:'Recepción semillas',code:'REC-SEM',freq:'Por recepción',fields:[
-    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
-    {id:'lote_proveedor',label:'Lote del proveedor',type:'text',req:true,ph:'Número de lote'},
+  {id:'semillas',icon:'üåæ',name:'Recepci√≥n semillas',code:'REC-SEM',freq:'Por recepci√≥n',fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Ch√≠charo','Betabel','R√°bano','Cilantro','Girasol','Spicy Mix']},
+    {id:'lote_proveedor',label:'Lote del proveedor',type:'text',req:true,ph:'N√∫mero de lote'},
     {id:'peso',label:'Peso recibido (kg)',type:'number',req:true,ph:'Ej. 5.0'},
-    {id:'calidad',label:'Calidad',type:'select',req:true,opts:['Aprobada — sin observaciones','Aprobada con observaciones','Rechazada']},
+    {id:'calidad',label:'Calidad',type:'select',req:true,opts:['Aprobada ‚Äî sin observaciones','Aprobada con observaciones','Rechazada']},
     {id:'proveedor',label:'Proveedor',type:'text',req:true,ph:'Nombre del proveedor'},
-    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']}
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['Jos√© Carlos','Encargado de producci√≥n']}
   ]},
-  {id:'residuos',icon:'♻️',name:'Residuos orgánicos',code:'POES-10',freq:'Semanal',fields:[
+  {id:'residuos',icon:'‚ôªÔ∏è',name:'Residuos org√°nicos',code:'POES-10',freq:'Semanal',fields:[
     {id:'peso',label:'Peso (kg)',type:'number',req:true,ph:'Ej. 8.5'},
-    {id:'hora_creacion',label:'Hora de generación',type:'time',req:true},
-    {id:'hora_recoleccion',label:'Hora de recolección',type:'time'},
-    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción']},
+    {id:'hora_creacion',label:'Hora de generaci√≥n',type:'time',req:true},
+    {id:'hora_recoleccion',label:'Hora de recolecci√≥n',type:'time'},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['Jos√© Carlos','Encargado de producci√≥n','Personal de producci√≥n']},
     {id:'proveedor_rec',label:'Empresa recolectora',type:'text',ph:'Nombre del recolector'}
   ]},
-  {id:'no_conforme',icon:'🚫',name:'Producto no conforme',code:'REG-PNC',freq:'Por evento',fields:[
-    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
+  {id:'no_conforme',icon:'üö´',name:'Producto no conforme',code:'REG-PNC',freq:'Por evento',fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Ch√≠charo','Ch√≠charo CT','Betabel','R√°bano','Cilantro','Girasol','Spicy Mix']},
     {id:'lote',label:'Lote',type:'text',req:true,ph:'Ej. CRF-2612-CHI'},
-    {id:'problema',label:'Problema detectado',type:'select',req:true,opts:['Moho / hongos','Contaminación visible','Daño físico','Temperatura fuera de rango','Mal olor','Crecimiento irregular','Otro']},
-    {id:'accion',label:'Acción tomada',type:'select',req:true,opts:['Descartado a composta','Segregado — en evaluación','Reprocesado','Retiro de producto activado']},
-    {id:'comentarios',label:'Descripción',type:'textarea',ph:'Detalles del problema...'}
+    {id:'problema',label:'Problema detectado',type:'select',req:true,opts:['Moho / hongos','Contaminaci√≥n visible','Da√±o f√≠sico','Temperatura fuera de rango','Mal olor','Crecimiento irregular','Otro']},
+    {id:'accion',label:'Acci√≥n tomada',type:'select',req:true,opts:['Descartado a composta','Segregado ‚Äî en evaluaci√≥n','Reprocesado','Retiro de producto activado']},
+    {id:'comentarios',label:'Descripci√≥n',type:'textarea',ph:'Detalles del problema...'}
   ]},
-  {id:'inventario',icon:'📦',name:'Inventario semanal',code:'INV-SEM',freq:'Por evento',fields:[
-    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT (fresco)','Chícharo CT (vivo)','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
+  {id:'inventario',icon:'üì¶',name:'Inventario semanal',code:'INV-SEM',freq:'Por evento',fields:[
+    {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Ch√≠charo','Ch√≠charo CT (fresco)','Ch√≠charo CT (vivo)','Betabel','R√°bano','Cilantro','Girasol','Spicy Mix']},
     {id:'lote',label:'Lote',type:'text',req:true,ph:'Ej. CRF-2612-CHI'},
     {id:'cantidad',label:'Cantidad en gramos',type:'number',req:true,ph:'Ej. 500'}
   ]},
-  {id:'transporte',icon:'🚗',name:'Transporte',code:'POES-11/12',freq:'Por entrega',fields:[
-    {id:'tipo',label:'Tipo de registro',type:'select',req:true,opts:['Limpieza del vehículo (POES-11)','Temperatura de transporte (POES-12)','Ambos']},
-    {id:'temp',label:'Temperatura del compartimento (°C)',type:'number',req:true,ph:'Ej. 4.0'},
-    {id:'estado_limpieza',label:'Estado de limpieza',type:'select',req:true,opts:['Conforme — limpio y sanitizado','No conforme — se realizó limpieza adicional']},
-    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Chofer asignado']},
+  {id:'transporte',icon:'üöó',name:'Transporte',code:'POES-11/12',freq:'Por entrega',fields:[
+    {id:'tipo',label:'Tipo de registro',type:'select',req:true,opts:['Limpieza del veh√≠culo (POES-11)','Temperatura de transporte (POES-12)','Ambos']},
+    {id:'temp',label:'Temperatura del compartimento (¬∞C)',type:'number',req:true,ph:'Ej. 4.0'},
+    {id:'estado_limpieza',label:'Estado de limpieza',type:'select',req:true,opts:['Conforme ‚Äî limpio y sanitizado','No conforme ‚Äî se realiz√≥ limpieza adicional']},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['Jos√© Carlos','Chofer asignado']},
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Sin novedad...'}
   ]}
 ];
 
 
-// ══ DATOS FIJOS POR VARIEDAD ══════════════════════════════════════════════════
+// ‚ïê‚ïê DATOS FIJOS POR VARIEDAD ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 const VARIEDAD_DEFAULTS = {
-  'Chícharo':            {gr_semilla:120, dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:200, dias_cultivo:20},
-  'Chícharo CT (fresco)':{gr_semilla:170, dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:200, dias_cultivo:13},
-  'Chícharo CT (vivo)':  {gr_semilla:25,  dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:null,dias_cultivo:11},
+  'Ch√≠charo':            {gr_semilla:120, dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:200, dias_cultivo:20},
+  'Ch√≠charo CT (fresco)':{gr_semilla:170, dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:200, dias_cultivo:13},
+  'Ch√≠charo CT (vivo)':  {gr_semilla:25,  dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:null,dias_cultivo:11},
   'Betabel':             {gr_semilla:25,  dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:13},
-  'Rábano':              {gr_semilla:25,  dia_siembra:'Jueves',  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:11},
+  'R√°bano':              {gr_semilla:25,  dia_siembra:'Jueves',  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:11},
   'Girasol':             {gr_semilla:100, dia_siembra:'Viernes', dia_cosecha:'Lunes', cosecha_est_charola:300, dias_cultivo:10},
   'Cilantro':            {gr_semilla:25,  dia_siembra:'Viernes', dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:17},
   'Spicy Mix':           {gr_semilla:13,  dia_siembra:'Jueves',  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:18},
 };
-// ══ STORAGE ═══════════════════════════════════════════════════════════════════
+// ‚ïê‚ïê STORAGE ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 const SK = {url:'crf_sheet_url',rec:'crf_records_v2',pend:'crf_pending_v2',lotes:'crf_lotes_v2'};
 const LS = {
   get: k => { try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;} },
@@ -331,7 +331,7 @@ const setPend = v  => LS.set(SK.pend,v);
 const getLotes= () => LS.get(SK.lotes)||[];
 const setLotes= v  => LS.set(SK.lotes,v);
 
-// ══ UTILS ══════════════════════════════════════════════════════════════════════
+// ‚ïê‚ïê UTILS ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 const todayKey = () => new Date().toISOString().split('T')[0];
 const nowTime  = () => new Date().toTimeString().slice(0,5);
 const fmtDate  = iso => new Date(iso).toLocaleDateString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
@@ -347,12 +347,12 @@ function isToday(dateStr){return dateStr&&dateStr.split('T')[0]===todayKey();}
 function isPast(dateStr){if(!dateStr)return false; const d=dateStr.split('T')[0]; return d<todayKey();}
 function isFuture(dateStr){if(!dateStr)return false; const d=dateStr.split('T')[0]; return d>todayKey();}
 
-// ══ SYNC ═══════════════════════════════════════════════════════════════════════
+// ‚ïê‚ïê SYNC ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function setSyncUI(s){
   const dot=document.getElementById('sdot'),lbl=document.getElementById('slbl');
   if(!dot)return;
   dot.className='sync-dot';
-  if(s==='ok'){dot.classList.add('sync-ok');lbl.textContent='Sheets ✓';}
+  if(s==='ok'){dot.classList.add('sync-ok');lbl.textContent='Sheets ‚úì';}
   else if(s==='ing'){dot.classList.add('sync-ing');lbl.textContent='Sincronizando...';}
   else{dot.classList.add('sync-off');lbl.textContent='Sin Sheets';}
 }
@@ -460,33 +460,32 @@ async function syncLotesFromSheet(){
   const localLotes=getLotes();
   const localIds=new Set(localLotes.map(l=>l.id));
   const merged=[...localLotes];
-  let added=0;
+  let added=0,updated=0;
   remoteLotes.forEach(r=>{
     const parsed=parseLoteFromSheet(r);
-    if(!parsed.id)return;
+    if(!parsed.id&&!parsed.lote)return;
     // Check by id first, then by lote code to avoid duplicates
-    const byId=merged.findIndex(l=>String(l.id)===String(parsed.id));
+    const byId=parsed.id?merged.findIndex(l=>String(l.id)===String(parsed.id)):-1;
     const byLote=merged.findIndex(l=>l.lote===parsed.lote&&l.variedad===parsed.variedad);
-    if(byId>=0){
+    const idx=byId>=0?byId:byLote;
+    if(idx>=0){
       // Update confirmation fields from remote
-      if(parsed.sembrado_confirmado)merged[byId].sembrado_confirmado=parsed.sembrado_confirmado;
-      if(parsed.charolas_confirmadas)merged[byId].charolas_confirmadas=parsed.charolas_confirmadas;
-      if(parsed.cosecha_real)merged[byId].cosecha_real=parsed.cosecha_real;
-      if(parsed.charolas_cosechadas)merged[byId].charolas_cosechadas=parsed.charolas_cosechadas;
-      if(parsed.promedio_cosecha)merged[byId].promedio_cosecha=parsed.promedio_cosecha;
-    } else if(byLote>=0){
-      // Same lote but different id — update confirmations, keep local id
-      if(parsed.sembrado_confirmado)merged[byLote].sembrado_confirmado=parsed.sembrado_confirmado;
-      if(parsed.charolas_confirmadas)merged[byLote].charolas_confirmadas=parsed.charolas_confirmadas;
-      if(parsed.cosecha_real)merged[byLote].cosecha_real=parsed.cosecha_real;
-      if(parsed.charolas_cosechadas)merged[byLote].charolas_cosechadas=parsed.charolas_cosechadas;
-      if(parsed.promedio_cosecha)merged[byLote].promedio_cosecha=parsed.promedio_cosecha;
+      let changed=false;
+      if(parsed.sembrado_confirmado&&!merged[idx].sembrado_confirmado){merged[idx].sembrado_confirmado=parsed.sembrado_confirmado;changed=true;}
+      if(parsed.charolas_confirmadas&&!merged[idx].charolas_confirmadas){merged[idx].charolas_confirmadas=parsed.charolas_confirmadas;changed=true;}
+      if(parsed.responsable_siembra&&!merged[idx].responsable_siembra){merged[idx].responsable_siembra=parsed.responsable_siembra;changed=true;}
+      if(parsed.cosecha_real&&!merged[idx].cosecha_real){merged[idx].cosecha_real=parsed.cosecha_real;changed=true;}
+      if(parsed.charolas_cosechadas&&!merged[idx].charolas_cosechadas){merged[idx].charolas_cosechadas=parsed.charolas_cosechadas;changed=true;}
+      if(parsed.promedio_cosecha&&!merged[idx].promedio_cosecha){merged[idx].promedio_cosecha=parsed.promedio_cosecha;changed=true;}
+      if(parsed.contenedores_50g&&!merged[idx].contenedores_50g){merged[idx].contenedores_50g=parsed.contenedores_50g;changed=true;}
+      if(changed)updated++;
     } else {
       merged.push(parsed);added++;
     }
   });
   setLotes(merged);
-  if(added>0){toast(added+' lote'+(added>1?'s':'')+' descargado'+(added>1?'s':'')+' ✓');render(page);}
+  if(added>0||updated>0){toast((added?added+' nuevo'+(added>1?'s':''):'')+(added&&updated?' ¬∑ ':'')+(updated?updated+' actualizado'+(updated>1?'s':''):'')+' ‚úì');render(page);}
+  else{render(page);} // Always re-render to reflect remote confirmations
   setSyncUI('ok');
 }
 async function flushPending(){
@@ -496,7 +495,7 @@ async function flushPending(){
   const failed=[];
   for(const rec of pending){const ok=await pushToSheet(rec);if(!ok)failed.push(rec);}
   setPend(failed);setSyncUI(failed.length?'off':'ok');
-  if(failed.length<pending.length)toast(`${pending.length-failed.length} registros sincronizados ✓`);
+  if(failed.length<pending.length)toast(`${pending.length-failed.length} registros sincronizados ‚úì`);
   updatePendBadge();
 }
 function updatePendBadge(){
@@ -504,7 +503,7 @@ function updatePendBadge(){
   if(b)b.style.display=getPend().length?'block':'none';
 }
 
-// ══ NAVEGACIÓN ═════════════════════════════════════════════════════════════════
+// ‚ïê‚ïê NAVEGACI√ìN ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 let page='inicio',histFilter='todos',prodFilter='todos';
 function goTo(p){
   page=p;
@@ -523,7 +522,7 @@ function render(p){
   setSyncUI(getURL()?'ok':'off');
 }
 
-// ══ INICIO ══════════════════════════════════════════════════════════════════════
+// ‚ïê‚ïê INICIO ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function renderInicio(el){
   const recs=getRecs(),pend=getPend(),lotes=getLotes();
   const today=todayKey();
@@ -532,7 +531,7 @@ function renderInicio(el){
   const doneC=daily.filter(r=>doneIds.has(r.id)).length;
   const pendC=daily.length-doneC;
   const hour=new Date().getHours();
-  const gr=hour<12?'Buenos días ☀️':hour<19?'Buenas tardes 🌤':'Buenas noches 🌙';
+  const gr=hour<12?'Buenos d√≠as ‚òÄÔ∏è':hour<19?'Buenas tardes üå§':'Buenas noches üåô';
 
   // Siembras y cosechas de hoy
   const sembrarHoy=lotes.filter(l=>l.fecha_siembra&&l.fecha_siembra.split('T')[0]===today&&!l.sembrado_confirmado);
@@ -541,11 +540,11 @@ function renderInicio(el){
   el.innerHTML=`<div class="pad">
     <div class="greeting">${gr}</div>
     <div class="dateline">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
-    ${pend.length?`<div class="banner banner-warn">📡 ${pend.length} registro${pend.length>1?'s':''} sin sincronizar. <span style="text-decoration:underline;cursor:pointer;font-weight:600" onclick="flushPending().then(()=>render('inicio'))">Sincronizar</span></div>`:''}
-    ${sembrarHoy.length?`<div class="banner banner-amber" style="cursor:pointer" onclick="goTo('produccion')">🌾 ${sembrarHoy.length} variedad${sembrarHoy.length>1?'es':''} por sembrar hoy — toca para ver</div>`:''}
-    ${cosecharHoy.length?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;cursor:pointer" onclick="goTo('produccion')">✂️ ${cosecharHoy.length} variedad${cosecharHoy.length>1?'es':''} por cosechar hoy — toca para ver</div>`:''}
+    ${pend.length?`<div class="banner banner-warn">üì° ${pend.length} registro${pend.length>1?'s':''} sin sincronizar. <span style="text-decoration:underline;cursor:pointer;font-weight:600" onclick="flushPending().then(()=>render('inicio'))">Sincronizar</span></div>`:''}
+    ${sembrarHoy.length?`<div class="banner banner-amber" style="cursor:pointer" onclick="goTo('produccion')">üåæ ${sembrarHoy.length} variedad${sembrarHoy.length>1?'es':''} por sembrar hoy ‚Äî toca para ver</div>`:''}
+    ${cosecharHoy.length?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;cursor:pointer" onclick="goTo('produccion')">‚úÇÔ∏è ${cosecharHoy.length} variedad${cosecharHoy.length>1?'es':''} por cosechar hoy ‚Äî toca para ver</div>`:''}
     <div class="stats">
-      <div class="stat"><div class="stat-n n-ok">${doneC}</div><div class="stat-l">Registros ✓</div></div>
+      <div class="stat"><div class="stat-n n-ok">${doneC}</div><div class="stat-l">Registros ‚úì</div></div>
       <div class="stat"><div class="stat-n n-warn">${pendC}</div><div class="stat-l">Pendientes</div></div>
       <div class="stat"><div class="stat-n n-amber">${sembrarHoy.length+cosecharHoy.length}</div><div class="stat-l">Prod. hoy</div></div>
     </div>
@@ -555,27 +554,27 @@ function renderInicio(el){
         <div class="reg-icon">${r.icon}</div>
         <div class="reg-name">${r.name}</div>
         <div class="reg-code">${r.code}</div>
-        <div class="reg-st ${doneIds.has(r.id)?'s-done':'s-pend'}">${doneIds.has(r.id)?'✓ Registrado':'Pendiente'}</div>
+        <div class="reg-st ${doneIds.has(r.id)?'s-done':'s-pend'}">${doneIds.has(r.id)?'‚úì Registrado':'Pendiente'}</div>
       </div>`).join('')}</div>
     <div class="sec">Por evento</div>
     <div class="reg-grid">${REGS.filter(r=>r.freq!=='Diario').map(r=>`
       <div class="reg-card" onclick="openForm('${r.id}')">
         <div class="reg-icon">${r.icon}</div>
         <div class="reg-name">${r.name}</div>
-        <div class="reg-code">${r.code} · ${r.freq}</div>
+        <div class="reg-code">${r.code} ¬∑ ${r.freq}</div>
         <div class="reg-st s-pend">Registrar</div>
       </div>`).join('')}
       <div class="reg-card prod" onclick="goTo('produccion')">
-        <div class="reg-icon">🌱</div>
-        <div class="reg-name">Producción</div>
-        <div class="reg-code">Siembras · Cosechas</div>
+        <div class="reg-icon">üå±</div>
+        <div class="reg-name">Producci√≥n</div>
+        <div class="reg-code">Siembras ¬∑ Cosechas</div>
         <div class="reg-st s-hoy">${sembrarHoy.length+cosecharHoy.length} tarea${sembrarHoy.length+cosecharHoy.length!==1?'s':''} hoy</div>
       </div>
     </div>
   </div>`;
 }
 
-// ══ PRODUCCIÓN ══════════════════════════════════════════════════════════════════
+// ‚ïê‚ïê PRODUCCI√ìN ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function renderProduccion(el){
   const lotes=getLotes();
   const today=todayKey();
@@ -603,9 +602,9 @@ function renderProduccion(el){
 
   el.innerHTML=`<div class="pad">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div class="sec" style="margin-bottom:0">Plan de producción</div>
+      <div class="sec" style="margin-bottom:0">Plan de producci√≥n</div>
       <div style="display:flex;gap:6px">
-        <button class="btn btn-secondary" style="flex:0;padding:7px 12px;font-size:12px" onclick="syncLotesFromSheet().then(()=>render('produccion'))">↓ Sincronizar</button>
+        <button class="btn btn-secondary" style="flex:0;padding:7px 12px;font-size:12px" onclick="syncLotesFromSheet().then(()=>render('produccion'))">‚Üì Sincronizar</button>
         <button class="btn btn-primary" style="flex:0;padding:7px 14px;font-size:12px" onclick="openNuevoLote()">+ Nuevo lote</button>
       </div>
     </div>
@@ -644,22 +643,22 @@ function siembraCard(l,today){
   else if(esHoySembrar)cardClass+=' hoy-sembrar';
 
   let statusTxt='',statusClass='ss-pend';
-  if(l.cosecha_real){statusTxt='✓ Cosechado';statusClass='ss-cosechado';}
-  else if(esHoyCosechar){statusTxt='✂️ Cosechar HOY';statusClass='ss-hoy';}
-  else if(l.sembrado_confirmado){statusTxt='🌱 Sembrado';statusClass='ss-sembrado';}
-  else if(esHoySembrar){statusTxt='🌾 Sembrar HOY';statusClass='ss-hoy';}
-  else if(isPast(l.fecha_siembra)&&!l.sembrado_confirmado){statusTxt='⚠️ Siembra pendiente';statusClass='ss-pend';}
+  if(l.cosecha_real){statusTxt='‚úì Cosechado';statusClass='ss-cosechado';}
+  else if(esHoyCosechar){statusTxt='‚úÇÔ∏è Cosechar HOY';statusClass='ss-hoy';}
+  else if(l.sembrado_confirmado){statusTxt='üå± Sembrado';statusClass='ss-sembrado';}
+  else if(esHoySembrar){statusTxt='üåæ Sembrar HOY';statusClass='ss-hoy';}
+  else if(isPast(l.fecha_siembra)&&!l.sembrado_confirmado){statusTxt='‚ö†Ô∏è Siembra pendiente';statusClass='ss-pend';}
   else{statusTxt='Programado';statusClass='ss-pend';}
 
-  const cosEst=l.gr_semilla&&l.charolas_planificadas?`${l.charolas_planificadas * (l.cosecha_est_charola||0)}g`:'—';
+  const cosEst=l.gr_semilla&&l.charolas_planificadas?`${l.charolas_planificadas * (l.cosecha_est_charola||0)}g`:'‚Äî';
   const charConf=l.charolas_confirmadas||l.charolas_planificadas;
-  const varIcon={'Chícharo':'🫛','Chícharo CT':'🫛','Betabel':'🟣','Rábano':'🔴','Cilantro':'🌿','Girasol':'🌻','Spicy Mix':'🌶️'}[l.variedad]||'🌱';
+  const varIcon={'Ch√≠charo':'ü´õ','Ch√≠charo CT':'ü´õ','Betabel':'üü£','R√°bano':'üî¥','Cilantro':'üåø','Girasol':'üåª','Spicy Mix':'üå∂Ô∏è'}[l.variedad]||'üå±';
 
   let accionBtn='';
   if(!l.sembrado_confirmado){
-    accionBtn=`<button class="sc-accion btn-sembrar" onclick="event.stopPropagation();confirmarSiembra('${l.id}')">🌾 Confirmar siembra</button>`;
+    accionBtn=`<button class="sc-accion btn-sembrar" onclick="event.stopPropagation();confirmarSiembra('${l.id}')">üåæ Confirmar siembra</button>`;
   }else if(!l.cosecha_real){
-    accionBtn=`<button class="sc-accion btn-cosechar" onclick="event.stopPropagation();registrarCosecha('${l.id}')">✂️ Registrar cosecha</button>`;
+    accionBtn=`<button class="sc-accion btn-cosechar" onclick="event.stopPropagation();registrarCosecha('${l.id}')">‚úÇÔ∏è Registrar cosecha</button>`;
   }else{
     accionBtn=`<button class="sc-accion btn-ver" onclick="event.stopPropagation();verDetalle('${l.id}')">Ver detalle</button>`;
   }
@@ -672,14 +671,14 @@ function siembraCard(l,today){
       <span class="sc-status ${statusClass}">${statusTxt}</span>
     </div>
     <div class="sc-grid">
-      <div class="sc-dato"><div class="sc-dato-label">Lote</div><div class="sc-dato-val" style="font-family:monospace;font-size:11px">${l.lote||'—'}</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Lote</div><div class="sc-dato-val" style="font-family:monospace;font-size:11px">${l.lote||'‚Äî'}</div></div>
       <div class="sc-dato"><div class="sc-dato-label">Charolas</div><div class="sc-dato-val highlight">${charConf} charolas</div></div>
-      <div class="sc-dato"><div class="sc-dato-label">Semilla / charola</div><div class="sc-dato-val">${l.gr_semilla||'—'} g</div></div>
-      <div class="sc-dato"><div class="sc-dato-label">Días de cultivo</div><div class="sc-dato-val">${l.dias_cultivo||'—'} días</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Semilla / charola</div><div class="sc-dato-val">${l.gr_semilla||'‚Äî'} g</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">D√≠as de cultivo</div><div class="sc-dato-val">${l.dias_cultivo||'‚Äî'} d√≠as</div></div>
       <div class="sc-dato"><div class="sc-dato-label">Siembra</div><div class="sc-dato-val ${esHoySembrar?'amber':''}">${l.dia_siembra||''} ${fechaSiembra?fmtDateShort(l.fecha_siembra):''}</div></div>
       <div class="sc-dato"><div class="sc-dato-label">Cosecha</div><div class="sc-dato-val ${esHoyCosechar?'amber':''}">${l.dia_cosecha||''} ${fechaCosecha?fmtDateShort(l.fecha_cosecha):''}</div></div>
-      <div class="sc-dato"><div class="sc-dato-label">Est. / charola</div><div class="sc-dato-val">${l.cosecha_est_charola||'—'} g</div></div>
-      <div class="sc-dato"><div class="sc-dato-label">Cosecha estimada</div><div class="sc-dato-val">${(typeof l.cosecha_estimada==='number'?l.cosecha_estimada:'')||'—'} g</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Est. / charola</div><div class="sc-dato-val">${l.cosecha_est_charola||'‚Äî'} g</div></div>
+      <div class="sc-dato"><div class="sc-dato-label">Cosecha estimada</div><div class="sc-dato-val">${(typeof l.cosecha_estimada==='number'?l.cosecha_estimada:'')||'‚Äî'} g</div></div>
       ${l.cosecha_real?`<div class="sc-dato"><div class="sc-dato-label">Cosecha real</div><div class="sc-dato-val highlight">${l.cosecha_real} g</div></div>`:''}
       ${l.charolas_cosechadas?`<div class="sc-dato"><div class="sc-dato-label">Charolas cosechadas</div><div class="sc-dato-val highlight">${l.charolas_cosechadas}</div></div>`:''}
     </div>
@@ -689,50 +688,50 @@ function siembraCard(l,today){
 
 function setProdFilter(f){prodFilter=f;goTo('produccion');}
 
-// ══ NUEVO LOTE (encargado registra la siembra planificada) ═════════════════════
+// ‚ïê‚ïê NUEVO LOTE (encargado registra la siembra planificada) ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function openNuevoLote(){
   const body=document.getElementById('modal-body');
   const today=todayKey();
   body.innerHTML=`
     <div class="modal-handle"></div>
-    <div class="modal-title">🌾 Nuevo lote de siembra</div>
+    <div class="modal-title">üåæ Nuevo lote de siembra</div>
     <div class="modal-sub">Registra las charolas planificadas para esta semana</div>
     <div class="field"><label>Variedad <span style="color:var(--danger)">*</span></label>
       <select id="nl-variedad" onchange="updateNLLote()">
         <option value="">Seleccionar...</option>
-        ${['Chícharo','Chícharo CT (fresco)','Chícharo CT (vivo)','Betabel','Rábano','Cilantro','Girasol','Spicy Mix'].map(v=>`<option>${v}</option>`).join('')}
+        ${['Ch√≠charo','Ch√≠charo CT (fresco)','Ch√≠charo CT (vivo)','Betabel','R√°bano','Cilantro','Girasol','Spicy Mix'].map(v=>`<option>${v}</option>`).join('')}
       </select></div>
     <div class="field"><label>Tipo</label>
       <select id="nl-tipo"><option value="Fresco">Fresco</option><option value="Vivo">Vivo</option></select></div>
     <div class="field"><label>Lote <span style="color:var(--danger)">*</span></label>
       <input id="nl-lote" type="text" placeholder="CRF-XXYY-VAR">
-      <div class="field-hint">Se genera automático al elegir variedad</div></div>
+      <div class="field-hint">Se genera autom√°tico al elegir variedad</div></div>
     <div class="field"><label>Charolas a sembrar <span style="color:var(--danger)">*</span></label>
       <input id="nl-charolas" type="number" placeholder="Ej. 10" oninput="calcNL()"></div>
-    <div class="field"><label>Día de siembra</label>
+    <div class="field"><label>D√≠a de siembra</label>
       <select id="nl-dia-siembra">
         <option value="">Seleccionar...</option>
-        ${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map(d=>`<option>${d}</option>`).join('')}
+        ${['Lunes','Martes','Mi√©rcoles','Jueves','Viernes','S√°bado'].map(d=>`<option>${d}</option>`).join('')}
       </select></div>
     <div class="field"><label>Fecha de siembra <span style="color:var(--danger)">*</span></label>
       <input id="nl-fecha-siembra" type="date" value="${today}"></div>
     <div class="field"><label>Gramos de semilla por charola <span style="color:var(--danger)">*</span></label>
-      <input id="nl-gr-semilla" type="number" placeholder="Auto según variedad" oninput="calcNL()"></div>
+      <input id="nl-gr-semilla" type="number" placeholder="Auto seg√∫n variedad" oninput="calcNL()"></div>
     <div class="field"><label>Total semilla (g)</label>
-      <div class="field-val" id="nl-total-semilla">—</div></div>
-    <div class="field"><label>Días de cultivo</label>
-      <input id="nl-dias" type="number" placeholder="Auto según variedad" oninput="calcFechaCosecha()"></div>
-    <div class="field"><label>Día de cosecha</label>
+      <div class="field-val" id="nl-total-semilla">‚Äî</div></div>
+    <div class="field"><label>D√≠as de cultivo</label>
+      <input id="nl-dias" type="number" placeholder="Auto seg√∫n variedad" oninput="calcFechaCosecha()"></div>
+    <div class="field"><label>D√≠a de cosecha</label>
       <select id="nl-dia-cosecha">
         <option value="">Seleccionar...</option>
-        ${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map(d=>`<option>${d}</option>`).join('')}
+        ${['Lunes','Martes','Mi√©rcoles','Jueves','Viernes','S√°bado'].map(d=>`<option>${d}</option>`).join('')}
       </select></div>
     <div class="field"><label>Fecha de cosecha</label>
       <input id="nl-fecha-cosecha" type="date"></div>
     <div class="field"><label>Cosecha estimada por charola (g)</label>
-      <input id="nl-cos-est" type="number" placeholder="Auto según variedad" oninput="calcNL()"></div>
+      <input id="nl-cos-est" type="number" placeholder="Auto seg√∫n variedad" oninput="calcNL()"></div>
     <div class="field"><label>Cosecha estimada total (g)</label>
-      <div class="field-val" id="nl-cos-total">—</div></div>
+      <div class="field-val" id="nl-cos-total">‚Äî</div></div>
     <div class="field"><label>Comentarios</label>
       <textarea id="nl-comentarios" placeholder="Observaciones del lote..."></textarea></div>
     <div class="btn-row">
@@ -767,8 +766,8 @@ function calcNL(){
   const est=parseFloat(document.getElementById('nl-cos-est')?.value)||0;
   const tot=document.getElementById('nl-total-semilla');
   const cosT=document.getElementById('nl-cos-total');
-  if(tot)tot.textContent=ch&&gr?`${ch*gr} g`:'—';
-  if(cosT)cosT.textContent=ch&&est?`${ch*est} g`:'—';
+  if(tot)tot.textContent=ch&&gr?`${ch*gr} g`:'‚Äî';
+  if(cosT)cosT.textContent=ch&&est?`${ch*est} g`:'‚Äî';
 }
 function calcFechaCosecha(){
   const fs=document.getElementById('nl-fecha-siembra')?.value;
@@ -827,25 +826,25 @@ async function guardarNuevoLote(){
   if(!syncedL&&getURL()){const p=getPend();p.push({id:nuevoLote.id,tipo:'lotes_produccion',fecha:nuevoLote.fecha_registro,datos:nuevoLote});setPend(p);updatePendBadge();}
   _savingLote=false;
   closeModal();
-  toast('Lote registrado ✓');
+  toast('Lote registrado ‚úì');
   goTo('produccion');
 }
 
-// ══ CONFIRMAR SIEMBRA ════════════════════════════════════════════════════════
+// ‚ïê‚ïê CONFIRMAR SIEMBRA ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function confirmarSiembra(id){
   const sid=String(id);
   const lote=getLotes().find(l=>String(l.id)===sid);if(!lote)return;
   const body=document.getElementById('modal-body');
   body.innerHTML=`
     <div class="modal-handle"></div>
-    <div class="modal-title">🌾 Confirmar siembra</div>
-    <div class="modal-sub">${lote.variedad} · ${lote.lote}</div>
+    <div class="modal-title">üåæ Confirmar siembra</div>
+    <div class="modal-sub">${lote.variedad} ¬∑ ${lote.lote}</div>
     <div style="background:var(--bg2);border-radius:var(--radius);padding:12px;margin-bottom:14px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div><div style="font-size:10px;color:var(--text3)">Planificadas</div><div style="font-size:18px;font-weight:700;color:var(--text)">${lote.charolas_planificadas} charolas</div></div>
         <div><div style="font-size:10px;color:var(--text3)">Semilla/charola</div><div style="font-size:18px;font-weight:700;color:var(--text)">${lote.gr_semilla} g</div></div>
         <div><div style="font-size:10px;color:var(--text3)">Total semilla</div><div style="font-size:14px;font-weight:600;color:var(--green)">${lote.total_semilla} g</div></div>
-        <div><div style="font-size:10px;color:var(--text3)">Cosecha estimada</div><div style="font-size:14px;font-weight:600;color:var(--green)">${lote.cosecha_estimada||'—'} g</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Cosecha estimada</div><div style="font-size:14px;font-weight:600;color:var(--green)">${lote.cosecha_estimada||'‚Äî'} g</div></div>
       </div>
     </div>
     <div class="field"><label>Charolas sembradas (real) <span style="color:var(--danger)">*</span></label>
@@ -854,13 +853,13 @@ function confirmarSiembra(id){
     <div class="field"><label>Responsable <span style="color:var(--danger)">*</span></label>
       <select id="cs-responsable">
         <option value="">Seleccionar...</option>
-        ${['José Carlos','Encargado de producción','Personal de producción'].map(o=>`<option>${o}</option>`).join('')}
+        ${['Jos√© Carlos','Encargado de producci√≥n','Personal de producci√≥n'].map(o=>`<option>${o}</option>`).join('')}
       </select></div>
     <div class="field"><label>Observaciones</label>
-      <textarea id="cs-obs" placeholder="Sin novedad / Observación..."></textarea></div>
+      <textarea id="cs-obs" placeholder="Sin novedad / Observaci√≥n..."></textarea></div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-amber" onclick="guardarSiembra('${id}')">✓ Confirmar siembra</button>
+      <button class="btn btn-amber" onclick="guardarSiembra('${id}')">‚úì Confirmar siembra</button>
     </div>`;
   document.getElementById('modal-ov').style.display='flex';
 }
@@ -886,25 +885,25 @@ async function guardarSiembra(id){
   if(!syncedS&&getURL()){const p=getPend();p.push(rec);setPend(p);updatePendBadge();}
   _savingSiembra=false;
   closeModal();
-  toast('Siembra confirmada ✓');
+  toast('Siembra confirmada ‚úì');
   goTo('produccion');
 }
 
-// ══ REGISTRAR COSECHA ═══════════════════════════════════════════════════════
+// ‚ïê‚ïê REGISTRAR COSECHA ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function registrarCosecha(id){
   const sid=String(id);
   const lote=getLotes().find(l=>String(l.id)===sid);if(!lote)return;
   const body=document.getElementById('modal-body');
   body.innerHTML=`
     <div class="modal-handle"></div>
-    <div class="modal-title">✂️ Registrar cosecha</div>
-    <div class="modal-sub">${lote.variedad} · ${lote.lote}</div>
+    <div class="modal-title">‚úÇÔ∏è Registrar cosecha</div>
+    <div class="modal-sub">${lote.variedad} ¬∑ ${lote.lote}</div>
     <div style="background:var(--bg2);border-radius:var(--radius);padding:12px;margin-bottom:14px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div><div style="font-size:10px;color:var(--text3)">Sembradas</div><div style="font-size:18px;font-weight:700;color:var(--text)">${lote.charolas_confirmadas||lote.charolas_planificadas} charolas</div></div>
-        <div><div style="font-size:10px;color:var(--text3)">Cosecha estimada</div><div style="font-size:18px;font-weight:700;color:var(--green)">${lote.cosecha_estimada||'—'} g</div></div>
-        <div><div style="font-size:10px;color:var(--text3)">Est. por charola</div><div style="font-size:14px;font-weight:600;color:var(--text)">${lote.cosecha_est_charola||'—'} g</div></div>
-        <div><div style="font-size:10px;color:var(--text3)">Días de cultivo</div><div style="font-size:14px;font-weight:600;color:var(--text)">${lote.dias_cultivo||'—'} días</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Cosecha estimada</div><div style="font-size:18px;font-weight:700;color:var(--green)">${lote.cosecha_estimada||'‚Äî'} g</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Est. por charola</div><div style="font-size:14px;font-weight:600;color:var(--text)">${lote.cosecha_est_charola||'‚Äî'} g</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">D√≠as de cultivo</div><div style="font-size:14px;font-weight:600;color:var(--text)">${lote.dias_cultivo||'‚Äî'} d√≠as</div></div>
       </div>
     </div>
     <div class="field"><label>Charolas cosechadas <span style="color:var(--danger)">*</span></label>
@@ -912,19 +911,19 @@ function registrarCosecha(id){
     <div class="field"><label>Cosecha real en gramos <span style="color:var(--danger)">*</span></label>
       <input id="rc-gramos" type="number" placeholder="Total gramos cosechados" oninput="calcPromedio()"></div>
     <div class="field"><label>Promedio por charola</label>
-      <div class="field-val" id="rc-promedio">— g/charola</div></div>
+      <div class="field-val" id="rc-promedio">‚Äî g/charola</div></div>
     <div class="field"><label>Contenedores 50g</label>
-      <div class="field-val" id="rc-contenedores">—</div></div>
+      <div class="field-val" id="rc-contenedores">‚Äî</div></div>
     <div class="field"><label>Responsable <span style="color:var(--danger)">*</span></label>
       <select id="rc-responsable">
         <option value="">Seleccionar...</option>
-        ${['José Carlos','Encargado de producción','Personal de producción'].map(o=>`<option>${o}</option>`).join('')}
+        ${['Jos√© Carlos','Encargado de producci√≥n','Personal de producci√≥n'].map(o=>`<option>${o}</option>`).join('')}
       </select></div>
     <div class="field"><label>Comentarios</label>
       <textarea id="rc-comentarios" placeholder="Sin novedad / Incidencia..."></textarea></div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-primary" style="background:var(--info)" onclick="guardarCosecha('${id}')">✓ Guardar cosecha</button>
+      <button class="btn btn-primary" style="background:var(--info)" onclick="guardarCosecha('${id}')">‚úì Guardar cosecha</button>
     </div>`;
   document.getElementById('modal-ov').style.display='flex';
 }
@@ -934,8 +933,8 @@ function calcPromedio(){
   const gr=parseFloat(document.getElementById('rc-gramos')?.value)||0;
   const prom=document.getElementById('rc-promedio');
   const cont=document.getElementById('rc-contenedores');
-  if(prom)prom.textContent=ch&&gr?`${Math.round(gr/ch)} g/charola`:'— g/charola';
-  if(cont)cont.textContent=gr?`${Math.round(gr/50)} contenedores de 50g`:'—';
+  if(prom)prom.textContent=ch&&gr?`${Math.round(gr/ch)} g/charola`:'‚Äî g/charola';
+  if(cont)cont.textContent=gr?`${Math.round(gr/50)} contenedores de 50g`:'‚Äî';
 }
 
 let _savingCosecha=false;
@@ -964,30 +963,30 @@ async function guardarCosecha(id){
   if(!syncedC&&getURL()){const p=getPend();p.push(rec);setPend(p);updatePendBadge();}
   _savingCosecha=false;
   closeModal();
-  toast('Cosecha registrada: '+gr+'g ✓');
+  toast('Cosecha registrada: '+gr+'g ‚úì');
   goTo('produccion');
 }
 
-// ══ VER DETALLE ═══════════════════════════════════════════════════════════════
+// ‚ïê‚ïê VER DETALLE ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function verDetalle(id){
   const sid=String(id);
   const l=getLotes().find(x=>String(x.id)===sid);if(!l)return;
   const body=document.getElementById('modal-body');
-  const varIcon={'Chícharo':'🫛','Chícharo CT (fresco)':'🫛','Chícharo CT (vivo)':'🫛','Betabel':'🟣','Rábano':'🔴','Cilantro':'🌿','Girasol':'🌻','Spicy Mix':'🌶️'}[l.variedad]||'🌱';
+  const varIcon={'Ch√≠charo':'ü´õ','Ch√≠charo CT (fresco)':'ü´õ','Ch√≠charo CT (vivo)':'ü´õ','Betabel':'üü£','R√°bano':'üî¥','Cilantro':'üåø','Girasol':'üåª','Spicy Mix':'üå∂Ô∏è'}[l.variedad]||'üå±';
   const rendimiento=l.cosecha_real&&l.cosecha_estimada?Math.round((l.cosecha_real/l.cosecha_estimada)*100):null;
   body.innerHTML=`
     <div class="modal-handle"></div>
     <div class="modal-title">${varIcon} ${l.variedad}</div>
-    <div class="modal-sub" style="font-family:monospace">${l.lote} · ${l.tipo_variedad||l.tipo||'Fresco'}</div>
+    <div class="modal-sub" style="font-family:monospace">${l.lote} ¬∑ ${l.tipo_variedad||l.tipo||'Fresco'}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       ${[
         ['Charolas planificadas',l.charolas_planificadas],
-        ['Charolas confirmadas',l.charolas_confirmadas||'—'],
+        ['Charolas confirmadas',l.charolas_confirmadas||'‚Äî'],
         ['Semilla/charola',`${l.gr_semilla} g`],
         ['Total semilla',`${l.total_semilla} g`],
-        ['Días de cultivo',`${l.dias_cultivo} días`],
-        ['Cosecha est./charola',`${l.cosecha_est_charola||'—'} g`],
-        ['Cosecha estimada total',`${l.cosecha_estimada||'—'} g`],
+        ['D√≠as de cultivo',`${l.dias_cultivo} d√≠as`],
+        ['Cosecha est./charola',`${l.cosecha_est_charola||'‚Äî'} g`],
+        ['Cosecha estimada total',`${l.cosecha_estimada||'‚Äî'} g`],
         ['Siembra',`${l.dia_siembra||''} ${l.fecha_siembra?fmtDateShort(l.fecha_siembra):''}`],
         ['Cosecha programada',`${l.dia_cosecha||''} ${l.fecha_cosecha?fmtDateShort(l.fecha_cosecha):''}`],
         l.cosecha_real?['Cosecha REAL',`${l.cosecha_real} g`]:['Cosecha real','Pendiente'],
@@ -1003,15 +1002,15 @@ function verDetalle(id){
     </div>
     ${l.comentarios?`<div style="background:var(--bg2);border-radius:8px;padding:10px;font-size:12px;color:var(--text2);margin-bottom:12px"><b>Comentarios:</b> ${l.comentarios}</div>`:''}
     <div class="btn-row">
-      ${!l.sembrado_confirmado?`<button class="btn btn-amber" onclick="closeModal();confirmarSiembra('${l.id}')">🌾 Confirmar siembra</button>`:''}
-      ${l.sembrado_confirmado&&!l.cosecha_real?`<button class="btn btn-primary" style="background:var(--info)" onclick="closeModal();registrarCosecha('${l.id}')">✂️ Registrar cosecha</button>`:''}
-      <button class="btn btn-secondary" onclick="closeModal();editarLote('${l.id}')">✏️ Editar</button>
+      ${!l.sembrado_confirmado?`<button class="btn btn-amber" onclick="closeModal();confirmarSiembra('${l.id}')">üåæ Confirmar siembra</button>`:''}
+      ${l.sembrado_confirmado&&!l.cosecha_real?`<button class="btn btn-primary" style="background:var(--info)" onclick="closeModal();registrarCosecha('${l.id}')">‚úÇÔ∏è Registrar cosecha</button>`:''}
+      <button class="btn btn-secondary" onclick="closeModal();editarLote('${l.id}')">‚úèÔ∏è Editar</button>
       <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
     </div>`;
   document.getElementById('modal-ov').style.display='flex';
 }
 
-// ══ REGISTRAR (inocuidad) ════════════════════════════════════════════════════
+// ‚ïê‚ïê REGISTRAR (inocuidad) ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function renderRegistrar(el){
   const doneIds=new Set(getRecs().filter(r=>r.fecha.startsWith(todayKey())).map(r=>r.tipo));
   el.innerHTML=`<div class="pad">
@@ -1020,38 +1019,38 @@ function renderRegistrar(el){
       <div class="reg-card ${doneIds.has(r.id)?'done':''}" onclick="openForm('${r.id}')">
         <div class="reg-icon">${r.icon}</div>
         <div class="reg-name">${r.name}</div>
-        <div class="reg-code">${r.code} · ${r.freq}</div>
-        <div class="reg-st ${doneIds.has(r.id)?'s-done':'s-pend'}">${doneIds.has(r.id)?'✓ Hoy':'Registrar'}</div>
+        <div class="reg-code">${r.code} ¬∑ ${r.freq}</div>
+        <div class="reg-st ${doneIds.has(r.id)?'s-done':'s-pend'}">${doneIds.has(r.id)?'‚úì Hoy':'Registrar'}</div>
       </div>`).join('')}</div>
   </div>`;
 }
 
-// ══ HISTORIAL ════════════════════════════════════════════════════════════════
+// ‚ïê‚ïê HISTORIAL ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function renderHistorial(el){
   const recs=getRecs(),pendIds=new Set(getPend().map(r=>r.id));
   const filters=['todos',...REGS.map(r=>r.id),'cosecha','siembra_confirmada'];
   const labels=Object.fromEntries([['todos','Todos'],...REGS.map(r=>[r.id,r.name]),['cosecha','Cosecha'],['siembra_confirmada','Siembras']]);
   const filtered=histFilter==='todos'?recs:recs.filter(r=>r.tipo===histFilter);
   const iconMap=Object.fromEntries(REGS.map(r=>[r.id,r.icon]));
-  iconMap['cosecha']='🌱';iconMap['siembra_confirmada']='🌾';
+  iconMap['cosecha']='üå±';iconMap['siembra_confirmada']='üåæ';
   el.innerHTML=`<div class="pad">
     <div class="chip-row">${filters.map(f=>`<span class="chip ${histFilter===f?'active':''}" onclick="setHF('${f}')">${labels[f]||f}</span>`).join('')}</div>
-    ${filtered.length===0?`<div class="empty">Sin registros aún.</div>`:''}
+    ${filtered.length===0?`<div class="empty">Sin registros a√∫n.</div>`:''}
     ${filtered.map(r=>{
-      const icon=iconMap[r.tipo]||'📋';
+      const icon=iconMap[r.tipo]||'üìã';
       const name=labels[r.tipo]||r.tipo;
       const d=r.datos||{};
       const temp=parseFloat(d.temp);
-      const tBadge=d.temp?`<span class="${temp<=4?'temp-ok':'temp-bad'}">${d.temp}°C</span> `:'';
-      const sBadge=pendIds.has(r.id)?`<span class="badge badge-pend">⏳</span>`:`<span class="badge badge-ok">✓</span>`;
+      const tBadge=d.temp?`<span class="${temp<=4?'temp-ok':'temp-bad'}">${d.temp}¬∞C</span> `:'';
+      const sBadge=pendIds.has(r.id)?`<span class="badge badge-pend">‚è≥</span>`:`<span class="badge badge-ok">‚úì</span>`;
       return `<div class="hist-item">
         <div class="hist-icon">${icon}</div>
         <div style="flex:1;min-width:0">
           <div class="hist-title">${name} ${tBadge}${sBadge}</div>
-          <div class="hist-meta">${fmtDate(r.fecha)} · ${d.responsable||''}</div>
+          <div class="hist-meta">${fmtDate(r.fecha)} ¬∑ ${d.responsable||''}</div>
           ${d.lote||d.lote_proveedor?`<div class="hist-lote">${d.lote||d.lote_proveedor}</div>`:''}
           ${d.area||d.variedad?`<div class="hist-meta">${d.area||d.variedad}</div>`:''}
-          ${d.gramos_real?`<div class="hist-meta" style="color:var(--ok)">Cosecha real: ${d.gramos_real}g · Promedio: ${d.promedio}g/charola</div>`:''}
+          ${d.gramos_real?`<div class="hist-meta" style="color:var(--ok)">Cosecha real: ${d.gramos_real}g ¬∑ Promedio: ${d.promedio}g/charola</div>`:''}
           ${d.problema?`<div class="hist-meta" style="color:var(--danger)">${d.problema}</div>`:''}
         </div>
       </div>`;
@@ -1060,7 +1059,7 @@ function renderHistorial(el){
 }
 function setHF(f){histFilter=f;goTo('historial');}
 
-// ══ ADMIN ════════════════════════════════════════════════════════════════════
+// ‚ïê‚ïê ADMIN ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function renderAdmin(el){
   const recs=getRecs(),pend=getPend(),url=getURL(),lotes=getLotes();
   const hoy=recs.filter(r=>r.fecha.startsWith(todayKey())).length;
@@ -1075,52 +1074,84 @@ function renderAdmin(el){
   }
   return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);
 }
-function doGet(){
-  return ContentService.createTextOutput(JSON.stringify({ok:true,app:'CityRootsFarm'})).setMimeType(ContentService.MimeType.JSON);
+function doGet(e){
+  var p=(e&&e.parameter)||{};
+  var ss=SpreadsheetApp.getActiveSpreadsheet();
+  // Leer lotes
+  var lotes=sheetToArray(ss,'lotes_produccion');
+  // Leer confirmaciones de siembra y cruzar
+  var siembras=sheetToArray(ss,'siembra_confirmada');
+  siembras.forEach(function(s){
+    var match=lotes.find(function(l){return l.lote===s.lote&&l.variedad===s.variedad;});
+    if(match){match.sembrado_confirmado='TRUE';match.charolas_confirmadas=s.charolas_confirmadas;match.responsable_siembra=s.responsable;}
+  });
+  // Leer cosechas y cruzar
+  var cosechas=sheetToArray(ss,'cosecha_semanal');
+  cosechas.forEach(function(c){
+    var match=lotes.find(function(l){return l.lote===c.lote&&l.variedad===c.variedad;});
+    if(match){match.cosecha_real=c.gramos_real;match.charolas_cosechadas=c.charolas;match.promedio_cosecha=c.promedio;match.contenedores_50g=c.contenedores_50g;}
+  });
+  var result=JSON.stringify({ok:true,app:'CityRootsFarm',lotes:lotes});
+  // JSONP support
+  if(p.callback)return ContentService.createTextOutput(p.callback+'('+result+')').setMimeType(ContentService.MimeType.JAVASCRIPT);
+  return ContentService.createTextOutput(result).setMimeType(ContentService.MimeType.JSON);
+}
+function sheetToArray(ss,name){
+  var sh=ss.getSheetByName(name);
+  if(!sh||sh.getLastRow()<2)return [];
+  var data=sh.getDataRange().getValues();
+  var headers=data[0];
+  var arr=[];
+  for(var i=1;i<data.length;i++){
+    var obj={};
+    for(var j=0;j<headers.length;j++)obj[headers[j]]=data[i][j];
+    arr.push(obj);
+  }
+  return arr;
 }`;
   el.innerHTML=`<div class="pad">
-    <div class="sec">Conexión con Google Sheets</div>
+    <div class="sec">Conexi√≥n con Google Sheets</div>
     <div class="setup-box">
       <div class="setup-title">URL del Apps Script
-        ${url?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
+        ${url?`<span class="badge badge-ok">‚úì Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Pega aquí la URL de tu Apps Script</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Pega aqu√≠ la URL de tu Apps Script</div>
       <input class="url-input" id="url-inp" type="url" placeholder="https://script.google.com/macros/s/..." value="${url||''}">
       <div class="btn-row" style="margin-top:9px">
         <button class="btn btn-primary" onclick="saveURL()">Guardar URL</button>
         <button class="btn btn-secondary" onclick="testConn()">Probar</button>
       </div>
     </div>
-    ${pend.length?`<div class="banner banner-warn" style="margin-bottom:10px">📡 ${pend.length} pendiente${pend.length>1?'s':''}
+    ${pend.length?`<div class="banner banner-warn" style="margin-bottom:10px">üì° ${pend.length} pendiente${pend.length>1?'s':''}
       <button class="btn btn-primary" style="flex:0;padding:5px 12px;font-size:11px;margin-left:auto" onclick="flushPending().then(()=>render('admin'))">Sincronizar</button>
     </div>`:''}
-    <div class="sec" style="margin-top:4px">Estadísticas</div>
+    <div class="sec" style="margin-top:4px">Estad√≠sticas</div>
     <div class="stats" style="margin-bottom:13px">
       <div class="stat"><div class="stat-n n-ok">${hoy}</div><div class="stat-l">Hoy</div></div>
       <div class="stat"><div class="stat-n n-info">${sem}</div><div class="stat-l">Semana</div></div>
       <div class="stat"><div class="stat-n n-amber">${lotes.length}</div><div class="stat-l">Lotes</div></div>
     </div>
     <div class="sec">Manual de Inocuidad</div>
-    <div class="exp-card" onclick="abrirManual()"><div class="exp-icon" style="background:#E8F5E9">📘</div><div><div class="exp-title">Manual Integrado de Inocuidad</div><div class="exp-sub">BPM · POES · HACCP · Food Safety Plan v1.0</div></div></div>
+    <div class="exp-card" onclick="abrirManual()"><div class="exp-icon" style="background:#E8F5E9">üìò</div><div><div class="exp-title">Manual Integrado de Inocuidad</div><div class="exp-sub">BPM ¬∑ POES ¬∑ HACCP ¬∑ Food Safety Plan v1.0</div></div></div>
     <div class="sec" style="margin-top:4px">Exportar para certificador</div>
-    <div class="exp-card" onclick="exportCSV()"><div class="exp-icon" style="background:var(--ok-bg)">📊</div><div><div class="exp-title">Exportar registros a Excel</div><div class="exp-sub">Todos los registros de inocuidad · ${recs.length} entradas</div></div></div>
-    <div class="exp-card" onclick="exportLotesCSV()"><div class="exp-icon" style="background:var(--amber-bg)">🌱</div><div><div class="exp-title">Exportar bitácora de producción</div><div class="exp-sub">Todos los lotes de siembra y cosecha · ${lotes.length} lotes</div></div></div>
-    <div class="exp-card" onclick="exportPDF()"><div class="exp-icon" style="background:var(--info-bg)">📄</div><div><div class="exp-title">Reporte PDF semanal</div><div class="exp-sub">Listo para imprimir y entregar al certificador</div></div></div>
-    <div class="sec" style="margin-top:12px">Código Apps Script</div>
+    <div class="exp-card" onclick="exportCSV()"><div class="exp-icon" style="background:var(--ok-bg)">üìä</div><div><div class="exp-title">Exportar registros a Excel</div><div class="exp-sub">Todos los registros de inocuidad ¬∑ ${recs.length} entradas</div></div></div>
+    <div class="exp-card" onclick="exportLotesCSV()"><div class="exp-icon" style="background:var(--amber-bg)">üå±</div><div><div class="exp-title">Exportar bit√°cora de producci√≥n</div><div class="exp-sub">Todos los lotes de siembra y cosecha ¬∑ ${lotes.length} lotes</div></div></div>
+    <div class="exp-card" onclick="exportPDF()"><div class="exp-icon" style="background:var(--info-bg)">üìÑ</div><div><div class="exp-title">Reporte PDF semanal</div><div class="exp-sub">Listo para imprimir y entregar al certificador</div></div></div>
+    <div class="sec" style="margin-top:12px">C√≥digo Apps Script</div>
     <div class="code-block">${script.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-    <button class="btn btn-secondary" style="margin-bottom:12px" onclick="copyScript()">📋 Copiar código</button>
-    <div class="exp-card" onclick="confirmClear()" style="border-color:var(--danger)"><div class="exp-icon" style="background:var(--danger-bg)">🗑️</div><div><div class="exp-title" style="color:var(--danger)">Limpiar registros locales</div><div class="exp-sub">Exporta primero. No borra Sheets.</div></div></div>
+    <button class="btn btn-secondary" style="margin-bottom:12px" onclick="copyScript()">üìã Copiar c√≥digo</button>
+    <div class="exp-card" onclick="confirmClear()" style="border-color:var(--danger)"><div class="exp-icon" style="background:var(--danger-bg)">üóëÔ∏è</div><div><div class="exp-title" style="color:var(--danger)">Limpiar registros locales</div><div class="exp-sub">Exporta primero. No borra Sheets.</div></div></div>
   </div>`;
 }
 
-// ══ FORMS (inocuidad) ════════════════════════════════════════════════════════
+// ‚ïê‚ïê FORMS (inocuidad) ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function openForm(id){
   const reg=REGS.find(r=>r.id===id);if(!reg)return;
   const body=document.getElementById('modal-body');
   body.innerHTML=`
     <div class="modal-handle"></div>
     <div class="modal-title">${reg.icon} ${reg.name}</div>
-    <div class="modal-sub">${reg.code} · ${new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})}</div>
+    <div class="modal-sub">${reg.code} ¬∑ ${new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})}</div>
     ${reg.fields.map(f=>`<div class="field">
       <label>${f.label}${f.req?` <span style="color:var(--danger)">*</span>`:''}</label>
       ${f.type==='select'?`<select id="f_${f.id}"><option value="">Seleccionar...</option>${(f.opts||[]).map(o=>`<option>${o}</option>`).join('')}</select>`:
@@ -1155,60 +1186,60 @@ async function submitForm(id){
   if(!synced&&getURL()){const p=getPend();p.push(record);setPend(p);updatePendBadge();}
   _savingForm=false;
   closeModal();
-  toast(synced?'✓ Guardado y enviado a Sheets':'✓ Guardado localmente');
+  toast(synced?'‚úì Guardado y enviado a Sheets':'‚úì Guardado localmente');
   render(page);
 }
 
-// ══ ADMIN ACTIONS ════════════════════════════════════════════════════════════
+// ‚ïê‚ïê ADMIN ACTIONS ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 function saveURL(){
   const v=document.getElementById('url-inp')?.value?.trim();
-  if(!v||!v.startsWith('https://')){toast('URL inválida');return;}
-  setURL(v);setSyncUI('ok');toast('URL guardada ✓');
+  if(!v||!v.startsWith('https://')){toast('URL inv√°lida');return;}
+  setURL(v);setSyncUI('ok');toast('URL guardada ‚úì');
   testConn();setTimeout(()=>flushPending(),800);
 }
 async function testConn(){
   const url=getURL();if(!url){toast('Primero guarda la URL');return;}
   setSyncUI('ing');
-  try{await fetch(url,{mode:'no-cors'});setSyncUI('ok');toast('Conexión con Sheets: OK ✓');}
-  catch(e){setSyncUI('off');toast('Sin conexión a internet');}
+  try{await fetch(url,{mode:'no-cors'});setSyncUI('ok');toast('Conexi√≥n con Sheets: OK ‚úì');}
+  catch(e){setSyncUI('off');toast('Sin conexi√≥n a internet');}
 }
 function copyScript(){
   const code=`function doPost(e){var ss=SpreadsheetApp.getActiveSpreadsheet();var data=JSON.parse(e.postData.contents);if(data.action==='append'){var sh=ss.getSheetByName(data.data.tipo)||ss.insertSheet(data.data.tipo);if(sh.getLastRow()===0)sh.appendRow(Object.keys(data.data));sh.appendRow(Object.values(data.data));}return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);}function doGet(){return ContentService.createTextOutput(JSON.stringify({ok:true,app:'CityRootsFarm'})).setMimeType(ContentService.MimeType.JSON);}`;
-  navigator.clipboard.writeText(code).then(()=>toast('Código copiado ✓')).catch(()=>toast('Copia el código manualmente'));
+  navigator.clipboard.writeText(code).then(()=>toast('C√≥digo copiado ‚úì')).catch(()=>toast('Copia el c√≥digo manualmente'));
 }
 function exportCSV(){
   const recs=getRecs();if(!recs.length){toast('Sin registros');return;}
-  const rows=[['ID','Fecha','Hora','Tipo','Código','Lote','Responsable','Área','Temperatura','Observaciones','Detalle']];
+  const rows=[['ID','Fecha','Hora','Tipo','C√≥digo','Lote','Responsable','√Årea','Temperatura','Observaciones','Detalle']];
   recs.forEach(r=>{const reg=REGS.find(x=>x.id===r.tipo)||{name:r.tipo,code:''};const d=r.datos||{};rows.push([r.id,new Date(r.fecha).toLocaleDateString('es-MX'),new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),reg.name,reg.code||r.tipo,d.lote||d.lote_proveedor||'',d.responsable||'',d.area||d.variedad||'',d.temp||'',d.observacion||d.observaciones||d.comentarios||d.problema||'',Object.entries(d).map(([k,v])=>`${k}:${v}`).join('|')]);});
   dl('\uFEFF'+rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv',`CityRootsFarm_Registros_${todayKey()}.csv`);
-  toast('Excel descargado ✓');
+  toast('Excel descargado ‚úì');
 }
 function exportLotesCSV(){
   const lotes=getLotes();if(!lotes.length){toast('Sin lotes');return;}
-  const rows=[['Lote','Semana','Variedad','Tipo','Charolas Plan.','Charolas Conf.','Semilla/charola (g)','Total Semilla (g)','Días Cultivo','Día Siembra','Fecha Siembra','Día Cosecha','Fecha Cosecha','Est./charola (g)','Cosecha Estimada (g)','Charolas Cosechadas','Cosecha Real (g)','Promedio (g/charola)','Contenedores 50g','Responsable Siembra','Responsable Cosecha','Comentarios']];
+  const rows=[['Lote','Semana','Variedad','Tipo','Charolas Plan.','Charolas Conf.','Semilla/charola (g)','Total Semilla (g)','D√≠as Cultivo','D√≠a Siembra','Fecha Siembra','D√≠a Cosecha','Fecha Cosecha','Est./charola (g)','Cosecha Estimada (g)','Charolas Cosechadas','Cosecha Real (g)','Promedio (g/charola)','Contenedores 50g','Responsable Siembra','Responsable Cosecha','Comentarios']];
   lotes.forEach(l=>rows.push([l.lote,l.lote_semana,l.variedad,l.tipo,l.charolas_planificadas,l.charolas_confirmadas||'',l.gr_semilla,l.total_semilla,l.dias_cultivo,l.dia_siembra,l.fecha_siembra?new Date(l.fecha_siembra).toLocaleDateString('es-MX'):'',l.dia_cosecha,l.fecha_cosecha?new Date(l.fecha_cosecha).toLocaleDateString('es-MX'):'',l.cosecha_est_charola||'',l.cosecha_estimada||'',l.charolas_cosechadas||'',l.cosecha_real||'',l.promedio_cosecha||'',l.contenedores_50g||'',l.responsable_siembra||'',l.responsable_cosecha||'',l.comentarios||'']));
   dl('\uFEFF'+rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv',`CityRootsFarm_Produccion_${todayKey()}.csv`);
-  toast('Bitácora de producción descargada ✓');
+  toast('Bit√°cora de producci√≥n descargada ‚úì');
 }
 function exportPDF(){
   const recs=getRecs();const now=new Date();
   const ws=new Date(now);ws.setDate(now.getDate()-now.getDay());
   const sem=recs.filter(r=>new Date(r.fecha)>=ws);
   const lotesActivos=getLotes().filter(l=>!l.cosecha_real);
-  const rows=sem.map(r=>{const reg=REGS.find(x=>x.id===r.tipo)||{name:r.tipo};const d=r.datos||{},t=parseFloat(d.temp);return `<tr><td>${new Date(r.fecha).toLocaleDateString('es-MX')}</td><td>${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td><td>${reg.name}</td><td>${d.responsable||'—'}</td><td style="font-family:monospace;font-size:11px">${d.lote||d.variedad||d.area||'—'}</td><td><span style="background:${t<=4?'#EAF3DE':'#FCEBEB'};color:${t<=4?'#1B5E35':'#A32D2D'};padding:1px 6px;border-radius:3px">${d.temp?d.temp+'°C':'—'}</span></td><td style="font-size:11px">${d.observacion||d.observaciones||d.comentarios||d.problema||d.accion||'—'}</td></tr>`;}).join('');
-  const lotesRows=lotesActivos.map(l=>`<tr><td style="font-family:monospace">${l.lote}</td><td>${l.variedad}</td><td>${l.charolas_planificadas}</td><td>${l.charolas_confirmadas||'—'}</td><td>${l.cosecha_estimada||'—'}g</td><td>${l.fecha_siembra?new Date(l.fecha_siembra).toLocaleDateString('es-MX'):''}</td><td>${l.fecha_cosecha?new Date(l.fecha_cosecha).toLocaleDateString('es-MX'):''}</td><td>${l.sembrado_confirmado?'✓ Sembrado':'Pendiente'}</td></tr>`).join('');
+  const rows=sem.map(r=>{const reg=REGS.find(x=>x.id===r.tipo)||{name:r.tipo};const d=r.datos||{},t=parseFloat(d.temp);return `<tr><td>${new Date(r.fecha).toLocaleDateString('es-MX')}</td><td>${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td><td>${reg.name}</td><td>${d.responsable||'‚Äî'}</td><td style="font-family:monospace;font-size:11px">${d.lote||d.variedad||d.area||'‚Äî'}</td><td><span style="background:${t<=4?'#EAF3DE':'#FCEBEB'};color:${t<=4?'#1B5E35':'#A32D2D'};padding:1px 6px;border-radius:3px">${d.temp?d.temp+'¬∞C':'‚Äî'}</span></td><td style="font-size:11px">${d.observacion||d.observaciones||d.comentarios||d.problema||d.accion||'‚Äî'}</td></tr>`;}).join('');
+  const lotesRows=lotesActivos.map(l=>`<tr><td style="font-family:monospace">${l.lote}</td><td>${l.variedad}</td><td>${l.charolas_planificadas}</td><td>${l.charolas_confirmadas||'‚Äî'}</td><td>${l.cosecha_estimada||'‚Äî'}g</td><td>${l.fecha_siembra?new Date(l.fecha_siembra).toLocaleDateString('es-MX'):''}</td><td>${l.fecha_cosecha?new Date(l.fecha_cosecha).toLocaleDateString('es-MX'):''}</td><td>${l.sembrado_confirmado?'‚úì Sembrado':'Pendiente'}</td></tr>`).join('');
   const w=window.open('','_blank');if(!w){toast('Permite ventanas emergentes');return;}
   w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>City Roots Farm</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#222;font-size:12px}h1{color:#2E8B57;font-size:17px;margin-bottom:2px}h2{color:#1A1A2E;font-weight:400;font-size:12px;margin-bottom:16px}h3{color:#1A1A2E;font-size:13px;margin:16px 0 6px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#1A1A2E;color:#fff;padding:6px 7px;text-align:left;font-size:11px}td{padding:5px 7px;border-bottom:0.5px solid #e0e0e0;vertical-align:top}tr:nth-child(even){background:#f9f9f9}.foot{margin-top:16px;font-size:10px;color:#888;border-top:0.5px solid #ddd;padding-top:8px}@media print{body{margin:10px}}</style></head>
-  <body><h1>🌱 City Roots Farm — Reporte Semanal</h1><h2>Semana del ${ws.toLocaleDateString('es-MX',{day:'numeric',month:'long'})} · ${now.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</h2>
+  <body><h1>üå± City Roots Farm ‚Äî Reporte Semanal</h1><h2>Semana del ${ws.toLocaleDateString('es-MX',{day:'numeric',month:'long'})} ¬∑ ${now.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</h2>
   <h3>Registros de inocuidad (${sem.length})</h3>
-  ${sem.length?`<table><thead><tr><th>Fecha</th><th>Hora</th><th>Registro</th><th>Responsable</th><th>Lote/Área</th><th>Temp.</th><th>Observaciones</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>Sin registros esta semana.</p>'}
-  ${lotesActivos.length?`<h3>Lotes de producción activos (${lotesActivos.length})</h3><table><thead><tr><th>Lote</th><th>Variedad</th><th>Charolas Plan.</th><th>Charolas Conf.</th><th>Cosecha Est.</th><th>F. Siembra</th><th>F. Cosecha</th><th>Estado</th></tr></thead><tbody>${lotesRows}</tbody></table>`:''}
-  <div class="foot">City Roots Farm · Sinaloa #811 B, Nuevo Repueblo, Monterrey, N.L. · Manual Integrado de Inocuidad v1.0 · FSMA 21 CFR Part 117</div>
+  ${sem.length?`<table><thead><tr><th>Fecha</th><th>Hora</th><th>Registro</th><th>Responsable</th><th>Lote/√Årea</th><th>Temp.</th><th>Observaciones</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>Sin registros esta semana.</p>'}
+  ${lotesActivos.length?`<h3>Lotes de producci√≥n activos (${lotesActivos.length})</h3><table><thead><tr><th>Lote</th><th>Variedad</th><th>Charolas Plan.</th><th>Charolas Conf.</th><th>Cosecha Est.</th><th>F. Siembra</th><th>F. Cosecha</th><th>Estado</th></tr></thead><tbody>${lotesRows}</tbody></table>`:''}
+  <div class="foot">City Roots Farm ¬∑ Sinaloa #811 B, Nuevo Repueblo, Monterrey, N.L. ¬∑ Manual Integrado de Inocuidad v1.0 ¬∑ FSMA 21 CFR Part 117</div>
   <script>window.onload=()=>window.print()<\/script></body></html>`);
   w.document.close();
 }
 function dl(content,type,filename){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);}
-function confirmClear(){if(confirm('¿Seguro? Los datos en Google Sheets NO se eliminan.')){setRecs([]);setLotes([]);toast('Registros locales eliminados');render(page);}}
+function confirmClear(){if(confirm('¬øSeguro? Los datos en Google Sheets NO se eliminan.')){setRecs([]);setLotes([]);toast('Registros locales eliminados');render(page);}}
 
 function abrirManual(){
   window.open('https://docs.google.com/document/d/1hnbkpkwb32KEbaOiyKwFqtuKtlZRxRnT/edit','_blank');
@@ -1216,10 +1247,10 @@ function abrirManual(){
 function abrirManualInfo(){
   const body=document.getElementById('modal-body');
   const partes=[
-    ['I','Food Safety Plan (FSP) — FSMA 21 CFR Part 117'],
-    ['II','Manual de Buenas Prácticas de Manufactura (BPM)'],
+    ['I','Food Safety Plan (FSP) ‚Äî FSMA 21 CFR Part 117'],
+    ['II','Manual de Buenas Pr√°cticas de Manufactura (BPM)'],
     ['III','Procedimientos POES-01 al POES-12'],
-    ['IV','Manual HACCP — Puntos Críticos de Control'],
+    ['IV','Manual HACCP ‚Äî Puntos Cr√≠ticos de Control'],
     ['V','Procedimiento de Retiro de Producto (Recall)'],
     ['VI','Manejo de Producto No Conforme'],
     ['VII','Matriz de Riesgos de Inocuidad'],
@@ -1248,22 +1279,22 @@ function abrirManualInfo(){
 function editarLote(id){
   const l=getLotes().find(x=>x.id===id);if(!l)return;
   const body=document.getElementById('modal-body');
-  const varIcon={'Chícharo':'🫛','Chícharo CT (fresco)':'🫛','Chícharo CT (vivo)':'🫛','Betabel':'🟣','Rábano':'🔴','Cilantro':'🌿','Girasol':'🌻','Spicy Mix':'🌶️'}[l.variedad]||'🌱';
+  const varIcon={'Ch√≠charo':'ü´õ','Ch√≠charo CT (fresco)':'ü´õ','Ch√≠charo CT (vivo)':'ü´õ','Betabel':'üü£','R√°bano':'üî¥','Cilantro':'üåø','Girasol':'üåª','Spicy Mix':'üå∂Ô∏è'}[l.variedad]||'üå±';
   body.innerHTML=`
     <div class="modal-handle"></div>
     <div class="modal-title">${varIcon} Editar lote</div>
-    <div class="modal-sub" style="font-family:monospace">${l.lote} · ${l.variedad}</div>
+    <div class="modal-sub" style="font-family:monospace">${l.lote} ¬∑ ${l.variedad}</div>
     <div class="field">
       <label>Charolas planificadas</label>
       <input id="el-charolas" type="number" value="${l.charolas_planificadas||''}">
-      <div class="field-hint">Total semilla: <span id="el-total-sem">${l.total_semilla||0}g</span> · Cosecha est.: <span id="el-cos-est-total">${l.cosecha_estimada||0}g</span></div>
+      <div class="field-hint">Total semilla: <span id="el-total-sem">${l.total_semilla||0}g</span> ¬∑ Cosecha est.: <span id="el-cos-est-total">${l.cosecha_estimada||0}g</span></div>
     </div>
     <div class="field">
       <label>Comentarios</label>
       <textarea id="el-comentarios">${l.comentarios||''}</textarea>
     </div>
     <div style="background:var(--warn-bg);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--warn);margin-bottom:4px">
-      ⚠️ Solo puedes editar mientras el lote no haya sido confirmado como sembrado.
+      ‚ö†Ô∏è Solo puedes editar mientras el lote no haya sido confirmado como sembrado.
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
@@ -1283,7 +1314,7 @@ function editarLote(id){
 async function guardarEdicionLote(id){
   const ch=parseFloat(document.getElementById('el-charolas')?.value);
   const comentarios=document.getElementById('el-comentarios')?.value||'';
-  if(!ch||ch<=0){toast('Ingresa una cantidad válida de charolas');return;}
+  if(!ch||ch<=0){toast('Ingresa una cantidad v√°lida de charolas');return;}
   const lotes=getLotes();
   const idx=lotes.findIndex(l=>String(l.id)===String(id));if(idx<0)return;
   // Actualizar campos
@@ -1297,7 +1328,7 @@ async function guardarEdicionLote(id){
   setLotes(lotes);
   await pushToSheet({id:lotes[idx].id,tipo:'lotes_produccion',fecha:new Date().toISOString(),datos:{...lotes[idx],accion:'edicion'}});
   closeModal();
-  toast('Lote actualizado ✓');
+  toast('Lote actualizado ‚úì');
   goTo('produccion');
 }
 function closeModal(){document.getElementById('modal-ov').style.display='none';}
@@ -1305,7 +1336,7 @@ function closeOut(e){if(e.target===document.getElementById('modal-ov'))closeModa
 let toastTimer;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);}
 
-// ══ INIT ══════════════════════════════════════════════════════════════════════
+// ‚ïê‚ïê INIT ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
 // Set default Workspace URL if none saved
 const _defaultURL='https://script.google.com/macros/s/AKfycbwWOHWORz7mvHaNAPGT2YHZzn8qhd-ldaEJ4KWRhRNlqAbA5T8rRDqzxtS-SzWhqSsvxg/exec';
 if(!getURL())setURL(_defaultURL);
@@ -1315,6 +1346,21 @@ if(_url){
   syncLotesFromSheet();
 }
 render('inicio');
+
+// Auto-sync cada 30 segundos para recibir actualizaciones de otros dispositivos
+let _autoSyncInterval=null;
+function startAutoSync(){
+  if(_autoSyncInterval)clearInterval(_autoSyncInterval);
+  _autoSyncInterval=setInterval(()=>{
+    if(!getURL()||document.getElementById('modal-ov')?.style.display==='flex')return; // No sync si modal abierto
+    syncLotesFromSheet();
+  },30000);
+}
+if(_url)startAutoSync();
+// Re-sync al volver a la app (cuando el usuario cambia de tab/app y regresa)
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&getURL()){syncLotesFromSheet();startAutoSync();}
+});
 </script>
 </body>
 </html>
