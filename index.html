@@ -9,7 +9,7 @@
 <title>City Roots Farm — Inocuidad</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Josefin+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -46,8 +46,9 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 /* TOPBAR */
 .topbar{background:var(--green-deep);padding:14px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(168,213,162,0.1)}
-.topbar-logo{width:36px;height:36px;background:linear-gradient(135deg,var(--green-mid),var(--green-bright));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 2px 8px rgba(45,90,39,0.3)}
-.topbar-title{font-family:var(--font-display);font-size:16px;font-weight:600;color:#fff;letter-spacing:0.01em}
+.topbar-logo{width:36px;height:36px;flex-shrink:0}
+.topbar-logo img{width:100%;height:100%;object-fit:contain}
+.topbar-title{font-family:'Josefin Sans',sans-serif;font-size:15px;font-weight:400;color:#fff;letter-spacing:0.18em;text-transform:uppercase}
 .topbar-sub{font-size:10px;color:rgba(168,213,162,0.6);margin-top:2px;letter-spacing:0.08em;text-transform:uppercase;font-weight:400}
 .sync-row{display:flex;align-items:center;gap:6px;margin-left:auto;background:rgba(255,255,255,0.06);padding:5px 10px;border-radius:20px}
 .sync-dot{width:7px;height:7px;border-radius:50%}
@@ -215,10 +216,10 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="topbar-logo">🌱</div>
+    <div class="topbar-logo"><img src="ISOTIPO_VERDE_nobg.png" alt="City Roots Farm"></div>
     <div>
-      <div class="topbar-title">City Roots Farm</div>
-      <div class="topbar-sub">Sistema de Inocuidad v2.0</div>
+      <div class="topbar-title">CITYROOTS.FARM</div>
+      <div class="topbar-sub">Sistema de Registros v2.0</div>
     </div>
     <div class="sync-row">
       <div class="sync-dot sync-off" id="sdot"></div>
