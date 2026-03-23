@@ -133,6 +133,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .btn-primary:hover{box-shadow:0 4px 16px rgba(45,90,39,0.35)}
 .btn-primary:disabled{background:#b0c9ad;cursor:not-allowed;box-shadow:none}
 .btn-amber{background:linear-gradient(135deg,var(--amber),#e5960b);color:#fff;box-shadow:0 3px 12px rgba(212,133,10,0.25)}
+.btn-danger{background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;box-shadow:0 3px 12px rgba(231,76,60,0.25)}
 .btn-secondary{background:var(--bg2);color:var(--text);border:1px solid var(--border2);border-radius:50px}
 .btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(192,57,43,0.2);border-radius:50px}
 
@@ -998,6 +999,45 @@ async function guardarCosecha(id){
 }
 
 // ══ VER DETALLE ═══════════════════════════════════════════════════════════════
+function eliminarLote(id){
+  const sid=String(id);
+  const l=getLotes().find(x=>String(x.id)===sid);
+  if(!l)return;
+  const body=document.getElementById('modal-body');
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="color:#c0392b">🗑️ Eliminar lote</div>
+    <div class="modal-sub">¿Estás seguro de que deseas eliminar este lote?</div>
+    <div style="background:var(--bg2);border-radius:10px;padding:14px;margin:12px 0;border-left:4px solid #e74c3c">
+      <div style="font-weight:700;font-size:14px;margin-bottom:4px">${l.variedad} — ${l.lote}</div>
+      <div style="font-size:12px;color:var(--text2)">Semana ${l.lote_semana} · ${l.charolas_planificadas} charolas · ${l.tipo||'Fresco'}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">Siembra: ${l.fecha_siembra?fmtDateShort(l.fecha_siembra):'—'} · Cosecha: ${l.fecha_cosecha?fmtDateShort(l.fecha_cosecha):'—'}</div>
+    </div>
+    <div style="background:#fef2f2;border-radius:8px;padding:10px;font-size:12px;color:#991b1b;margin-bottom:14px">
+      ⚠️ Esta acción eliminará el lote de tu dispositivo. Si ya fue sincronizado a Google Sheets, el registro permanecerá en la hoja de cálculo.
+    </div>
+    <div class="btn-row" style="flex-wrap:wrap">
+      <button class="btn btn-danger" style="flex:1" onclick="confirmarEliminarLote('${l.id}')">Sí, eliminar</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="verDetalle('${l.id}')">Cancelar</button>
+    </div>`;
+}
+
+async function confirmarEliminarLote(id){
+  const sid=String(id);
+  let lotes=getLotes();
+  const lote=lotes.find(x=>String(x.id)===sid);
+  lotes=lotes.filter(x=>String(x.id)!==sid);
+  localStorage.setItem('crf_lotes',JSON.stringify(lotes));
+  // Intentar notificar a Sheets que se eliminó
+  if(getURL()&&lote){
+    try{
+      await pushToSheet({id:lote.id,tipo:'lote_eliminado',fecha:new Date().toISOString(),datos:{...lote,accion:'eliminado'}},'lote_eliminado');
+    }catch(e){console.warn('No se pudo notificar eliminación a Sheets',e);}
+  }
+  closeModal();
+  goTo('produccion');
+}
+
 function verDetalle(id){
   const sid=String(id);
   const l=getLotes().find(x=>String(x.id)===sid);if(!l)return;
@@ -1035,6 +1075,7 @@ function verDetalle(id){
       ${!l.sembrado_confirmado?`<button class="btn btn-amber" onclick="closeModal();confirmarSiembra('${l.id}')">🌾 Confirmar siembra</button>`:''}
       ${l.sembrado_confirmado&&!l.cosecha_real?`<button class="btn btn-primary" style="background:var(--info)" onclick="closeModal();registrarCosecha('${l.id}')">✂️ Registrar cosecha</button>`:''}
       <button class="btn btn-secondary" onclick="closeModal();editarLote('${l.id}')">✏️ Editar</button>
+      <button class="btn btn-danger" onclick="eliminarLote('${l.id}')">🗑️ Eliminar lote</button>
       <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
     </div>`;
   document.getElementById('modal-ov').style.display='flex';
