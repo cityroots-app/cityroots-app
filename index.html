@@ -137,11 +137,18 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(192,57,43,0.2);border-radius:50px}
 
 /* PRODUCCION */
-.lote-group{margin-bottom:18px}
-.lote-header{background:var(--green-deep);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:10px;cursor:pointer;box-shadow:var(--shadow-sm)}
+.lote-group{margin-bottom:14px}
+.lote-header{background:var(--green-deep);border-radius:var(--radius);padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;cursor:pointer;box-shadow:var(--shadow-sm);position:relative;transition:border-radius 0.2s}
+.lote-group.open .lote-header{border-radius:var(--radius) var(--radius) 0 0}
+.lote-header-arrow{color:rgba(255,255,255,0.6);font-size:12px;transition:transform 0.25s;margin-right:2px}
+.lote-group.open .lote-header-arrow{transform:rotate(90deg)}
 .lote-code{font-family:var(--font-display);font-size:15px;font-weight:700;color:#fff}
-.lote-cosecha{font-size:11px;color:rgba(168,213,162,0.55);margin-left:4px;font-weight:400}
+.lote-cosecha{font-size:11px;color:rgba(168,213,162,0.55);font-weight:400}
 .lote-badge{margin-left:auto;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:0.02em}
+.lote-header-summary{width:100%;font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+.lote-header-summary span{display:flex;align-items:center;gap:3px}
+.lote-body{max-height:0;overflow:hidden;transition:max-height 0.35s ease;border-radius:0 0 var(--radius) var(--radius);background:rgba(0,0,0,0.03)}
+.lote-group.open .lote-body{max-height:5000px;padding-top:8px}
 .lb-pend{background:rgba(245,200,66,.15);color:#f5c842}
 .lb-sembrado{background:rgba(74,140,63,.2);color:#a8d5a2}
 .lb-cosechado{background:rgba(24,95,165,.2);color:#4da3ff}
@@ -614,19 +621,34 @@ function renderProduccion(el){
     ${sortedLotes.map(semana=>{
       const items=grouped[semana].filter(matchFilter);
       if(!items.length)return '';
-      const allCosechados=grouped[semana].every(l=>l.cosecha_real);
-      const allSembrados=grouped[semana].every(l=>l.sembrado_confirmado);
+      const allItems=grouped[semana];
+      const allCosechados=allItems.every(l=>l.cosecha_real);
+      const allSembrados=allItems.every(l=>l.sembrado_confirmado);
       const badgeClass=allCosechados?'lb-cosechado':allSembrados?'lb-sembrado':'lb-pend';
       const badgeTxt=allCosechados?'Cosechado completo':allSembrados?'Sembrado':'En proceso';
-      // Fecha cosecha del grupo
-      const fechaCos=grouped[semana][0]?.fecha_cosecha;
-      return `<div class="lote-group">
-        <div class="lote-header">
+      const fechaCos=allItems[0]?.fecha_cosecha;
+      const pendientes=allItems.filter(l=>!l.sembrado_confirmado).length;
+      const sembrados=allItems.filter(l=>l.sembrado_confirmado&&!l.cosecha_real).length;
+      const cosechados=allItems.filter(l=>l.cosecha_real).length;
+      const variedades=allItems.map(l=>l.variedad).filter((v,i,a)=>a.indexOf(v)===i);
+      const isOpen=_openWeeks&&_openWeeks.has(semana)?'open':'';
+      return `<div class="lote-group ${isOpen}" id="wk-${semana}">
+        <div class="lote-header" onclick="toggleWeek('${semana}')">
+          <span class="lote-header-arrow">▶</span>
           <span class="lote-code">Semana ${semana}</span>
           ${fechaCos?`<span class="lote-cosecha">Cosecha: ${fmtDateShort(fechaCos)}</span>`:''}
           <span class="lote-badge ${badgeClass}">${badgeTxt}</span>
+          <div class="lote-header-summary">
+            <span>📦 ${allItems.length} lote${allItems.length>1?'s':''}</span>
+            <span>🌿 ${variedades.join(', ')}</span>
+            ${pendientes?`<span style="color:var(--amber)">⏳ ${pendientes} pendiente${pendientes>1?'s':''}</span>`:''}
+            ${sembrados?`<span style="color:var(--green-light)">🌱 ${sembrados} sembrado${sembrados>1?'s':''}</span>`:''}
+            ${cosechados?`<span style="color:#fff">✓ ${cosechados} cosechado${cosechados>1?'s':''}</span>`:''}
+          </div>
         </div>
-        ${items.map(l=>siembraCard(l,today)).join('')}
+        <div class="lote-body">
+          ${items.map(l=>siembraCard(l,today)).join('')}
+        </div>
       </div>`;
     }).join('')}
   </div>`;
@@ -687,6 +709,13 @@ function siembraCard(l,today){
   </div>`;
 }
 
+const _openWeeks=new Set();
+function toggleWeek(semana){
+  const el=document.getElementById('wk-'+semana);
+  if(!el)return;
+  if(_openWeeks.has(semana)){_openWeeks.delete(semana);el.classList.remove('open');}
+  else{_openWeeks.add(semana);el.classList.add('open');}
+}
 function setProdFilter(f){prodFilter=f;goTo('produccion');}
 
 // ══ NUEVO LOTE (encargado registra la siembra planificada) ═════════════════════
