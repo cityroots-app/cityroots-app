@@ -1577,8 +1577,22 @@ function isChecked(code){
 async function fetchPedidosFromSheet(){
   const url=getURL();if(!url)return;
   try{
-    const res=await fetch(url+'?action=getPedidos&_='+Date.now());
-    const data=await res.json();
+    const data=await new Promise((resolve,reject)=>{
+      const cbName='_crf_ped_'+Date.now();
+      const script=document.createElement('script');
+      window[cbName]=function(d){
+        delete window[cbName];
+        document.body.removeChild(script);
+        resolve(d);
+      };
+      script.onerror=function(){
+        delete window[cbName];
+        document.body.removeChild(script);
+        reject(new Error('JSONP failed'));
+      };
+      script.src=url+'?action=getPedidos&callback='+cbName+'&_='+Date.now();
+      document.body.appendChild(script);
+    });
     if(data.produccion)setPedidosProduccion(data.produccion);
     if(data.almacen)setPedidosAlmacen(data.almacen);
     if(data.inventario)setInventarioHade(data.inventario);
