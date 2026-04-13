@@ -5,7 +5,7 @@
 <script>
 // Cache buster: si la versión cambió, forzar recarga limpia
 (function(){
-  var APP_VERSION='2.1.3';
+  var APP_VERSION='2.1.4';
   var stored=localStorage.getItem('crf_app_version');
   if(stored!==APP_VERSION){
     localStorage.setItem('crf_app_version',APP_VERSION);
@@ -1686,12 +1686,16 @@ function renderPedidosProduccion(el){
 
 function deleteProdItem(code){
   if(!confirm('¿Eliminar este producto de la lista?'))return;
-  const deleted=getDeletedProd();
   const key=String(code);
+  // Agregar a lista de borrados (persiste contra auto-sync)
+  const deleted=getDeletedProd();
   if(!deleted.includes(key))deleted.push(key);
   setDeletedProd(deleted);
+  // También borrar del array guardado para efecto inmediato
+  const raw=LS.get(PEDIDOS_PROD_KEY)||[];
+  LS.set(PEDIDOS_PROD_KEY,raw.filter(i=>String(i.code)!==key));
   toast('Producto eliminado ✓');
-  render(page);
+  goTo(page);
 }
 
 // ══ VISTAS ALMACÉN ════════════════════════════════════════════════════════════
