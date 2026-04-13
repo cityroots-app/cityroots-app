@@ -5,7 +5,7 @@
 <script>
 // Cache buster: si la versión cambió, forzar recarga limpia
 (function(){
-  var APP_VERSION='2.1.2';
+  var APP_VERSION='2.1.3';
   var stored=localStorage.getItem('crf_app_version');
   if(stored!==APP_VERSION){
     localStorage.setItem('crf_app_version',APP_VERSION);
@@ -1578,7 +1578,7 @@ function getPedidosProduccion(){
   const all=LS.get(PEDIDOS_PROD_KEY)||[];
   const deleted=getDeletedProd();
   if(deleted.length===0)return all;
-  return all.filter(i=>!deleted.includes(i.code));
+  return all.filter(i=>!deleted.includes(String(i.code)));
 }
 function setPedidosProduccion(v){LS.set(PEDIDOS_PROD_KEY,v);}
 function getPedidosAlmacen(){return LS.get(PEDIDOS_ALM_KEY)||[];}
@@ -1687,7 +1687,8 @@ function renderPedidosProduccion(el){
 function deleteProdItem(code){
   if(!confirm('¿Eliminar este producto de la lista?'))return;
   const deleted=getDeletedProd();
-  if(!deleted.includes(code))deleted.push(code);
+  const key=String(code);
+  if(!deleted.includes(key))deleted.push(key);
   setDeletedProd(deleted);
   toast('Producto eliminado ✓');
   render(page);
