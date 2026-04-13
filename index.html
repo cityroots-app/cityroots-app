@@ -1643,17 +1643,25 @@ function renderPedidosProduccion(el){
     html+=`<div class="cat-header">${cat}</div>`;
     for(const item of catItems){
       const checked=isChecked(item.code);
-      html+=`<div class="pedido-item ${checked?'checked':''}">
+      html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative">
         <div class="pedido-check ${checked?'done':''}" onclick="toggleCheck('${item.code}')">${checked?'✓':''}</div>
-        <div class="pedido-info">
+        <div class="pedido-info" style="flex:1">
           <div class="pedido-qty">${item.totalQty} ${item.unit}</div>
           <div class="pedido-name">${item.name}</div>
           ${item.nota?`<div class="pedido-nota">${item.nota}</div>`:''}
         </div>
+        <div onclick="deleteProdItem('${item.code}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:center">✕</div>
       </div>`;
     }
   }
   document.getElementById('pedidos-prod-list').innerHTML=html;
+}
+
+function deleteProdItem(code){
+  if(!confirm('¿Eliminar este producto de la lista?'))return;
+  const items=getPedidosProduccion().filter(i=>i.code!==code);
+  setPedidosProduccion(items);
+  render(page);
 }
 
 // ══ VISTAS ALMACÉN ════════════════════════════════════════════════════════════
