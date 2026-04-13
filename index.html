@@ -580,6 +580,8 @@ function selectRole(role){
   setRole(role);
   document.getElementById('role-screen').style.display='none';
   initApp();
+  // Cargar datos al seleccionar rol
+  if(getURL()){syncLotesFromSheet();fetchPedidosFromSheet();startAutoSync();}
 }
 
 function showRoleSelector(){
@@ -589,9 +591,7 @@ function showRoleSelector(){
 }
 
 function initApp(){
-  // Siempre mostrar selector de rol al abrir la app
-  localStorage.removeItem(ROLE_KEY);
-  const role='';
+  const role=getRole();
   const sw=document.getElementById('role-switch');
   if(!role){showRoleSelector();if(sw)sw.style.display='none';return;}
   document.getElementById('role-screen').style.display='none';
@@ -1606,11 +1606,9 @@ async function fetchPedidosFromSheet(){
     if(data.almacen)setPedidosAlmacen(data.almacen);
     if(data.inventario)setInventarioHade(data.inventario);
     if(data.timestamp)LS.set('crf_pedidos_timestamp',data.timestamp);
-    alert('✅ Actualizado: '+((data.produccion||[]).length)+' producción, '+((data.almacen||[]).length)+' almacén');
     render(page);
   }catch(e){
     console.warn('Error fetching pedidos:',e);
-    alert('❌ Error actualizando: '+e.message);
   }
 }
 
@@ -1807,10 +1805,10 @@ function changeRole(){
 const _defaultURL='https://script.google.com/macros/s/AKfycbzHTGTDF7IYwiOfOU-IcZoZu-tusJMBTJ-sKKDLjYr_6fcABAVx4qXpb_qSOGTG4TBxYQ/exec';
 if(!getURL())setURL(_defaultURL);
 const _url=getURL();
+// Siempre mostrar selector de rol al abrir la app
+localStorage.removeItem(ROLE_KEY);
 if(_url){
   setSyncUI('ok');
-  syncLotesFromSheet();
-  fetchPedidosFromSheet();
 }
 initApp();
 
@@ -1819,7 +1817,7 @@ let _autoSyncInterval=null;
 function startAutoSync(){
   if(_autoSyncInterval)clearInterval(_autoSyncInterval);
   _autoSyncInterval=setInterval(()=>{
-    if(!getURL()||document.getElementById('modal-ov')?.style.display==='flex')return;
+    if(!getRole()||!getURL()||document.getElementById('modal-ov')?.style.display==='flex')return;
     syncLotesFromSheet();
     fetchPedidosFromSheet();
   },30000);
