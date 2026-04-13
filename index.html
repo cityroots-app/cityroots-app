@@ -2,6 +2,17 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<script>
+// Cache buster: si la versión cambió, forzar recarga limpia
+(function(){
+  var APP_VERSION='2.1.1';
+  var stored=localStorage.getItem('crf_app_version');
+  if(stored!==APP_VERSION){
+    localStorage.setItem('crf_app_version',APP_VERSION);
+    if(stored){location.href=location.pathname+'?_='+Date.now();return;}
+  }
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
