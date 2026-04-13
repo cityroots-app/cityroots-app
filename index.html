@@ -589,7 +589,9 @@ function showRoleSelector(){
 }
 
 function initApp(){
-  const role=getRole();
+  // Siempre mostrar selector de rol al abrir la app
+  localStorage.removeItem(ROLE_KEY);
+  const role='';
   const sw=document.getElementById('role-switch');
   if(!role){showRoleSelector();if(sw)sw.style.display='none';return;}
   document.getElementById('role-screen').style.display='none';
