@@ -1575,19 +1575,30 @@ function isChecked(code){
 }
 
 async function fetchPedidosFromSheet(){
-  const url=getURL();if(!url)return;
+  const url=getURL();if(!url){alert('No hay URL de Sheets configurada. Ve a Admin.');return;}
+  // Feedback visual
+  const btn=document.querySelector('[onclick="fetchPedidosFromSheet()"]');
+  const origText=btn?btn.textContent:'';
+  if(btn){btn.textContent='⏳ Cargando...';btn.style.pointerEvents='none';}
   try{
     const data=await new Promise((resolve,reject)=>{
       const cbName='_crf_ped_'+Date.now();
       const script=document.createElement('script');
-      window[cbName]=function(d){
+      const timeout=setTimeout(()=>{
         delete window[cbName];
-        document.body.removeChild(script);
+        if(script.parentNode)document.body.removeChild(script);
+        reject(new Error('Timeout — sin respuesta en 10s'));
+      },10000);
+      window[cbName]=function(d){
+        clearTimeout(timeout);
+        delete window[cbName];
+        if(script.parentNode)document.body.removeChild(script);
         resolve(d);
       };
       script.onerror=function(){
+        clearTimeout(timeout);
         delete window[cbName];
-        document.body.removeChild(script);
+        if(script.parentNode)document.body.removeChild(script);
         reject(new Error('JSONP failed'));
       };
       script.src=url+'?action=getPedidos&callback='+cbName+'&_='+Date.now();
@@ -1598,7 +1609,12 @@ async function fetchPedidosFromSheet(){
     if(data.inventario)setInventarioHade(data.inventario);
     if(data.timestamp)LS.set('crf_pedidos_timestamp',data.timestamp);
     render(page);
-  }catch(e){console.warn('Error fetching pedidos:',e);}
+  }catch(e){
+    console.warn('Error fetching pedidos:',e);
+    alert('Error actualizando: '+e.message);
+  }finally{
+    if(btn){btn.textContent=origText;btn.style.pointerEvents='';}
+  }
 }
 
 function renderPedidosProduccion(el){
