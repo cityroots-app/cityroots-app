@@ -1576,10 +1576,6 @@ function isChecked(code){
 
 async function fetchPedidosFromSheet(){
   const url=getURL();if(!url){alert('No hay URL de Sheets configurada. Ve a Admin.');return;}
-  // Feedback visual
-  const btn=document.querySelector('[onclick="fetchPedidosFromSheet()"]');
-  const origText=btn?btn.textContent:'';
-  if(btn){btn.textContent='⏳ Cargando...';btn.style.pointerEvents='none';}
   try{
     const data=await new Promise((resolve,reject)=>{
       const cbName='_crf_ped_'+Date.now();
@@ -1608,12 +1604,11 @@ async function fetchPedidosFromSheet(){
     if(data.almacen)setPedidosAlmacen(data.almacen);
     if(data.inventario)setInventarioHade(data.inventario);
     if(data.timestamp)LS.set('crf_pedidos_timestamp',data.timestamp);
+    alert('✅ Actualizado: '+((data.produccion||[]).length)+' producción, '+((data.almacen||[]).length)+' almacén');
     render(page);
   }catch(e){
     console.warn('Error fetching pedidos:',e);
-    alert('Error actualizando: '+e.message);
-  }finally{
-    if(btn){btn.textContent=origText;btn.style.pointerEvents='';}
+    alert('❌ Error actualizando: '+e.message);
   }
 }
 
