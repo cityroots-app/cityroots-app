@@ -5,7 +5,7 @@
 <script>
 // Cache buster: si la versión cambió, forzar recarga limpia
 (function(){
-  var APP_VERSION='2.1.1';
+  var APP_VERSION='2.1.2';
   var stored=localStorage.getItem('crf_app_version');
   if(stored!==APP_VERSION){
     localStorage.setItem('crf_app_version',APP_VERSION);
@@ -1569,8 +1569,17 @@ const PEDIDOS_PROD_KEY='crf_pedidos_produccion';
 const PEDIDOS_ALM_KEY='crf_pedidos_almacen';
 const INV_HADE_KEY='crf_inventario_hade';
 const PEDIDOS_CHECK_KEY='crf_pedidos_checked';
+const DELETED_PROD_KEY='crf_deleted_prod';
 
-function getPedidosProduccion(){return LS.get(PEDIDOS_PROD_KEY)||[];}
+function getDeletedProd(){return LS.get(DELETED_PROD_KEY)||[];}
+function setDeletedProd(v){LS.set(DELETED_PROD_KEY,v);}
+
+function getPedidosProduccion(){
+  const all=LS.get(PEDIDOS_PROD_KEY)||[];
+  const deleted=getDeletedProd();
+  if(deleted.length===0)return all;
+  return all.filter(i=>!deleted.includes(i.code));
+}
 function setPedidosProduccion(v){LS.set(PEDIDOS_PROD_KEY,v);}
 function getPedidosAlmacen(){return LS.get(PEDIDOS_ALM_KEY)||[];}
 function setPedidosAlmacen(v){LS.set(PEDIDOS_ALM_KEY,v);}
@@ -1620,7 +1629,14 @@ async function fetchPedidosFromSheet(){
     if(data.produccion)setPedidosProduccion(data.produccion);
     if(data.almacen)setPedidosAlmacen(data.almacen);
     if(data.inventario)setInventarioHade(data.inventario);
-    if(data.timestamp)LS.set('crf_pedidos_timestamp',data.timestamp);
+    if(data.timestamp){
+      // Si el timestamp de Sheets es de un día diferente, limpiar borrados
+      const oldTs=LS.get('crf_pedidos_timestamp')||'';
+      const oldDay=oldTs?oldTs.split('T')[0]:'';
+      const newDay=data.timestamp.split('T')[0];
+      if(oldDay&&newDay!==oldDay)setDeletedProd([]);
+      LS.set('crf_pedidos_timestamp',data.timestamp);
+    }
     render(page);
   }catch(e){
     console.warn('Error fetching pedidos:',e);
@@ -1670,8 +1686,10 @@ function renderPedidosProduccion(el){
 
 function deleteProdItem(code){
   if(!confirm('¿Eliminar este producto de la lista?'))return;
-  const items=getPedidosProduccion().filter(i=>i.code!==code);
-  setPedidosProduccion(items);
+  const deleted=getDeletedProd();
+  if(!deleted.includes(code))deleted.push(code);
+  setDeletedProd(deleted);
+  toast('Producto eliminado ✓');
   render(page);
 }
 
