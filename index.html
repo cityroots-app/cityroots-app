@@ -5,7 +5,7 @@
 <script>
 // Cache buster: si la versión cambió, forzar recarga limpia
 (function(){
-  var APP_VERSION='2.1.4';
+  var APP_VERSION='2.1.5';
   var stored=localStorage.getItem('crf_app_version');
   if(stored!==APP_VERSION){
     localStorage.setItem('crf_app_version',APP_VERSION);
@@ -1570,9 +1570,12 @@ const PEDIDOS_ALM_KEY='crf_pedidos_almacen';
 const INV_HADE_KEY='crf_inventario_hade';
 const PEDIDOS_CHECK_KEY='crf_pedidos_checked';
 const DELETED_PROD_KEY='crf_deleted_prod';
+const DELETED_ALM_KEY='crf_deleted_alm';
 
 function getDeletedProd(){return LS.get(DELETED_PROD_KEY)||[];}
 function setDeletedProd(v){LS.set(DELETED_PROD_KEY,v);}
+function getDeletedAlm(){return LS.get(DELETED_ALM_KEY)||[];}
+function setDeletedAlm(v){LS.set(DELETED_ALM_KEY,v);}
 
 function getPedidosProduccion(){
   const all=LS.get(PEDIDOS_PROD_KEY)||[];
@@ -1581,7 +1584,12 @@ function getPedidosProduccion(){
   return all.filter(i=>!deleted.includes(String(i.code)));
 }
 function setPedidosProduccion(v){LS.set(PEDIDOS_PROD_KEY,v);}
-function getPedidosAlmacen(){return LS.get(PEDIDOS_ALM_KEY)||[];}
+function getPedidosAlmacen(){
+  const all=LS.get(PEDIDOS_ALM_KEY)||[];
+  const deleted=getDeletedAlm();
+  if(deleted.length===0)return all;
+  return all.filter(i=>!deleted.includes(String(i.code)));
+}
 function setPedidosAlmacen(v){LS.set(PEDIDOS_ALM_KEY,v);}
 function getInventarioHade(){return LS.get(INV_HADE_KEY)||[];}
 function setInventarioHade(v){LS.set(INV_HADE_KEY,v);}
@@ -1634,7 +1642,7 @@ async function fetchPedidosFromSheet(){
       const oldTs=LS.get('crf_pedidos_timestamp')||'';
       const oldDay=oldTs?oldTs.split('T')[0]:'';
       const newDay=data.timestamp.split('T')[0];
-      if(oldDay&&newDay!==oldDay)setDeletedProd([]);
+      if(oldDay&&newDay!==oldDay){setDeletedProd([]);setDeletedAlm([]);}
       LS.set('crf_pedidos_timestamp',data.timestamp);
     }
     render(page);
@@ -1754,17 +1762,30 @@ function renderAlmPedidos(el){
     for(const item of catItems){
       const checked=isChecked('alm_'+item.code);
       const isPending=item.status==='pendiente';
-      html+=`<div class="pedido-item ${checked?'checked':''}">
+      html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative">
         <div class="pedido-check ${checked?'done':''}" onclick="toggleCheck('alm_${item.code}')">${checked?'✓':''}</div>
-        <div class="pedido-info">
+        <div class="pedido-info" style="flex:1">
           <div class="pedido-qty">${item.totalQty} ${item.unit}</div>
           <div class="pedido-name">${item.name}</div>
           ${isPending?`<div class="pedido-nota">⏳ ${item.nota}</div>`:''}
         </div>
+        <div onclick="deleteAlmItem('${item.code}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:center">✕</div>
       </div>`;
     }
   }
   document.getElementById('pedidos-alm-list').innerHTML=html;
+}
+
+function deleteAlmItem(code){
+  if(!confirm('¿Eliminar este producto de la lista?'))return;
+  const key=String(code);
+  const deleted=getDeletedAlm();
+  if(!deleted.includes(key))deleted.push(key);
+  setDeletedAlm(deleted);
+  const raw=LS.get(PEDIDOS_ALM_KEY)||[];
+  LS.set(PEDIDOS_ALM_KEY,raw.filter(i=>String(i.code)!==key));
+  toast('Producto eliminado ✓');
+  goTo(page);
 }
 
 function renderAlmInventario(el){
