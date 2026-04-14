@@ -5,7 +5,7 @@
 <script>
 // Cache buster: si la versión cambió, forzar recarga limpia
 (function(){
-  var APP_VERSION='2.2.0';
+  var APP_VERSION='2.3.0';
   var stored=localStorage.getItem('crf_app_version');
   if(stored!==APP_VERSION){
     localStorage.setItem('crf_app_version',APP_VERSION);
@@ -414,13 +414,15 @@ const VARIEDAD_DEFAULTS = {
   'Spicy Mix':           {gr_semilla:13,  dia_siembra:'Jueves',  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:18},
 };
 // ══ STORAGE ═══════════════════════════════════════════════════════════════════
-const SK = {url:'crf_sheet_url',rec:'crf_records_v2',pend:'crf_pending_v2',lotes:'crf_lotes_v2'};
+const SK = {url:'crf_sheet_url',urlLog:'crf_sheet_url_logistica',rec:'crf_records_v2',pend:'crf_pending_v2',lotes:'crf_lotes_v2'};
 const LS = {
   get: k => { try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;} },
   set: (k,v) => { try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
 };
 const getURL  = () => LS.get(SK.url)||'';
 const setURL  = v  => LS.set(SK.url,v);
+const getURLLog = () => LS.get(SK.urlLog)||'';
+const setURLLog = v  => LS.set(SK.urlLog,v);
 const getRecs = () => LS.get(SK.rec)||[];
 const setRecs = v  => LS.set(SK.rec,v);
 const getPend = () => LS.get(SK.pend)||[];
@@ -610,7 +612,11 @@ function selectRole(role){
   document.getElementById('role-screen').style.display='none';
   initApp();
   // Cargar datos al seleccionar rol
-  if(getURL()){syncLotesFromSheet();fetchPedidosFromSheet();startAutoSync();}
+  if(role==='logistica'){
+    if(getURLLog()){fetchLogisticaFromSheet();startAutoSync();}
+  }else if(getURL()){
+    syncLotesFromSheet();fetchPedidosFromSheet();startAutoSync();
+  }
 }
 
 function showRoleSelector(){
@@ -1668,8 +1674,6 @@ async function fetchPedidosFromSheet(){
     if(data.produccion)setPedidosProduccion(data.produccion);
     if(data.almacen)setPedidosAlmacen(data.almacen);
     if(data.inventario)setInventarioHade(data.inventario);
-    if(data.logisticaCompras)LS.set(LOG_COMPRAS_KEY,data.logisticaCompras);
-    if(data.logisticaEntregas)LS.set(LOG_ENTREGAS_KEY,data.logisticaEntregas);
     if(data.timestamp){
       // Si el timestamp de Sheets es de un día diferente, limpiar borrados
       const oldTs=LS.get('crf_pedidos_timestamp')||'';
@@ -1681,6 +1685,41 @@ async function fetchPedidosFromSheet(){
     render(page);
   }catch(e){
     console.warn('Error fetching pedidos:',e);
+  }
+}
+
+async function fetchLogisticaFromSheet(){
+  const url=getURLLog();if(!url){alert('No hay URL de Logística configurada. Ve a Admin.');return;}
+  try{
+    const data=await new Promise((resolve,reject)=>{
+      const cbName='_crf_log_'+Date.now();
+      const script=document.createElement('script');
+      const timeout=setTimeout(()=>{
+        delete window[cbName];
+        if(script.parentNode)document.body.removeChild(script);
+        reject(new Error('Timeout — sin respuesta en 10s'));
+      },10000);
+      window[cbName]=function(d){
+        clearTimeout(timeout);
+        delete window[cbName];
+        if(script.parentNode)document.body.removeChild(script);
+        resolve(d);
+      };
+      script.onerror=function(){
+        clearTimeout(timeout);
+        delete window[cbName];
+        if(script.parentNode)document.body.removeChild(script);
+        reject(new Error('JSONP failed'));
+      };
+      script.src=url+'?action=getLogistica&callback='+cbName+'&_='+Date.now();
+      document.body.appendChild(script);
+    });
+    if(data.logisticaCompras)LS.set(LOG_COMPRAS_KEY,data.logisticaCompras);
+    if(data.logisticaEntregas)LS.set(LOG_ENTREGAS_KEY,data.logisticaEntregas);
+    if(data.timestamp)LS.set('crf_logistica_timestamp',data.timestamp);
+    render(page);
+  }catch(e){
+    console.warn('Error fetching logistica:',e);
   }
 }
 
@@ -1907,7 +1946,7 @@ function getLogEntregas(){return LS.get(LOG_ENTREGAS_KEY)||[];}
 function renderLogInicio(el){
   const compras=getLogCompras();
   const entregas=getLogEntregas();
-  const ts=LS.get('crf_pedidos_timestamp')||'';
+  const ts=LS.get('crf_logistica_timestamp')||'';
   const hour=new Date().getHours();
   const gr=hour<12?'Buenos días ☀️':hour<19?'Buenas tardes 🌤':'Buenas noches 🌙';
   const comprasPend=compras.filter(c=>!isChecked('log_c_'+c.code)).length;
@@ -1929,12 +1968,12 @@ function renderLogInicio(el){
 
 function renderLogCompras(el){
   const items=getLogCompras();
-  const ts=LS.get('crf_pedidos_timestamp')||'';
+  const ts=LS.get('crf_logistica_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
 
   el.innerHTML=`<div class="pad">
     <div class="greeting">Lista de Compras</div>
-    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchPedidosFromSheet()">↻ Actualizar</span></div>
+    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogisticaFromSheet()">↻ Actualizar</span></div>
     ${items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay productos por comprar hoy.</div>`:''}
     <div id="log-compras-list"></div>
   </div>`;
@@ -1975,12 +2014,12 @@ function renderLogCompras(el){
 
 function renderLogEntregas(el){
   const items=getLogEntregas();
-  const ts=LS.get('crf_pedidos_timestamp')||'';
+  const ts=LS.get('crf_logistica_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
 
   el.innerHTML=`<div class="pad">
     <div class="greeting">Entregas del Día</div>
-    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchPedidosFromSheet()">↻ Actualizar</span></div>
+    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogisticaFromSheet()">↻ Actualizar</span></div>
     ${items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay entregas programadas.</div>`:''}
     <div id="log-entregas-list"></div>
   </div>`;
@@ -2009,20 +2048,20 @@ function renderLogEntregas(el){
 }
 
 function renderLogAdmin(el){
-  const url=getURL();
+  const url=getURLLog();
   el.innerHTML=`<div class="pad">
     <div class="greeting">Configuración</div>
     <div class="dateline">Logística HADE</div>
-    <div class="sec">Conexión con Google Sheets</div>
+    <div class="sec">Conexión con Google Sheets (Logística)</div>
     <div class="setup-box">
-      <div class="setup-title">URL del Apps Script
+      <div class="setup-title">URL del Apps Script — Logística
         ${url?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Pega aquí la URL de tu Apps Script</div>
-      <input class="url-input" id="url-inp" type="url" placeholder="https://script.google.com/macros/s/..." value="${url||''}">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Pega aquí la URL del Apps Script dedicado al Sheet de Logística (archivo separado del Sheet principal).</div>
+      <input class="url-input" id="url-log-inp" type="url" placeholder="https://script.google.com/macros/s/..." value="${url||''}">
       <div class="btn-row" style="margin-top:9px">
-        <button class="btn btn-primary" onclick="saveURL()">Guardar URL</button>
-        <button class="btn btn-secondary" onclick="testConn()">Probar</button>
+        <button class="btn btn-primary" onclick="saveURLLog()">Guardar URL</button>
+        <button class="btn btn-secondary" onclick="fetchLogisticaFromSheet()">Probar</button>
       </div>
     </div>
     <div class="sec" style="margin-top:16px">Cuenta</div>
@@ -2031,6 +2070,13 @@ function renderLogAdmin(el){
       <div><div class="exp-title" style="color:var(--warn)">Cambiar de rol</div><div class="exp-sub">Volver a la pantalla de selección de área</div></div>
     </div>
   </div>`;
+}
+
+function saveURLLog(){
+  const v=document.getElementById('url-log-inp')?.value?.trim();
+  if(!v||!v.startsWith('https://')){toast('URL inválida');return;}
+  setURLLog(v);toast('URL de Logística guardada ✓');
+  fetchLogisticaFromSheet();
 }
 
 // ══ INIT ══════════════════════════════════════════════════════════════════════
@@ -2050,15 +2096,27 @@ let _autoSyncInterval=null;
 function startAutoSync(){
   if(_autoSyncInterval)clearInterval(_autoSyncInterval);
   _autoSyncInterval=setInterval(()=>{
-    if(!getRole()||!getURL()||document.getElementById('modal-ov')?.style.display==='flex')return;
-    syncLotesFromSheet();
-    fetchPedidosFromSheet();
+    if(!getRole()||document.getElementById('modal-ov')?.style.display==='flex')return;
+    const role=getRole();
+    if(role==='logistica'){
+      if(getURLLog())fetchLogisticaFromSheet();
+    }else{
+      if(!getURL())return;
+      syncLotesFromSheet();
+      fetchPedidosFromSheet();
+    }
   },30000);
 }
 if(_url)startAutoSync();
 // Re-sync al volver a la app (cuando el usuario cambia de tab/app y regresa)
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden&&getURL()){syncLotesFromSheet();fetchPedidosFromSheet();startAutoSync();}
+  if(document.hidden)return;
+  const role=getRole();
+  if(role==='logistica'){
+    if(getURLLog()){fetchLogisticaFromSheet();startAutoSync();}
+  }else if(getURL()){
+    syncLotesFromSheet();fetchPedidosFromSheet();startAutoSync();
+  }
 });
 </script>
 </body>
