@@ -5,7 +5,7 @@
 <script>
 // Cache buster: si la versión cambió, forzar recarga limpia
 (function(){
-  var APP_VERSION='2.1.5';
+  var APP_VERSION='2.2.0';
   var stored=localStorage.getItem('crf_app_version');
   if(stored!==APP_VERSION){
     localStorage.setItem('crf_app_version',APP_VERSION);
@@ -295,6 +295,13 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
     <button class="nav-btn" id="nb-alm-inventario" onclick="goTo('alm_inventario')"><span class="ni">📊</span>Inventario</button>
     <button class="nav-btn" id="nb-alm-admin" onclick="goTo('alm_admin')"><span class="ni">⚙️</span>Admin</button>
   </nav>
+  <!-- Nav para LOGÍSTICA (chofer) -->
+  <nav class="nav" id="nav-logistica" style="display:none">
+    <button class="nav-btn active" id="nb-log-inicio" onclick="goTo('log_inicio')"><span class="ni">🏠</span>Inicio</button>
+    <button class="nav-btn" id="nb-log-compras" onclick="goTo('log_compras')"><span class="ni">🛒</span>Compras</button>
+    <button class="nav-btn" id="nb-log-entregas" onclick="goTo('log_entregas')"><span class="ni">🚚</span>Entregas</button>
+    <button class="nav-btn" id="nb-log-admin" onclick="goTo('log_admin')"><span class="ni">⚙️</span>Admin</button>
+  </nav>
 </div>
 
 <!-- SELECTOR DE ROL -->
@@ -315,7 +322,14 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
       <span>HADE — Lista de preparación de pedidos e inventario</span>
     </div>
   </div>
-  <div style="margin-top:20px;font-size:11px;color:#999;text-align:center">v2.1</div>
+  <div class="role-card" onclick="selectRole('logistica')">
+    <div class="role-icon">🚚</div>
+    <div class="role-info">
+      <h3>Logística</h3>
+      <span>HADE — Compras del día y entregas a clientes</span>
+    </div>
+  </div>
+  <div style="margin-top:20px;font-size:11px;color:#999;text-align:center">v2.2</div>
 </div>
 
 <div id="modal-ov" class="modal-ov" style="display:none" onclick="closeOut(event)">
@@ -603,6 +617,7 @@ function showRoleSelector(){
   document.getElementById('role-screen').style.display='flex';
   document.getElementById('nav-produccion').style.display='none';
   document.getElementById('nav-almacen').style.display='none';
+  const navLog=document.getElementById('nav-logistica');if(navLog)navLog.style.display='none';
 }
 
 function initApp(){
@@ -612,14 +627,22 @@ function initApp(){
   document.getElementById('role-screen').style.display='none';
   if(sw)sw.style.display='flex';
   const sub=document.querySelector('.topbar-sub');
+  const navProd=document.getElementById('nav-produccion');
+  const navAlm=document.getElementById('nav-almacen');
+  const navLog=document.getElementById('nav-logistica');
+  if(navProd)navProd.style.display='none';
+  if(navAlm)navAlm.style.display='none';
+  if(navLog)navLog.style.display='none';
   if(role==='produccion'){
-    document.getElementById('nav-produccion').style.display='flex';
-    document.getElementById('nav-almacen').style.display='none';
+    navProd.style.display='flex';
     if(sub)sub.textContent='Producción · City Roots Farm';
     goTo('inicio');
+  } else if(role==='logistica'){
+    if(navLog)navLog.style.display='flex';
+    if(sub)sub.textContent='Logística · HADE';
+    goTo('log_inicio');
   } else {
-    document.getElementById('nav-almacen').style.display='flex';
-    document.getElementById('nav-produccion').style.display='none';
+    navAlm.style.display='flex';
     if(sub)sub.textContent='Almacén · HADE';
     goTo('alm_inicio');
   }
@@ -630,7 +653,9 @@ let page='inicio',histFilter='todos',prodFilter='todos';
 function goTo(p){
   page=p;
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  const nb=document.getElementById('nb-'+p)||document.getElementById('nb-alm-'+p.replace('alm_',''));
+  let nb=document.getElementById('nb-'+p);
+  if(!nb)nb=document.getElementById('nb-alm-'+p.replace('alm_',''));
+  if(!nb)nb=document.getElementById('nb-log-'+p.replace('log_',''));
   if(nb)nb.classList.add('active');
   render(p);
 }
@@ -646,6 +671,10 @@ function render(p){
   else if(p==='alm_pedidos')renderAlmPedidos(el);
   else if(p==='alm_inventario')renderAlmInventario(el);
   else if(p==='alm_admin')renderAlmAdmin(el);
+  else if(p==='log_inicio')renderLogInicio(el);
+  else if(p==='log_compras')renderLogCompras(el);
+  else if(p==='log_entregas')renderLogEntregas(el);
+  else if(p==='log_admin')renderLogAdmin(el);
   updatePendBadge();
   setSyncUI(getURL()?'ok':'off');
 }
@@ -1571,6 +1600,8 @@ const INV_HADE_KEY='crf_inventario_hade';
 const PEDIDOS_CHECK_KEY='crf_pedidos_checked';
 const DELETED_PROD_KEY='crf_deleted_prod';
 const DELETED_ALM_KEY='crf_deleted_alm';
+const LOG_COMPRAS_KEY='crf_logistica_compras';
+const LOG_ENTREGAS_KEY='crf_logistica_entregas';
 
 function getDeletedProd(){return LS.get(DELETED_PROD_KEY)||[];}
 function setDeletedProd(v){LS.set(DELETED_PROD_KEY,v);}
@@ -1637,6 +1668,8 @@ async function fetchPedidosFromSheet(){
     if(data.produccion)setPedidosProduccion(data.produccion);
     if(data.almacen)setPedidosAlmacen(data.almacen);
     if(data.inventario)setInventarioHade(data.inventario);
+    if(data.logisticaCompras)LS.set(LOG_COMPRAS_KEY,data.logisticaCompras);
+    if(data.logisticaEntregas)LS.set(LOG_ENTREGAS_KEY,data.logisticaEntregas);
     if(data.timestamp){
       // Si el timestamp de Sheets es de un día diferente, limpiar borrados
       const oldTs=LS.get('crf_pedidos_timestamp')||'';
@@ -1865,6 +1898,139 @@ function renderAlmAdmin(el){
 function changeRole(){
   localStorage.removeItem(ROLE_KEY);
   showRoleSelector();
+}
+
+// ══ VISTAS LOGÍSTICA (chofer) ════════════════════════════════════════════════
+function getLogCompras(){return LS.get(LOG_COMPRAS_KEY)||[];}
+function getLogEntregas(){return LS.get(LOG_ENTREGAS_KEY)||[];}
+
+function renderLogInicio(el){
+  const compras=getLogCompras();
+  const entregas=getLogEntregas();
+  const ts=LS.get('crf_pedidos_timestamp')||'';
+  const hour=new Date().getHours();
+  const gr=hour<12?'Buenos días ☀️':hour<19?'Buenas tardes 🌤':'Buenas noches 🌙';
+  const comprasPend=compras.filter(c=>!isChecked('log_c_'+c.code)).length;
+  const entregasPend=entregas.filter(e=>!isChecked('log_e_'+e.orderNumber)).length;
+
+  el.innerHTML=`<div class="pad">
+    <div class="greeting">${gr}</div>
+    <div class="dateline">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-n n-warn">${comprasPend}</div><div class="stat-l">Por comprar</div></div>
+      <div class="stat"><div class="stat-n n-info">${entregasPend}</div><div class="stat-l">Por entregar</div></div>
+      <div class="stat"><div class="stat-n n-ok">${compras.length+entregas.length-comprasPend-entregasPend}</div><div class="stat-l">Hechos</div></div>
+    </div>
+    ${comprasPend>0?`<div class="banner banner-warn" style="cursor:pointer" onclick="goTo('log_compras')">🛒 ${comprasPend} producto${comprasPend>1?'s':''} por comprar — toca para ver</div>`:''}
+    ${entregasPend>0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;cursor:pointer" onclick="goTo('log_entregas')">🚚 ${entregasPend} entrega${entregasPend>1?'s':''} pendiente${entregasPend>1?'s':''} — toca para ver</div>`:''}
+    ${compras.length===0&&entregas.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">Sin actividad programada. Jala ↻ para actualizar.</div>`:''}
+  </div>`;
+}
+
+function renderLogCompras(el){
+  const items=getLogCompras();
+  const ts=LS.get('crf_pedidos_timestamp')||'';
+  const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
+
+  el.innerHTML=`<div class="pad">
+    <div class="greeting">Lista de Compras</div>
+    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchPedidosFromSheet()">↻ Actualizar</span></div>
+    ${items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay productos por comprar hoy.</div>`:''}
+    <div id="log-compras-list"></div>
+  </div>`;
+
+  if(items.length===0)return;
+
+  // Agrupar por proveedor si existe, si no por categoría
+  const byGroup={};
+  items.forEach(item=>{
+    const g=item.supplier||item.category||'COMPRAS';
+    if(!byGroup[g])byGroup[g]=[];
+    byGroup[g].push(item);
+  });
+
+  const total=items.length;
+  const done=items.filter(i=>isChecked('log_c_'+i.code)).length;
+  let html='';
+  html+=`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">Progreso: ${done}/${total} comprados</div>`;
+  html+=`<div style="height:4px;background:var(--bg3);border-radius:4px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:${total?Math.round(done/total*100):0}%;background:var(--ok);border-radius:4px;transition:width .3s"></div></div>`;
+
+  for(const [grp,grpItems] of Object.entries(byGroup)){
+    html+=`<div class="cat-header">${grp}</div>`;
+    for(const item of grpItems){
+      const checked=isChecked('log_c_'+item.code);
+      html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative">
+        <div class="pedido-check ${checked?'done':''}" onclick="toggleCheck('log_c_${item.code}')">${checked?'✓':''}</div>
+        <div class="pedido-info" style="flex:1">
+          <div class="pedido-qty">${item.qty} ${item.unit||''}</div>
+          <div class="pedido-name">${item.name}</div>
+          ${item.orderRefs?`<div class="pedido-nota">📋 OC: ${item.orderRefs}</div>`:''}
+          ${item.derivedFrom?`<div class="pedido-nota">← ${item.derivedFrom}</div>`:''}
+        </div>
+      </div>`;
+    }
+  }
+  document.getElementById('log-compras-list').innerHTML=html;
+}
+
+function renderLogEntregas(el){
+  const items=getLogEntregas();
+  const ts=LS.get('crf_pedidos_timestamp')||'';
+  const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
+
+  el.innerHTML=`<div class="pad">
+    <div class="greeting">Entregas del Día</div>
+    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchPedidosFromSheet()">↻ Actualizar</span></div>
+    ${items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay entregas programadas.</div>`:''}
+    <div id="log-entregas-list"></div>
+  </div>`;
+
+  if(items.length===0)return;
+
+  const total=items.length;
+  const done=items.filter(i=>isChecked('log_e_'+i.orderNumber)).length;
+  let html='';
+  html+=`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">Progreso: ${done}/${total} entregadas</div>`;
+  html+=`<div style="height:4px;background:var(--bg3);border-radius:4px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:${total?Math.round(done/total*100):0}%;background:var(--ok);border-radius:4px;transition:width .3s"></div></div>`;
+
+  for(const item of items){
+    const checked=isChecked('log_e_'+item.orderNumber);
+    const totalFmt=item.total?`$${Number(item.total).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})}`:'';
+    html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative;align-items:flex-start">
+      <div class="pedido-check ${checked?'done':''}" onclick="toggleCheck('log_e_${item.orderNumber}')" style="margin-top:2px">${checked?'✓':''}</div>
+      <div class="pedido-info" style="flex:1">
+        <div class="pedido-name" style="font-weight:600">${item.clientName||'(sin cliente)'}</div>
+        <div class="pedido-nota" style="margin-top:2px">OC ${item.orderNumber||'—'} · ${item.itemsCount||0} productos${totalFmt?' · '+totalFmt:''}</div>
+        ${item.itemsText?`<div class="pedido-nota" style="margin-top:4px;font-style:italic">${item.itemsText}</div>`:''}
+      </div>
+    </div>`;
+  }
+  document.getElementById('log-entregas-list').innerHTML=html;
+}
+
+function renderLogAdmin(el){
+  const url=getURL();
+  el.innerHTML=`<div class="pad">
+    <div class="greeting">Configuración</div>
+    <div class="dateline">Logística HADE</div>
+    <div class="sec">Conexión con Google Sheets</div>
+    <div class="setup-box">
+      <div class="setup-title">URL del Apps Script
+        ${url?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Pega aquí la URL de tu Apps Script</div>
+      <input class="url-input" id="url-inp" type="url" placeholder="https://script.google.com/macros/s/..." value="${url||''}">
+      <div class="btn-row" style="margin-top:9px">
+        <button class="btn btn-primary" onclick="saveURL()">Guardar URL</button>
+        <button class="btn btn-secondary" onclick="testConn()">Probar</button>
+      </div>
+    </div>
+    <div class="sec" style="margin-top:16px">Cuenta</div>
+    <div class="exp-card" onclick="changeRole()" style="border-color:var(--warn)">
+      <div class="exp-icon" style="background:var(--warn-bg)">🔄</div>
+      <div><div class="exp-title" style="color:var(--warn)">Cambiar de rol</div><div class="exp-sub">Volver a la pantalla de selección de área</div></div>
+    </div>
+  </div>`;
 }
 
 // ══ INIT ══════════════════════════════════════════════════════════════════════
