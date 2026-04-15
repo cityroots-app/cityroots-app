@@ -5,7 +5,7 @@
 <script>
 // Cache buster: si la versión cambió, forzar recarga limpia
 (function(){
-  var APP_VERSION='2.3.0';
+  var APP_VERSION='2.3.1';
   var stored=localStorage.getItem('crf_app_version');
   if(stored!==APP_VERSION){
     localStorage.setItem('crf_app_version',APP_VERSION);
@@ -329,7 +329,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
       <span>HADE — Compras del día y entregas a clientes</span>
     </div>
   </div>
-  <div style="margin-top:20px;font-size:11px;color:#999;text-align:center">v2.3</div>
+  <div style="margin-top:20px;font-size:11px;color:#999;text-align:center">v2.3.1</div>
 </div>
 
 <div id="modal-ov" class="modal-ov" style="display:none" onclick="closeOut(event)">
@@ -1608,6 +1608,13 @@ const DELETED_PROD_KEY='crf_deleted_prod';
 const DELETED_ALM_KEY='crf_deleted_alm';
 const LOG_COMPRAS_KEY='crf_logistica_compras';
 const LOG_ENTREGAS_KEY='crf_logistica_entregas';
+const DELETED_LOG_COMPRAS_KEY='crf_deleted_log_compras';
+const DELETED_LOG_ENTREGAS_KEY='crf_deleted_log_entregas';
+
+function getDeletedLogCompras(){return LS.get(DELETED_LOG_COMPRAS_KEY)||[];}
+function setDeletedLogCompras(v){LS.set(DELETED_LOG_COMPRAS_KEY,v);}
+function getDeletedLogEntregas(){return LS.get(DELETED_LOG_ENTREGAS_KEY)||[];}
+function setDeletedLogEntregas(v){LS.set(DELETED_LOG_ENTREGAS_KEY,v);}
 
 function getDeletedProd(){return LS.get(DELETED_PROD_KEY)||[];}
 function setDeletedProd(v){LS.set(DELETED_PROD_KEY,v);}
@@ -1716,7 +1723,13 @@ async function fetchLogisticaFromSheet(){
     });
     if(data.logisticaCompras)LS.set(LOG_COMPRAS_KEY,data.logisticaCompras);
     if(data.logisticaEntregas)LS.set(LOG_ENTREGAS_KEY,data.logisticaEntregas);
-    if(data.timestamp)LS.set('crf_logistica_timestamp',data.timestamp);
+    if(data.timestamp){
+      const oldTs=LS.get('crf_logistica_timestamp')||'';
+      const oldDay=oldTs?oldTs.split('T')[0]:'';
+      const newDay=data.timestamp.split('T')[0];
+      if(oldDay&&newDay!==oldDay){setDeletedLogCompras([]);setDeletedLogEntregas([]);}
+      LS.set('crf_logistica_timestamp',data.timestamp);
+    }
     render(page);
   }catch(e){
     console.warn('Error fetching logistica:',e);
@@ -1940,8 +1953,18 @@ function changeRole(){
 }
 
 // ══ VISTAS LOGÍSTICA (chofer) ════════════════════════════════════════════════
-function getLogCompras(){return LS.get(LOG_COMPRAS_KEY)||[];}
-function getLogEntregas(){return LS.get(LOG_ENTREGAS_KEY)||[];}
+function getLogCompras(){
+  const all=LS.get(LOG_COMPRAS_KEY)||[];
+  const deleted=getDeletedLogCompras();
+  if(deleted.length===0)return all;
+  return all.filter(i=>!deleted.includes(String(i.code)));
+}
+function getLogEntregas(){
+  const all=LS.get(LOG_ENTREGAS_KEY)||[];
+  const deleted=getDeletedLogEntregas();
+  if(deleted.length===0)return all;
+  return all.filter(i=>!deleted.includes(String(i.orderNumber)));
+}
 
 function renderLogInicio(el){
   const compras=getLogCompras();
@@ -2006,6 +2029,7 @@ function renderLogCompras(el){
           ${item.orderRefs?`<div class="pedido-nota">📋 OC: ${item.orderRefs}</div>`:''}
           ${item.derivedFrom?`<div class="pedido-nota">← ${item.derivedFrom}</div>`:''}
         </div>
+        <div onclick="deleteLogCompra('${item.code}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:center">✕</div>
       </div>`;
     }
   }
@@ -2042,9 +2066,34 @@ function renderLogEntregas(el){
         <div class="pedido-nota" style="margin-top:2px">OC ${item.orderNumber||'—'} · ${item.itemsCount||0} productos${totalFmt?' · '+totalFmt:''}</div>
         ${item.itemsText?`<div class="pedido-nota" style="margin-top:4px;font-style:italic">${item.itemsText}</div>`:''}
       </div>
+      <div onclick="deleteLogEntrega('${item.orderNumber}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:flex-start;margin-top:2px">✕</div>
     </div>`;
   }
   document.getElementById('log-entregas-list').innerHTML=html;
+}
+
+function deleteLogCompra(code){
+  if(!confirm('¿Eliminar este producto de la lista de compras?'))return;
+  const key=String(code);
+  const deleted=getDeletedLogCompras();
+  if(!deleted.includes(key))deleted.push(key);
+  setDeletedLogCompras(deleted);
+  const raw=LS.get(LOG_COMPRAS_KEY)||[];
+  LS.set(LOG_COMPRAS_KEY,raw.filter(i=>String(i.code)!==key));
+  toast('Producto eliminado ✓');
+  goTo(page);
+}
+
+function deleteLogEntrega(orderNumber){
+  if(!confirm('¿Eliminar esta entrega de la lista?'))return;
+  const key=String(orderNumber);
+  const deleted=getDeletedLogEntregas();
+  if(!deleted.includes(key))deleted.push(key);
+  setDeletedLogEntregas(deleted);
+  const raw=LS.get(LOG_ENTREGAS_KEY)||[];
+  LS.set(LOG_ENTREGAS_KEY,raw.filter(i=>String(i.orderNumber)!==key));
+  toast('Entrega eliminada ✓');
+  goTo(page);
 }
 
 function renderLogAdmin(el){
