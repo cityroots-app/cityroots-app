@@ -2,56 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<script>
-// Versión visible de la app (informativa)
-var APP_VERSION='2.4.0';
-(function(){
-  try{
-    var stored=localStorage.getItem('crf_app_version');
-    if(stored!==APP_VERSION)localStorage.setItem('crf_app_version',APP_VERSION);
-  }catch(e){}
-})();
-
-// Service Worker: garantiza que siempre se cargue la última versión del HTML
-// (network-first), con fallback a caché si no hay conexión. Auto-reload al detectar
-// versión nueva mientras la app está abierta.
-if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js').then(function(reg){
-      // Chequear actualizaciones cada 60s (útil para tablets que quedan abiertas)
-      setInterval(function(){reg.update().catch(function(){});},60000);
-      // También chequear cuando la pestaña vuelve a primer plano
-      document.addEventListener('visibilitychange',function(){
-        if(!document.hidden)reg.update().catch(function(){});
-      });
-      reg.addEventListener('updatefound',function(){
-        var newWorker=reg.installing;
-        if(!newWorker)return;
-        newWorker.addEventListener('statechange',function(){
-          if(newWorker.state==='installed'&&navigator.serviceWorker.controller){
-            // Hay un SW nuevo instalado y ya hay uno activo → activar y recargar
-            newWorker.postMessage('SKIP_WAITING');
-          }
-        });
-      });
-      // Recargar la página cuando el SW nuevo toma el control
-      var reloaded=false;
-      navigator.serviceWorker.addEventListener('controllerchange',function(){
-        if(reloaded)return;
-        reloaded=true;
-        window.location.reload();
-      });
-    }).catch(function(err){console.warn('SW register failed:',err);});
-  });
-}
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1a3a1a">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <title>City Roots Farm — Sistema Operativo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -358,10 +312,9 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
     <div class="role-icon">🚚</div>
     <div class="role-info">
       <h3>Logística</h3>
-      <span>HADE — Compras del día y entregas a clientes</span>
+      <span>Chofer — Compras del día y ruta de entregas</span>
     </div>
   </div>
-  <div style="margin-top:20px;font-size:11px;color:#999;text-align:center">v2.4.0</div>
 </div>
 
 <div id="modal-ov" class="modal-ov" style="display:none" onclick="closeOut(event)">
@@ -446,15 +399,36 @@ const VARIEDAD_DEFAULTS = {
   'Spicy Mix':           {gr_semilla:13,  dia_siembra:'Jueves',  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:18},
 };
 // ══ STORAGE ═══════════════════════════════════════════════════════════════════
-const SK = {url:'crf_sheet_url',urlLog:'crf_sheet_url_logistica',rec:'crf_records_v2',pend:'crf_pending_v2',lotes:'crf_lotes_v2'};
+// Dual-endpoint: la app habla con DOS Apps Script distintos (Producción + Logística).
+// Router decide cuál URL usar según la acción. Ver getURLFor() abajo.
+const SK = {
+  url:      'crf_sheet_url',       // legacy — se migra a urlProd si existe
+  urlProd:  'crf_url_produccion',  // Apps Script del Sheet de Producción
+  urlLog:   'crf_url_logistica',   // Apps Script del Sheet de Logística
+  rec:      'crf_records_v2',
+  pend:     'crf_pending_v2',
+  lotes:    'crf_lotes_v2'
+};
 const LS = {
   get: k => { try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;} },
   set: (k,v) => { try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
 };
-const getURL  = () => LS.get(SK.url)||'';
-const setURL  = v  => LS.set(SK.url,v);
-const getURLLog = () => LS.get(SK.urlLog)||'';
-const setURLLog = v  => LS.set(SK.urlLog,v);
+// Dual URL accessors
+const getURLProd = () => LS.get(SK.urlProd)||LS.get(SK.url)||''; // fallback a legacy
+const setURLProd = v  => LS.set(SK.urlProd,v);
+const getURLLog  = () => LS.get(SK.urlLog)||'';
+const setURLLog  = v  => LS.set(SK.urlLog,v);
+// Legacy alias (producción es el default histórico)
+const getURL  = () => getURLProd();
+const setURL  = v  => setURLProd(v);
+// Router: qué endpoint usar para cada acción/tipo
+// prod: lotes, inocuidad, pedidos_produccion, inventario_hade (legacy)
+// log:  entregas, compras, preparado write-back, inventario_semanal
+const LOG_ACTIONS = new Set(['getEntregas','getCompras','updatePreparado','saveInventarioSemanal','getInventarioSemanal']);
+function getURLFor(action){
+  if(LOG_ACTIONS.has(action)) return getURLLog();
+  return getURLProd();
+}
 const getRecs = () => LS.get(SK.rec)||[];
 const setRecs = v  => LS.set(SK.rec,v);
 const getPend = () => LS.get(SK.pend)||[];
@@ -487,12 +461,21 @@ function setSyncUI(s){
   else if(s==='ing'){dot.classList.add('sync-ing');lbl.textContent='Sincronizando...';}
   else{dot.classList.add('sync-off');lbl.textContent='Sin Sheets';}
 }
+// Genérico: POST a cualquiera de los dos endpoints
+async function postToEndpoint(endpoint,payload){
+  const url=endpoint==='log'?getURLLog():getURLProd();
+  if(!url)return {ok:false,error:'no-url'};
+  try{
+    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+    return await res.json();
+  }catch(e){return {ok:false,error:e.message};}
+}
 async function pushToSheet(record,sheetName){
-  const url=getURL();if(!url)return false;
+  // Todos los registros de producción/inocuidad van al Sheet de Producción
+  const url=getURLProd();if(!url)return false;
   setSyncUI('ing');
   try{
     const destSheet=sheetName||record.tipo||'PROD';
-    // Spread datos first, then override tipo with destSheet so it always goes to the right tab
     const flat={...record.datos, id:record.id, fecha:record.fecha, tipo:destSheet, codigo:REGS.find(r=>r.id===record.tipo)?.code||destSheet};
     const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'append',data:flat})});
     const json=await res.json();
@@ -502,7 +485,7 @@ async function pushToSheet(record,sheetName){
 }
 
 async function fetchLotesFromSheet(){
-  const url=getURL();if(!url)return [];
+  const url=getURLProd();if(!url)return [];
   try{
     // Use no-cors for GET too, read via script tag trick
     return await new Promise((resolve)=>{
@@ -620,7 +603,7 @@ async function syncLotesFromSheet(){
   setSyncUI('ok');
 }
 async function flushPending(){
-  const url=getURL();if(!url)return;
+  const url=getURLProd();if(!url)return;
   const pending=getPend();if(!pending.length)return;
   setSyncUI('ing');
   const failed=[];
@@ -643,19 +626,13 @@ function selectRole(role){
   setRole(role);
   document.getElementById('role-screen').style.display='none';
   initApp();
-  // Cargar datos al seleccionar rol
-  if(role==='logistica'){
-    if(getURLLog()){fetchLogisticaFromSheet();startAutoSync();}
-  }else if(getURL()){
-    syncLotesFromSheet();fetchPedidosFromSheet();startAutoSync();
-  }
 }
 
 function showRoleSelector(){
   document.getElementById('role-screen').style.display='flex';
   document.getElementById('nav-produccion').style.display='none';
   document.getElementById('nav-almacen').style.display='none';
-  const navLog=document.getElementById('nav-logistica');if(navLog)navLog.style.display='none';
+  const nl=document.getElementById('nav-logistica');if(nl)nl.style.display='none';
 }
 
 function initApp(){
@@ -666,18 +643,16 @@ function initApp(){
   if(sw)sw.style.display='flex';
   const sub=document.querySelector('.topbar-sub');
   const navProd=document.getElementById('nav-produccion');
-  const navAlm=document.getElementById('nav-almacen');
-  const navLog=document.getElementById('nav-logistica');
-  if(navProd)navProd.style.display='none';
-  if(navAlm)navAlm.style.display='none';
-  if(navLog)navLog.style.display='none';
+  const navAlm =document.getElementById('nav-almacen');
+  const navLog =document.getElementById('nav-logistica');
+  navProd.style.display='none'; navAlm.style.display='none'; if(navLog)navLog.style.display='none';
   if(role==='produccion'){
     navProd.style.display='flex';
     if(sub)sub.textContent='Producción · City Roots Farm';
     goTo('inicio');
   } else if(role==='logistica'){
     if(navLog)navLog.style.display='flex';
-    if(sub)sub.textContent='Logística · HADE';
+    if(sub)sub.textContent='Logística · Chofer';
     goTo('log_inicio');
   } else {
     navAlm.style.display='flex';
@@ -691,9 +666,10 @@ let page='inicio',histFilter='todos',prodFilter='todos';
 function goTo(p){
   page=p;
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  // Match: inicio/produccion/... → nb-<p>  |  alm_xxx → nb-alm-xxx  |  log_xxx → nb-log-xxx
   let nb=document.getElementById('nb-'+p);
-  if(!nb)nb=document.getElementById('nb-alm-'+p.replace('alm_',''));
-  if(!nb)nb=document.getElementById('nb-log-'+p.replace('log_',''));
+  if(!nb&&p.startsWith('alm_'))nb=document.getElementById('nb-alm-'+p.slice(4));
+  if(!nb&&p.startsWith('log_'))nb=document.getElementById('nb-log-'+p.slice(4));
   if(nb)nb.classList.add('active');
   render(p);
 }
@@ -714,7 +690,7 @@ function render(p){
   else if(p==='log_entregas')renderLogEntregas(el);
   else if(p==='log_admin')renderLogAdmin(el);
   updatePendBadge();
-  setSyncUI(getURL()?'ok':'off');
+  setSyncUI((getURLProd()||getURLLog())?'ok':'off');
 }
 
 // ══ INICIO ══════════════════════════════════════════════════════════════════════
@@ -1402,17 +1378,31 @@ function sheetToArray(ss,name){
   }
   return arr;
 }`;
+  const urlProd=getURLProd(),urlLog=getURLLog();
   el.innerHTML=`<div class="pad">
     <div class="sec">Conexión con Google Sheets</div>
+
     <div class="setup-box">
-      <div class="setup-title">URL del Apps Script
-        ${url?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
+      <div class="setup-title">📗 Apps Script — Producción
+        ${urlProd?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Pega aquí la URL de tu Apps Script</div>
-      <input class="url-input" id="url-inp" type="url" placeholder="https://script.google.com/macros/s/..." value="${url||''}">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Sheet con lotes, inocuidad y pedidos de producción</div>
+      <input class="url-input" id="url-inp-prod" type="url" placeholder="https://script.google.com/macros/s/..." value="${urlProd||''}">
       <div class="btn-row" style="margin-top:9px">
-        <button class="btn btn-primary" onclick="saveURL()">Guardar URL</button>
-        <button class="btn btn-secondary" onclick="testConn()">Probar</button>
+        <button class="btn btn-primary" onclick="saveURLDual('prod')">Guardar</button>
+        <button class="btn btn-secondary" onclick="testConnDual('prod')">Probar</button>
+      </div>
+    </div>
+
+    <div class="setup-box" style="margin-top:10px">
+      <div class="setup-title">📘 Apps Script — Logística
+        ${urlLog?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Sheet con entregas del día, compras e inventario semanal</div>
+      <input class="url-input" id="url-inp-log" type="url" placeholder="https://script.google.com/macros/s/..." value="${urlLog||''}">
+      <div class="btn-row" style="margin-top:9px">
+        <button class="btn btn-primary" onclick="saveURLDual('log')">Guardar</button>
+        <button class="btn btn-secondary" onclick="testConnDual('log')">Probar</button>
       </div>
     </div>
     ${pend.length?`<div class="banner banner-warn" style="margin-bottom:10px">📡 ${pend.length} pendiente${pend.length>1?'s':''}
@@ -1486,18 +1476,28 @@ async function submitForm(id){
 }
 
 // ══ ADMIN ACTIONS ════════════════════════════════════════════════════════════
-function saveURL(){
-  const v=document.getElementById('url-inp')?.value?.trim();
+// which: 'prod' | 'log'
+function saveURLDual(which){
+  const inpId=which==='log'?'url-inp-log':'url-inp-prod';
+  const v=document.getElementById(inpId)?.value?.trim();
   if(!v||!v.startsWith('https://')){toast('URL inválida');return;}
-  setURL(v);setSyncUI('ok');toast('URL guardada ✓');
-  testConn();setTimeout(()=>flushPending(),800);
+  if(which==='log')setURLLog(v); else setURLProd(v);
+  setSyncUI('ok');
+  toast((which==='log'?'Logística':'Producción')+' guardada ✓');
+  testConnDual(which);
+  if(which==='prod')setTimeout(()=>flushPending(),800);
+  render(page);
 }
-async function testConn(){
-  const url=getURL();if(!url){toast('Primero guarda la URL');return;}
+async function testConnDual(which){
+  const url=which==='log'?getURLLog():getURLProd();
+  if(!url){toast('Primero guarda la URL');return;}
   setSyncUI('ing');
-  try{await fetch(url,{mode:'no-cors'});setSyncUI('ok');toast('Conexión con Sheets: OK ✓');}
+  try{await fetch(url,{mode:'no-cors'});setSyncUI('ok');toast('Conexión '+(which==='log'?'Logística':'Producción')+': OK ✓');}
   catch(e){setSyncUI('off');toast('Sin conexión a internet');}
 }
+// Legacy (por si quedó algún onclick colgado) — mapea a producción
+function saveURL(){saveURLDual('prod');}
+async function testConn(){return testConnDual('prod');}
 function copyScript(){
   const code=`function doPost(e){var ss=SpreadsheetApp.getActiveSpreadsheet();var data=JSON.parse(e.postData.contents);if(data.action==='append'){var sh=ss.getSheetByName(data.data.tipo)||ss.insertSheet(data.data.tipo);if(sh.getLastRow()===0)sh.appendRow(Object.keys(data.data));sh.appendRow(Object.values(data.data));}return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);}function doGet(){return ContentService.createTextOutput(JSON.stringify({ok:true,app:'CityRootsFarm'})).setMimeType(ContentService.MimeType.JSON);}`;
   navigator.clipboard.writeText(code).then(()=>toast('Código copiado ✓')).catch(()=>toast('Copia el código manualmente'));
@@ -1631,44 +1631,27 @@ function closeOut(e){if(e.target===document.getElementById('modal-ov'))closeModa
 let toastTimer;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);}
 
-// ══ PEDIDOS PRODUCCIÓN ═════════════════════════════════════════════════════════
+// ══ PEDIDOS PRODUCCIÓN + LOGÍSTICA ═════════════════════════════════════════════
 const PEDIDOS_PROD_KEY='crf_pedidos_produccion';
-const PEDIDOS_ALM_KEY='crf_pedidos_almacen';
-const INV_HADE_KEY='crf_inventario_hade';
+const PEDIDOS_ALM_KEY ='crf_pedidos_almacen';   // (legacy, ya no se llena desde Producción)
+const INV_HADE_KEY    ='crf_inventario_hade';   // inventario ERP (lectura)
+const ENTREGAS_KEY    ='crf_entregas_logistica';// lista del día para almacén (Logística)
+const COMPRAS_KEY     ='crf_compras_logistica'; // items a comprar (no se usa aún en UI)
+const INV_SEM_KEY     ='crf_inventario_semanal';// captura semanal del almacén
 const PEDIDOS_CHECK_KEY='crf_pedidos_checked';
-const DELETED_PROD_KEY='crf_deleted_prod';
-const DELETED_ALM_KEY='crf_deleted_alm';
-const LOG_COMPRAS_KEY='crf_logistica_compras';
-const LOG_ENTREGAS_KEY='crf_logistica_entregas';
-const DELETED_LOG_COMPRAS_KEY='crf_deleted_log_compras';
-const DELETED_LOG_ENTREGAS_KEY='crf_deleted_log_entregas';
 
-function getDeletedLogCompras(){return LS.get(DELETED_LOG_COMPRAS_KEY)||[];}
-function setDeletedLogCompras(v){LS.set(DELETED_LOG_COMPRAS_KEY,v);}
-function getDeletedLogEntregas(){return LS.get(DELETED_LOG_ENTREGAS_KEY)||[];}
-function setDeletedLogEntregas(v){LS.set(DELETED_LOG_ENTREGAS_KEY,v);}
-
-function getDeletedProd(){return LS.get(DELETED_PROD_KEY)||[];}
-function setDeletedProd(v){LS.set(DELETED_PROD_KEY,v);}
-function getDeletedAlm(){return LS.get(DELETED_ALM_KEY)||[];}
-function setDeletedAlm(v){LS.set(DELETED_ALM_KEY,v);}
-
-function getPedidosProduccion(){
-  const all=LS.get(PEDIDOS_PROD_KEY)||[];
-  const deleted=getDeletedProd();
-  if(deleted.length===0)return all;
-  return all.filter(i=>!deleted.includes(String(i.code)));
-}
+function getPedidosProduccion(){return LS.get(PEDIDOS_PROD_KEY)||[];}
 function setPedidosProduccion(v){LS.set(PEDIDOS_PROD_KEY,v);}
-function getPedidosAlmacen(){
-  const all=LS.get(PEDIDOS_ALM_KEY)||[];
-  const deleted=getDeletedAlm();
-  if(deleted.length===0)return all;
-  return all.filter(i=>!deleted.includes(String(i.code)));
-}
+function getPedidosAlmacen(){return LS.get(PEDIDOS_ALM_KEY)||[];}
 function setPedidosAlmacen(v){LS.set(PEDIDOS_ALM_KEY,v);}
 function getInventarioHade(){return LS.get(INV_HADE_KEY)||[];}
 function setInventarioHade(v){LS.set(INV_HADE_KEY,v);}
+function getEntregas(){return LS.get(ENTREGAS_KEY)||[];}
+function setEntregas(v){LS.set(ENTREGAS_KEY,v);}
+function getCompras(){return LS.get(COMPRAS_KEY)||[];}
+function setCompras(v){LS.set(COMPRAS_KEY,v);}
+function getInventarioSemanal(){return LS.get(INV_SEM_KEY)||[];}
+function setInventarioSemanal(v){LS.set(INV_SEM_KEY,v);}
 function getChecked(){return LS.get(PEDIDOS_CHECK_KEY)||{};}
 function setChecked(v){LS.set(PEDIDOS_CHECK_KEY,v);}
 
@@ -1684,88 +1667,52 @@ function isChecked(code){
   return !!ch[todayKey()+'_'+code];
 }
 
-async function fetchPedidosFromSheet(){
-  const url=getURL();if(!url){alert('No hay URL de Sheets configurada. Ve a Admin.');return;}
-  try{
-    const data=await new Promise((resolve,reject)=>{
-      const cbName='_crf_ped_'+Date.now();
-      const script=document.createElement('script');
-      const timeout=setTimeout(()=>{
-        delete window[cbName];
-        if(script.parentNode)document.body.removeChild(script);
-        reject(new Error('Timeout — sin respuesta en 10s'));
-      },10000);
-      window[cbName]=function(d){
-        clearTimeout(timeout);
-        delete window[cbName];
-        if(script.parentNode)document.body.removeChild(script);
-        resolve(d);
-      };
-      script.onerror=function(){
-        clearTimeout(timeout);
-        delete window[cbName];
-        if(script.parentNode)document.body.removeChild(script);
-        reject(new Error('JSONP failed'));
-      };
-      script.src=url+'?action=getPedidos&callback='+cbName+'&_='+Date.now();
-      document.body.appendChild(script);
-    });
-    if(data.produccion)setPedidosProduccion(data.produccion);
-    if(data.almacen)setPedidosAlmacen(data.almacen);
-    if(data.inventario)setInventarioHade(data.inventario);
-    if(data.timestamp){
-      // Si el timestamp de Sheets es de un día diferente, limpiar borrados
-      const oldTs=LS.get('crf_pedidos_timestamp')||'';
-      const oldDay=oldTs?oldTs.split('T')[0]:'';
-      const newDay=data.timestamp.split('T')[0];
-      if(oldDay&&newDay!==oldDay){setDeletedProd([]);setDeletedAlm([]);}
-      LS.set('crf_pedidos_timestamp',data.timestamp);
-    }
-    render(page);
-  }catch(e){
-    console.warn('Error fetching pedidos:',e);
-  }
+// JSONP helper genérico
+function jsonpGet(url,action){
+  return new Promise((resolve,reject)=>{
+    const cbName='_crf_jp_'+Date.now()+'_'+Math.floor(Math.random()*10000);
+    const script=document.createElement('script');
+    const cleanup=()=>{delete window[cbName];try{document.body.removeChild(script);}catch(e){}};
+    window[cbName]=function(d){cleanup();resolve(d);};
+    script.onerror=function(){cleanup();reject(new Error('JSONP failed: '+action));};
+    script.src=url+'?action='+action+'&callback='+cbName+'&_='+Date.now();
+    document.body.appendChild(script);
+    setTimeout(()=>{if(window[cbName]){cleanup();reject(new Error('JSONP timeout: '+action));}},8000);
+  });
 }
 
-async function fetchLogisticaFromSheet(){
-  const url=getURLLog();if(!url){alert('No hay URL de Logística configurada. Ve a Admin.');return;}
+// Fetch desde el Sheet de Producción: pedidos de producción (lectura del ERP) + inventario HADE
+async function fetchPedidosProduccion(){
+  const url=getURLProd();if(!url)return;
   try{
-    const data=await new Promise((resolve,reject)=>{
-      const cbName='_crf_log_'+Date.now();
-      const script=document.createElement('script');
-      const timeout=setTimeout(()=>{
-        delete window[cbName];
-        if(script.parentNode)document.body.removeChild(script);
-        reject(new Error('Timeout — sin respuesta en 10s'));
-      },10000);
-      window[cbName]=function(d){
-        clearTimeout(timeout);
-        delete window[cbName];
-        if(script.parentNode)document.body.removeChild(script);
-        resolve(d);
-      };
-      script.onerror=function(){
-        clearTimeout(timeout);
-        delete window[cbName];
-        if(script.parentNode)document.body.removeChild(script);
-        reject(new Error('JSONP failed'));
-      };
-      script.src=url+'?action=getLogistica&callback='+cbName+'&_='+Date.now();
-      document.body.appendChild(script);
-    });
-    if(data.logisticaCompras)LS.set(LOG_COMPRAS_KEY,data.logisticaCompras);
-    if(data.logisticaEntregas)LS.set(LOG_ENTREGAS_KEY,data.logisticaEntregas);
-    if(data.timestamp){
-      const oldTs=LS.get('crf_logistica_timestamp')||'';
-      const oldDay=oldTs?oldTs.split('T')[0]:'';
-      const newDay=data.timestamp.split('T')[0];
-      if(oldDay&&newDay!==oldDay){setDeletedLogCompras([]);setDeletedLogEntregas([]);}
-      LS.set('crf_logistica_timestamp',data.timestamp);
-    }
+    const data=await jsonpGet(url,'getPedidos');
+    if(data.produccion)setPedidosProduccion(data.produccion);
+    if(data.almacen)   setPedidosAlmacen(data.almacen);
+    if(data.inventario)setInventarioHade(data.inventario);
+    if(data.timestamp)LS.set('crf_pedidos_timestamp',data.timestamp);
     render(page);
-  }catch(e){
-    console.warn('Error fetching logistica:',e);
-  }
+  }catch(e){console.warn('Error fetchPedidosProduccion:',e);}
+}
+
+// Fetch desde el Sheet de Logística: entregas del día + compras + inventario semanal capturado
+async function fetchLogistica(){
+  const url=getURLLog();if(!url)return;
+  try{
+    const data=await jsonpGet(url,'getLogistica');
+    // Schema erpweb: {logisticaCompras, logisticaEntregas, inventarioSemanal}
+    const entregas=data.logisticaEntregas||data.entregas;
+    const compras =data.logisticaCompras ||data.compras;
+    if(entregas)setEntregas(entregas);
+    if(compras) setCompras(compras);
+    if(data.inventarioSemanal)setInventarioSemanal(data.inventarioSemanal);
+    if(data.timestamp)LS.set('crf_log_timestamp',data.timestamp);
+    render(page);
+  }catch(e){console.warn('Error fetchLogistica:',e);}
+}
+
+// Compat: llamada única que dispara ambos fetchers en paralelo
+async function fetchPedidosFromSheet(){
+  await Promise.all([fetchPedidosProduccion(),fetchLogistica()]);
 }
 
 function renderPedidosProduccion(el){
@@ -1795,41 +1742,27 @@ function renderPedidosProduccion(el){
     html+=`<div class="cat-header">${cat}</div>`;
     for(const item of catItems){
       const checked=isChecked(item.code);
-      html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative">
+      html+=`<div class="pedido-item ${checked?'checked':''}">
         <div class="pedido-check ${checked?'done':''}" onclick="toggleCheck('${item.code}')">${checked?'✓':''}</div>
-        <div class="pedido-info" style="flex:1">
+        <div class="pedido-info">
           <div class="pedido-qty">${item.totalQty} ${item.unit}</div>
           <div class="pedido-name">${item.name}</div>
           ${item.nota?`<div class="pedido-nota">${item.nota}</div>`:''}
         </div>
-        <div onclick="deleteProdItem('${item.code}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:center">✕</div>
       </div>`;
     }
   }
   document.getElementById('pedidos-prod-list').innerHTML=html;
 }
 
-function deleteProdItem(code){
-  if(!confirm('¿Eliminar este producto de la lista?'))return;
-  const key=String(code);
-  // Agregar a lista de borrados (persiste contra auto-sync)
-  const deleted=getDeletedProd();
-  if(!deleted.includes(key))deleted.push(key);
-  setDeletedProd(deleted);
-  // También borrar del array guardado para efecto inmediato
-  const raw=LS.get(PEDIDOS_PROD_KEY)||[];
-  LS.set(PEDIDOS_PROD_KEY,raw.filter(i=>String(i.code)!==key));
-  toast('Producto eliminado ✓');
-  goTo(page);
-}
-
 // ══ VISTAS ALMACÉN ════════════════════════════════════════════════════════════
 function renderAlmInicio(el){
-  const items=getPedidosAlmacen();
-  const inv=getInventarioHade();
-  const ts=LS.get('crf_pedidos_timestamp')||'';
-  const listos=items.filter(i=>i.status==='listo').length;
-  const pendientes=items.filter(i=>i.status==='pendiente').length;
+  // Cada entrega es una orden completa (orderNumber + clientName + itemsText)
+  const entregas=getEntregas().filter(e=>!e.preparado&&String(e.preparado).toUpperCase()!=='TRUE');
+  const invSem=getInventarioSemanal();
+  const pend =entregas.filter(e=>(e.status||'').toString().toLowerCase()==='pendiente').length;
+  const listos=entregas.filter(e=>{const s=(e.status||'').toString().toLowerCase();return s==='listo'||s==='preparado';}).length;
+  const totalItems=entregas.reduce((s,e)=>s+(parseInt(e.itemsCount)||0),0);
   const hour=new Date().getHours();
   const gr=hour<12?'Buenos días ☀️':hour<19?'Buenas tardes 🌤':'Buenas noches 🌙';
 
@@ -1837,140 +1770,248 @@ function renderAlmInicio(el){
     <div class="greeting">${gr}</div>
     <div class="dateline">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
     <div class="stats">
-      <div class="stat"><div class="stat-n n-ok">${listos}</div><div class="stat-l">Listos</div></div>
-      <div class="stat"><div class="stat-n n-warn">${pendientes}</div><div class="stat-l">Pendientes</div></div>
-      <div class="stat"><div class="stat-n n-info">${inv.length}</div><div class="stat-l">Productos inv.</div></div>
+      <div class="stat"><div class="stat-n n-info">${entregas.length}</div><div class="stat-l">Pedidos hoy</div></div>
+      <div class="stat"><div class="stat-n n-warn">${pend}</div><div class="stat-l">Pendientes</div></div>
+      <div class="stat"><div class="stat-n n-ok">${totalItems}</div><div class="stat-l">Items total</div></div>
     </div>
-    ${pendientes>0?`<div class="banner banner-warn" style="cursor:pointer" onclick="goTo('alm_pedidos')">⏳ ${pendientes} producto${pendientes>1?'s':''} pendientes de recibir — toca para ver</div>`:''}
-    ${items.length>0?`<div class="banner" style="background:var(--ok-bg);border:1px solid var(--ok);color:#1B5E35;cursor:pointer" onclick="goTo('alm_pedidos')">📦 ${items.length} productos por preparar hoy</div>`:`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">Sin pedidos activos por el momento.</div>`}
+    ${entregas.length>0?`<div class="banner" style="background:var(--ok-bg);border:1px solid var(--ok);color:#1B5E35;cursor:pointer" onclick="goTo('alm_pedidos')">📦 ${entregas.length} pedido${entregas.length>1?'s':''} por preparar hoy</div>`:`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">Sin pedidos activos por el momento.</div>`}
+    <div class="exp-card" style="margin-top:10px" onclick="goTo('alm_inventario')">
+      <div class="exp-icon" style="background:var(--info-bg)">📊</div>
+      <div><div class="exp-title">Captura semanal</div><div class="exp-sub">${invSem.length?invSem.length+' productos en última captura':'Sin captura esta semana'}</div></div>
+    </div>
   </div>`;
 }
 
+
 function renderAlmPedidos(el){
+  // Lee la warehouseList que erpweb ya preparó en _pedidos_almacen.
+  // Cada item trae: code, name, totalQty, unit, category, status ('listo'|'pendiente'|'faltante'), nota.
+  // La 'nota' del backend dice 'chofer notificado' / 'producción notificada' / etc.
   const items=getPedidosAlmacen();
   const ts=LS.get('crf_pedidos_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
+  const urlOk=!!getURLProd();
 
   el.innerHTML=`<div class="pad">
     <div class="greeting">Preparación de Pedidos</div>
-    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchPedidosFromSheet()">↻ Actualizar</span></div>
-    ${items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay pedidos por preparar.</div>`:''}
+    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchPedidosProduccion()">↻ Actualizar</span></div>
+    ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Producción en Admin.</div>`:''}
+    ${urlOk&&items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay productos por preparar.</div>`:''}
     <div id="pedidos-alm-list"></div>
   </div>`;
 
   if(items.length===0)return;
 
-  // Agrupar por categoría
-  const byCategory={};
-  items.forEach(item=>{
-    const cat=item.category||'GENERAL';
-    if(!byCategory[cat])byCategory[cat]=[];
-    byCategory[cat].push(item);
-  });
-
+  // Progreso local por producto (checkboxes se reinician al día siguiente por el todayKey)
+  const total=items.length;
+  const keyFor=(p)=>'alm_prod_'+(p.code||p.name)+'_'+(p.unit||'');
+  const comp=items.filter(p=>isChecked(keyFor(p))).length;
   let html='';
-  const totalItems=items.length;
-  const checkedCount=items.filter(i=>isChecked('alm_'+i.code)).length;
-  html+=`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">Progreso: ${checkedCount}/${totalItems} preparados</div>`;
-  html+=`<div style="height:4px;background:var(--bg3);border-radius:4px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:${totalItems?Math.round(checkedCount/totalItems*100):0}%;background:var(--ok);border-radius:4px;transition:width .3s"></div></div>`;
+  html+=`<div style="font-size:12px;color:var(--text2);margin-bottom:4px">${total} producto${total>1?'s':''} a preparar</div>`;
+  html+=`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">Progreso: ${comp}/${total}</div>`;
+  html+=`<div style="height:4px;background:var(--bg3);border-radius:4px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:${total?Math.round(comp/total*100):0}%;background:var(--ok);border-radius:4px;transition:width .3s"></div></div>`;
 
-  for(const [cat,catItems] of Object.entries(byCategory)){
-    html+=`<div class="cat-header">${cat}</div>`;
-    for(const item of catItems){
-      const checked=isChecked('alm_'+item.code);
-      const isPending=item.status==='pendiente';
-      html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative">
-        <div class="pedido-check ${checked?'done':''}" onclick="toggleCheck('alm_${item.code}')">${checked?'✓':''}</div>
-        <div class="pedido-info" style="flex:1">
-          <div class="pedido-qty">${item.totalQty} ${item.unit}</div>
-          <div class="pedido-name">${item.name}</div>
-          ${isPending?`<div class="pedido-nota">⏳ ${item.nota}</div>`:''}
+  // Agrupar por categoría (la categoría también viene del backend)
+  const byCat={};
+  items.forEach(p=>{const c=p.category||'GENERAL';(byCat[c]=byCat[c]||[]).push(p);});
+
+  for(const cat of Object.keys(byCat).sort()){
+    html+=`<div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 6px;border-bottom:1px solid var(--bg3);padding-bottom:4px">${cat}</div>`;
+    for(const p of byCat[cat]){
+      const k=keyFor(p);
+      const checked=isChecked(k);
+      const q=Number(p.totalQty||0);
+      const qtyStr=(q%1===0)?String(q):q.toFixed(2).replace(/\.?0+$/,'');
+      // Badge según status + nota de erpweb
+      let noteHtml='';
+      const nota=String(p.nota||'').toLowerCase();
+      if(p.status==='pendiente'){
+        if(nota.indexOf('chofer')>=0){
+          noteHtml=`<div class="pedido-nota" style="color:var(--info);font-size:11px">🛒 Chofer notificado · lo traerá</div>`;
+        } else if(nota.indexOf('producci')>=0){
+          noteHtml=`<div class="pedido-nota" style="color:var(--amber);font-size:11px">🌱 Producción notificada · en cultivo</div>`;
+        } else if(nota.indexOf('foráneo')>=0||nota.indexOf('foraneo')>=0){
+          noteHtml=`<div class="pedido-nota" style="color:var(--info);font-size:11px">✈️ Pedido foráneo pendiente</div>`;
+        } else if(nota.indexOf('delivery')>=0){
+          noteHtml=`<div class="pedido-nota" style="color:var(--info);font-size:11px">🚛 Proveedor delivery lo trae</div>`;
+        } else if(p.nota){
+          noteHtml=`<div class="pedido-nota" style="font-size:11px">⏳ ${p.nota}</div>`;
+        }
+      } else if(p.status==='faltante'){
+        noteHtml=`<div class="pedido-nota" style="color:var(--danger);font-size:11px">⚠️ Faltante sin clasificar</div>`;
+      }
+      html+=`<div class="pedido-item ${checked?'checked':''}">
+        <div class="pedido-check ${checked?'done':''}" onclick="toggleCheck('${k.replace(/'/g,"\\'")}')">${checked?'✓':''}</div>
+        <div class="pedido-info">
+          <div class="pedido-qty">${qtyStr} ${p.unit||''}</div>
+          <div class="pedido-name">${p.name}</div>
+          ${noteHtml}
         </div>
-        <div onclick="deleteAlmItem('${item.code}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:center">✕</div>
       </div>`;
     }
   }
   document.getElementById('pedidos-alm-list').innerHTML=html;
 }
 
-function deleteAlmItem(code){
-  if(!confirm('¿Eliminar este producto de la lista?'))return;
-  const key=String(code);
-  const deleted=getDeletedAlm();
-  if(!deleted.includes(key))deleted.push(key);
-  setDeletedAlm(deleted);
-  const raw=LS.get(PEDIDOS_ALM_KEY)||[];
-  LS.set(PEDIDOS_ALM_KEY,raw.filter(i=>String(i.code)!==key));
-  toast('Producto eliminado ✓');
-  goTo(page);
+// Marca una orden como preparada: escribe al Sheet de Logística y actualiza localStorage
+// itemId = orderNumber (string)
+async function markPreparado(itemId){
+  const key='alm_'+itemId;
+  toggleCheck(key);
+  const nowChecked=isChecked(key);
+  const entregas=getEntregas();
+  const idx=entregas.findIndex(e=>String(e.orderNumber||e.id||'')===String(itemId));
+  if(idx>=0){
+    entregas[idx].preparado=nowChecked;
+    entregas[idx].preparadoAt=nowChecked?new Date().toISOString():null;
+    setEntregas(entregas);
+  }
+  if(getURLLog()){
+    setSyncUI('ing');
+    const res=await postToEndpoint('log',{action:'updatePreparado',data:{orderNumber:itemId,id:itemId,preparado:nowChecked,timestamp:new Date().toISOString()}});
+    if(res&&res.ok){setSyncUI('ok');toast(nowChecked?'✓ Marcado como preparado':'Desmarcado');}
+    else{setSyncUI('off');toast('⚠️ Cambio local, reintentará en la próxima sync');}
+  }
+  render(page);
 }
 
+// ══ INVENTARIO SEMANAL ═════════════════════════════════════════════════════════
+// Captura lunes por el almacén: producto + cantidad. Se guarda en Logística y
+// después se sube manualmente a Bind. Pre-llena con la última captura si existe.
 function renderAlmInventario(el){
-  const inv=getInventarioHade();
-  const ts=LS.get('crf_inv_timestamp')||LS.get('crf_pedidos_timestamp')||'';
+  const prev=getInventarioSemanal();  // último set guardado
+  const inv =getInventarioHade();     // catálogo ERP (opcional, para sugerir nombres)
+  const ts=LS.get('crf_log_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
+  const urlOk=!!getURLLog();
 
-  let searchVal='';
+  // Borrador en memoria: lo que lleva capturado esta sesión
+  if(!window._invDraft)window._invDraft=prev.map(p=>({name:p.name,unit:p.unit||'pz',stock:p.stock,category:p.category||''}));
+  const draft=window._invDraft;
+
   el.innerHTML=`<div class="pad">
-    <div class="greeting">Inventario HADE</div>
-    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchPedidosFromSheet()">↻ Actualizar</span></div>
-    <input type="search" placeholder="Buscar producto..." style="width:100%;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);font-size:14px;margin-bottom:12px;font-family:var(--font-body)" oninput="filterInventario(this.value)">
-    ${inv.length===0?`<div class="banner banner-warn">Sin datos de inventario. Se actualiza cada lunes.</div>`:''}
-    <div id="inv-table-wrap"></div>
+    <div class="greeting">Captura de inventario</div>
+    <div class="dateline">Último: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogistica()">↻ Cargar</span></div>
+    ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin para guardar la captura.</div>`:''}
+    <div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;font-size:13px">📋 Capture el conteo de este lunes. Se guarda en Logística para subirlo manualmente a Bind.</div>
+
+    <div class="sec" style="margin-top:12px">Productos (${draft.length})</div>
+    <div id="inv-draft-list"></div>
+
+    <div class="sec" style="margin-top:16px">Agregar producto</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input id="inv-new-name" type="text" placeholder="Nombre del producto" list="inv-name-suggest" style="padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);font-size:14px;font-family:var(--font-body)">
+      <datalist id="inv-name-suggest">${inv.map(i=>`<option value="${(i.name||'').replace(/"/g,'&quot;')}">`).join('')}</datalist>
+      <div style="display:flex;gap:8px">
+        <input id="inv-new-qty" type="number" step="0.01" placeholder="Cantidad" style="flex:2;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);font-size:14px;font-family:var(--font-body)">
+        <input id="inv-new-unit" type="text" placeholder="Unidad (pz/kg/lt)" value="pz" style="flex:1;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);font-size:14px;font-family:var(--font-body)">
+      </div>
+      <button class="btn btn-secondary" onclick="addInvRow()">+ Agregar a la lista</button>
+    </div>
+
+    <div class="btn-row" style="margin-top:18px">
+      <button class="btn btn-primary" onclick="saveInvSemanal()" ${!urlOk?'disabled':''}>💾 Guardar captura</button>
+      <button class="btn btn-secondary" onclick="clearInvDraft()">Limpiar</button>
+    </div>
   </div>`;
 
-  renderInvTable(inv);
+  renderInvDraft();
 }
 
-function renderInvTable(items){
-  const wrap=document.getElementById('inv-table-wrap');
-  if(!wrap||items.length===0){if(wrap)wrap.innerHTML='';return;}
-
-  // Agrupar por categoría
-  const byCategory={};
-  items.forEach(item=>{
-    const cat=item.category||'SIN CATEGORÍA';
-    if(!byCategory[cat])byCategory[cat]=[];
-    byCategory[cat].push(item);
+function renderInvDraft(){
+  const wrap=document.getElementById('inv-draft-list');
+  if(!wrap)return;
+  const draft=window._invDraft||[];
+  if(draft.length===0){wrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px 0">Sin productos aún. Agrégalos abajo.</div>';return;}
+  let html='<table class="inv-table"><thead><tr><th>Producto</th><th>Stock</th><th>Unidad</th><th></th></tr></thead><tbody>';
+  draft.forEach((it,i)=>{
+    html+=`<tr>
+      <td>${it.name}</td>
+      <td><input type="number" step="0.01" value="${it.stock||0}" onchange="updInvQty(${i},this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--bg2);font-size:13px"></td>
+      <td>${it.unit||'pz'}</td>
+      <td><span style="cursor:pointer;color:var(--danger);font-size:18px" onclick="removeInvRow(${i})">×</span></td>
+    </tr>`;
   });
-
-  let html='';
-  for(const [cat,catItems] of Object.entries(byCategory)){
-    html+=`<div class="cat-header">${cat}</div>`;
-    html+=`<table class="inv-table"><thead><tr><th>Producto</th><th>Stock</th><th>Unidad</th></tr></thead><tbody>`;
-    for(const item of catItems){
-      const isLow=item.stock<=0;
-      html+=`<tr><td>${item.name}</td><td class="${isLow?'inv-low':''}">${item.stock}</td><td>${item.unit}</td></tr>`;
-    }
-    html+=`</tbody></table>`;
-  }
+  html+='</tbody></table>';
   wrap.innerHTML=html;
 }
-
-function filterInventario(q){
-  const inv=getInventarioHade();
-  if(!q){renderInvTable(inv);return;}
-  const filtered=inv.filter(i=>i.name.toLowerCase().includes(q.toLowerCase())||i.code?.toLowerCase().includes(q.toLowerCase()));
-  renderInvTable(filtered);
+function addInvRow(){
+  const name=document.getElementById('inv-new-name').value.trim();
+  const qty =parseFloat(document.getElementById('inv-new-qty').value);
+  const unit=document.getElementById('inv-new-unit').value.trim()||'pz';
+  if(!name){toast('Nombre requerido');return;}
+  if(isNaN(qty)){toast('Cantidad inválida');return;}
+  window._invDraft=window._invDraft||[];
+  window._invDraft.push({name,stock:qty,unit,category:''});
+  document.getElementById('inv-new-name').value='';
+  document.getElementById('inv-new-qty').value='';
+  renderInvDraft();
+  // actualizar contador
+  const sec=document.querySelector('.pad .sec');
+  if(sec)sec.textContent=`Productos (${window._invDraft.length})`;
+}
+function updInvQty(i,v){
+  if(window._invDraft&&window._invDraft[i])window._invDraft[i].stock=parseFloat(v)||0;
+}
+function removeInvRow(i){
+  if(!window._invDraft)return;
+  window._invDraft.splice(i,1);
+  render(page);
+}
+function clearInvDraft(){
+  if(!confirm('¿Borrar la captura actual (sin guardar)?'))return;
+  window._invDraft=[];
+  render(page);
+}
+async function saveInvSemanal(){
+  const draft=window._invDraft||[];
+  if(draft.length===0){toast('Captura vacía');return;}
+  if(!getURLLog()){toast('Falta URL de Logística');return;}
+  setSyncUI('ing');
+  const payload={fecha:new Date().toISOString(),semana:getWeek(),items:draft};
+  const res=await postToEndpoint('log',{action:'saveInventarioSemanal',data:payload});
+  if(res&&res.ok){
+    setSyncUI('ok');
+    setInventarioSemanal(draft);
+    LS.set('crf_log_timestamp',new Date().toISOString());
+    toast('✓ Inventario guardado en Logística');
+  } else {
+    setSyncUI('off');
+    toast('⚠️ No se pudo guardar — revisa la URL de Logística');
+  }
 }
 
 function renderAlmAdmin(el){
-  const url=getURL();
+  const urlProd=getURLProd(),urlLog=getURLLog();
   el.innerHTML=`<div class="pad">
     <div class="greeting">Configuración</div>
-    <div class="dateline">Almacén HADE</div>
+    <div class="dateline">Almacén</div>
     <div class="sec">Conexión con Google Sheets</div>
+
     <div class="setup-box">
-      <div class="setup-title">URL del Apps Script
-        ${url?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
+      <div class="setup-title">📗 Apps Script — Producción
+        ${urlProd?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Pega aquí la URL de tu Apps Script</div>
-      <input class="url-input" id="url-inp" type="url" placeholder="https://script.google.com/macros/s/..." value="${url||''}">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Sheet de lotes y pedidos de producción</div>
+      <input class="url-input" id="url-inp-prod" type="url" placeholder="https://script.google.com/macros/s/..." value="${urlProd||''}">
       <div class="btn-row" style="margin-top:9px">
-        <button class="btn btn-primary" onclick="saveURL()">Guardar URL</button>
-        <button class="btn btn-secondary" onclick="testConn()">Probar</button>
+        <button class="btn btn-primary" onclick="saveURLDual('prod')">Guardar</button>
+        <button class="btn btn-secondary" onclick="testConnDual('prod')">Probar</button>
       </div>
     </div>
+
+    <div class="setup-box" style="margin-top:10px">
+      <div class="setup-title">📘 Apps Script — Logística
+        ${urlLog?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Sheet de entregas del día, compras e inventario semanal</div>
+      <input class="url-input" id="url-inp-log" type="url" placeholder="https://script.google.com/macros/s/..." value="${urlLog||''}">
+      <div class="btn-row" style="margin-top:9px">
+        <button class="btn btn-primary" onclick="saveURLDual('log')">Guardar</button>
+        <button class="btn btn-secondary" onclick="testConnDual('log')">Probar</button>
+      </div>
+    </div>
+
     <div class="sec" style="margin-top:16px">Cuenta</div>
     <div class="exp-card" onclick="changeRole()" style="border-color:var(--warn)">
       <div class="exp-icon" style="background:var(--warn-bg)">🔄</div>
@@ -1984,84 +2025,93 @@ function changeRole(){
   showRoleSelector();
 }
 
-// ══ VISTAS LOGÍSTICA (chofer) ════════════════════════════════════════════════
-function getLogCompras(){
-  const all=LS.get(LOG_COMPRAS_KEY)||[];
-  const deleted=getDeletedLogCompras();
-  if(deleted.length===0)return all;
-  return all.filter(i=>!deleted.includes(String(i.code)));
+// ══ VISTAS LOGÍSTICA (Chofer) ═════════════════════════════════════════════════
+// Rol que ve: compras del día (items sin stock en _logistica_compras) y
+// entregas del día (en modo lectura, para referencia de ruta).
+const LOG_COMPRAS_CHECK_KEY='crf_log_compras_checked';
+function getLogCheck(){return LS.get(LOG_COMPRAS_CHECK_KEY)||{};}
+function setLogCheck(v){LS.set(LOG_COMPRAS_CHECK_KEY,v);}
+// key es la cadena completa (ej: 'comp_<id>') — el caller arma el prefijo
+function toggleLogCheck(key){
+  const ch=getLogCheck();
+  const k=todayKey()+'_'+key;
+  ch[k]=!ch[k];
+  setLogCheck(ch);
+  render(page);
 }
-function getLogEntregas(){
-  const all=LS.get(LOG_ENTREGAS_KEY)||[];
-  const deleted=getDeletedLogEntregas();
-  if(deleted.length===0)return all;
-  return all.filter(i=>!deleted.includes(String(i.orderNumber)));
+function isLogChecked(key){
+  const ch=getLogCheck();
+  return !!ch[todayKey()+'_'+key];
 }
 
 function renderLogInicio(el){
-  const compras=getLogCompras();
-  const entregas=getLogEntregas();
-  const ts=LS.get('crf_logistica_timestamp')||'';
+  const compras=getCompras();
+  const entregas=getEntregas();
+  const pendCompra=compras.filter(c=>!isLogChecked('comp_'+(c.id||c.code||c.name))).length;
+  const ts=LS.get('crf_log_timestamp')||'';
+  const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
   const hour=new Date().getHours();
   const gr=hour<12?'Buenos días ☀️':hour<19?'Buenas tardes 🌤':'Buenas noches 🌙';
-  const comprasPend=compras.filter(c=>!isChecked('log_c_'+c.code)).length;
-  const entregasPend=entregas.filter(e=>!isChecked('log_e_'+e.orderNumber)).length;
+  const urlOk=!!getURLLog();
 
   el.innerHTML=`<div class="pad">
     <div class="greeting">${gr}</div>
-    <div class="dateline">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
+    <div class="dateline">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})} · Actualizado: ${fecha}</div>
+    ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin.</div>`:''}
     <div class="stats">
-      <div class="stat"><div class="stat-n n-warn">${comprasPend}</div><div class="stat-l">Por comprar</div></div>
-      <div class="stat"><div class="stat-n n-info">${entregasPend}</div><div class="stat-l">Por entregar</div></div>
-      <div class="stat"><div class="stat-n n-ok">${compras.length+entregas.length-comprasPend-entregasPend}</div><div class="stat-l">Hechos</div></div>
+      <div class="stat"><div class="stat-n n-amber">${pendCompra}</div><div class="stat-l">Por comprar</div></div>
+      <div class="stat"><div class="stat-n n-info">${compras.length}</div><div class="stat-l">Compras hoy</div></div>
+      <div class="stat"><div class="stat-n n-ok">${entregas.length}</div><div class="stat-l">Entregas hoy</div></div>
     </div>
-    ${comprasPend>0?`<div class="banner banner-warn" style="cursor:pointer" onclick="goTo('log_compras')">🛒 ${comprasPend} producto${comprasPend>1?'s':''} por comprar — toca para ver</div>`:''}
-    ${entregasPend>0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;cursor:pointer" onclick="goTo('log_entregas')">🚚 ${entregasPend} entrega${entregasPend>1?'s':''} pendiente${entregasPend>1?'s':''} — toca para ver</div>`:''}
-    ${compras.length===0&&entregas.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">Sin actividad programada. Jala ↻ para actualizar.</div>`:''}
+    ${pendCompra>0?`<div class="banner banner-warn" style="cursor:pointer" onclick="goTo('log_compras')">🛒 ${pendCompra} producto${pendCompra>1?'s':''} por comprar — toca para ver</div>`:''}
+    ${entregas.length>0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;cursor:pointer" onclick="goTo('log_entregas')">🚚 ${entregas.length} entregas programadas hoy</div>`:''}
+    ${compras.length===0&&entregas.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">Sin compras ni entregas activas.</div>`:''}
   </div>`;
 }
 
 function renderLogCompras(el){
-  const items=getLogCompras();
-  const ts=LS.get('crf_logistica_timestamp')||'';
+  const items=getCompras();
+  const ts=LS.get('crf_log_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
+  const urlOk=!!getURLLog();
 
   el.innerHTML=`<div class="pad">
-    <div class="greeting">Lista de Compras</div>
-    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogisticaFromSheet()">↻ Actualizar</span></div>
-    ${items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay productos por comprar hoy.</div>`:''}
+    <div class="greeting">Compras del día</div>
+    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogistica()">↻ Actualizar</span></div>
+    ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin para ver las compras.</div>`:''}
+    ${urlOk&&items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay compras pendientes hoy.</div>`:''}
     <div id="log-compras-list"></div>
   </div>`;
 
   if(items.length===0)return;
 
-  // Agrupar por proveedor si existe, si no por categoría
-  const byGroup={};
+  // Agrupar por categoría
+  const byCategory={};
   items.forEach(item=>{
-    const g=item.supplier||item.category||'COMPRAS';
-    if(!byGroup[g])byGroup[g]=[];
-    byGroup[g].push(item);
+    const cat=item.category||'GENERAL';
+    if(!byCategory[cat])byCategory[cat]=[];
+    byCategory[cat].push(item);
   });
 
   const total=items.length;
-  const done=items.filter(i=>isChecked('log_c_'+i.code)).length;
+  const comprados=items.filter(i=>isLogChecked('comp_'+(i.id||i.code||i.name))).length;
   let html='';
-  html+=`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">Progreso: ${done}/${total} comprados</div>`;
-  html+=`<div style="height:4px;background:var(--bg3);border-radius:4px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:${total?Math.round(done/total*100):0}%;background:var(--ok);border-radius:4px;transition:width .3s"></div></div>`;
+  html+=`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">Progreso: ${comprados}/${total} comprados</div>`;
+  html+=`<div style="height:4px;background:var(--bg3);border-radius:4px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:${total?Math.round(comprados/total*100):0}%;background:var(--amber);border-radius:4px;transition:width .3s"></div></div>`;
 
-  for(const [grp,grpItems] of Object.entries(byGroup)){
-    html+=`<div class="cat-header">${grp}</div>`;
-    for(const item of grpItems){
-      const checked=isChecked('log_c_'+item.code);
-      html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative">
-        <div class="pedido-check ${checked?'done':''}" onclick="toggleCheck('log_c_${item.code}')">${checked?'✓':''}</div>
-        <div class="pedido-info" style="flex:1">
-          <div class="pedido-qty">${item.qty} ${item.unit||''}</div>
-          <div class="pedido-name">${item.name}</div>
-          ${item.orderRefs?`<div class="pedido-nota">📋 OC: ${item.orderRefs}</div>`:''}
-          ${item.derivedFrom?`<div class="pedido-nota">← ${item.derivedFrom}</div>`:''}
+  for(const [cat,catItems] of Object.entries(byCategory)){
+    html+=`<div class="cat-header">${cat}</div>`;
+    for(const item of catItems){
+      const key='comp_'+(item.id||item.code||item.name);
+      const checked=isLogChecked(key);
+      html+=`<div class="pedido-item ${checked?'checked':''}">
+        <div class="pedido-check ${checked?'done':''}" onclick="toggleLogCheck('${key.replace(/'/g,"\\'")}')">${checked?'✓':''}</div>
+        <div class="pedido-info">
+          <div class="pedido-qty">${item.totalQty||item.qty||''} ${item.unit||''}</div>
+          <div class="pedido-name">${item.name||item.producto||''}</div>
+          ${item.proveedor?`<div class="pedido-nota">🏪 ${item.proveedor}</div>`:''}
+          ${item.nota?`<div class="pedido-nota">${item.nota}</div>`:''}
         </div>
-        <div onclick="deleteLogCompra('${item.code}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:center">✕</div>
       </div>`;
     }
   }
@@ -2069,82 +2119,92 @@ function renderLogCompras(el){
 }
 
 function renderLogEntregas(el){
-  const items=getLogEntregas();
-  const ts=LS.get('crf_logistica_timestamp')||'';
+  // Ruta del chofer: lista de órdenes del día (solo lectura)
+  // Campos: orderNumber, clientName, deliveryDate, itemsCount, itemsText, total, status
+  const items=getEntregas();
+  const ts=LS.get('crf_log_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
+  const urlOk=!!getURLLog();
 
   el.innerHTML=`<div class="pad">
-    <div class="greeting">Entregas del Día</div>
-    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogisticaFromSheet()">↻ Actualizar</span></div>
-    ${items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay entregas programadas.</div>`:''}
+    <div class="greeting">Ruta de entregas</div>
+    <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogistica()">↻ Actualizar</span></div>
+    ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin.</div>`:''}
+    ${urlOk&&items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay entregas activas.</div>`:''}
     <div id="log-entregas-list"></div>
   </div>`;
 
   if(items.length===0)return;
 
-  const total=items.length;
-  const done=items.filter(i=>isChecked('log_e_'+i.orderNumber)).length;
-  let html='';
-  html+=`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">Progreso: ${done}/${total} entregadas</div>`;
-  html+=`<div style="height:4px;background:var(--bg3);border-radius:4px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:${total?Math.round(done/total*100):0}%;background:var(--ok);border-radius:4px;transition:width .3s"></div></div>`;
+  // Agrupar por cliente (varios pedidos mismo cliente se juntan en la ruta)
+  const byCliente={};
+  items.forEach(item=>{
+    const c=item.clientName||'Sin cliente';
+    if(!byCliente[c])byCliente[c]=[];
+    byCliente[c].push(item);
+  });
 
-  for(const item of items){
-    const checked=isChecked('log_e_'+item.orderNumber);
-    const totalFmt=item.total?`$${Number(item.total).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})}`:'';
-    html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative;align-items:flex-start">
-      <div class="pedido-check ${checked?'done':''}" onclick="toggleCheck('log_e_${item.orderNumber}')" style="margin-top:2px">${checked?'✓':''}</div>
-      <div class="pedido-info" style="flex:1">
-        <div class="pedido-name" style="font-weight:600">${item.clientName||'(sin cliente)'}</div>
-        <div class="pedido-nota" style="margin-top:2px">OC ${item.orderNumber||'—'} · ${item.itemsCount||0} productos${totalFmt?' · '+totalFmt:''}</div>
-        ${item.itemsText?`<div class="pedido-nota" style="margin-top:4px;font-style:italic">${item.itemsText}</div>`:''}
-      </div>
-      <div onclick="deleteLogEntrega('${item.orderNumber}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:flex-start;margin-top:2px">✕</div>
-    </div>`;
+  let html='';
+  for(const [cli,cliItems] of Object.entries(byCliente)){
+    const totalOrders=cliItems.length;
+    html+=`<div class="cat-header">👤 ${cli}${totalOrders>1?` <span style="font-weight:400;color:var(--text2);font-size:11px">· ${totalOrders} órdenes</span>`:''}</div>`;
+    for(const item of cliItems){
+      const orderId=String(item.orderNumber||item.id||'');
+      const st=(item.status||'').toString().toLowerCase();
+      let badge='';
+      if(st==='pendiente'){
+        badge=`<span class="badge" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px">⏳ Pendiente</span>`;
+      } else if(st==='listo'||st==='preparado'){
+        badge=`<span class="badge" style="background:var(--ok-bg);color:#1B5E35;border:1px solid var(--ok);font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px">✓ Listo</span>`;
+      }
+      const itemsList=(item.itemsText||'').toString().split(/\s*[\|\n;]\s*/).filter(x=>x.trim());
+      const itemsHtml=itemsList.length>1
+        ? '<ul style="margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--text2)">'+itemsList.map(l=>`<li>${l}</li>`).join('')+'</ul>'
+        : `<div class="pedido-nota" style="white-space:pre-wrap">${item.itemsText||''}</div>`;
+      html+=`<div class="pedido-item">
+        <div class="pedido-info">
+          <div class="pedido-qty">#${orderId} ${badge}</div>
+          ${itemsHtml}
+          ${item.itemsCount?`<div class="pedido-nota" style="font-size:11px">📦 ${item.itemsCount} item${item.itemsCount>1?'s':''}${item.total?` · $${item.total}`:''}</div>`:''}
+          ${item.deliveryDate?`<div class="pedido-nota" style="font-size:11px">📅 ${item.deliveryDate}</div>`:''}
+        </div>
+      </div>`;
+    }
   }
   document.getElementById('log-entregas-list').innerHTML=html;
 }
 
-function deleteLogCompra(code){
-  if(!confirm('¿Eliminar este producto de la lista de compras?'))return;
-  const key=String(code);
-  const deleted=getDeletedLogCompras();
-  if(!deleted.includes(key))deleted.push(key);
-  setDeletedLogCompras(deleted);
-  const raw=LS.get(LOG_COMPRAS_KEY)||[];
-  LS.set(LOG_COMPRAS_KEY,raw.filter(i=>String(i.code)!==key));
-  toast('Producto eliminado ✓');
-  goTo(page);
-}
-
-function deleteLogEntrega(orderNumber){
-  if(!confirm('¿Eliminar esta entrega de la lista?'))return;
-  const key=String(orderNumber);
-  const deleted=getDeletedLogEntregas();
-  if(!deleted.includes(key))deleted.push(key);
-  setDeletedLogEntregas(deleted);
-  const raw=LS.get(LOG_ENTREGAS_KEY)||[];
-  LS.set(LOG_ENTREGAS_KEY,raw.filter(i=>String(i.orderNumber)!==key));
-  toast('Entrega eliminada ✓');
-  goTo(page);
-}
-
 function renderLogAdmin(el){
-  const url=getURLLog();
+  const urlProd=getURLProd(),urlLog=getURLLog();
   el.innerHTML=`<div class="pad">
     <div class="greeting">Configuración</div>
-    <div class="dateline">Logística HADE</div>
-    <div class="sec">Conexión con Google Sheets (Logística)</div>
+    <div class="dateline">Logística · Chofer</div>
+    <div class="sec">Conexión con Google Sheets</div>
+
     <div class="setup-box">
-      <div class="setup-title">URL del Apps Script — Logística
-        ${url?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
+      <div class="setup-title">📗 Apps Script — Producción
+        ${urlProd?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Pega aquí la URL del Apps Script dedicado al Sheet de Logística (archivo separado del Sheet principal).</div>
-      <input class="url-input" id="url-log-inp" type="url" placeholder="https://script.google.com/macros/s/..." value="${url||''}">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Sheet de producción</div>
+      <input class="url-input" id="url-inp-prod" type="url" placeholder="https://script.google.com/macros/s/..." value="${urlProd||''}">
       <div class="btn-row" style="margin-top:9px">
-        <button class="btn btn-primary" onclick="saveURLLog()">Guardar URL</button>
-        <button class="btn btn-secondary" onclick="fetchLogisticaFromSheet()">Probar</button>
+        <button class="btn btn-primary" onclick="saveURLDual('prod')">Guardar</button>
+        <button class="btn btn-secondary" onclick="testConnDual('prod')">Probar</button>
       </div>
     </div>
+
+    <div class="setup-box" style="margin-top:10px">
+      <div class="setup-title">📘 Apps Script — Logística
+        ${urlLog?`<span class="badge badge-ok">✓ Conectado</span>`:`<span class="badge badge-noconn">Sin configurar</span>`}
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Sheet de compras, entregas e inventario</div>
+      <input class="url-input" id="url-inp-log" type="url" placeholder="https://script.google.com/macros/s/..." value="${urlLog||''}">
+      <div class="btn-row" style="margin-top:9px">
+        <button class="btn btn-primary" onclick="saveURLDual('log')">Guardar</button>
+        <button class="btn btn-secondary" onclick="testConnDual('log')">Probar</button>
+      </div>
+    </div>
+
     <div class="sec" style="margin-top:16px">Cuenta</div>
     <div class="exp-card" onclick="changeRole()" style="border-color:var(--warn)">
       <div class="exp-icon" style="background:var(--warn-bg)">🔄</div>
@@ -2153,51 +2213,38 @@ function renderLogAdmin(el){
   </div>`;
 }
 
-function saveURLLog(){
-  const v=document.getElementById('url-log-inp')?.value?.trim();
-  if(!v||!v.startsWith('https://')){toast('URL inválida');return;}
-  setURLLog(v);toast('URL de Logística guardada ✓');
-  fetchLogisticaFromSheet();
-}
-
 // ══ INIT ══════════════════════════════════════════════════════════════════════
-// Set default Workspace URL if none saved
-const _defaultURL='https://script.google.com/macros/s/AKfycbzHTGTDF7IYwiOfOU-IcZoZu-tusJMBTJ-sKKDLjYr_6fcABAVx4qXpb_qSOGTG4TBxYQ/exec';
-if(!getURL())setURL(_defaultURL);
-const _url=getURL();
-// Siempre mostrar selector de rol al abrir la app
-localStorage.removeItem(ROLE_KEY);
-if(_url){
-  setSyncUI('ok');
+// Default URL de Producción (legacy) — solo si no hay nada guardado
+const _defaultProdURL='https://script.google.com/macros/s/AKfycbzHTGTDF7IYwiOfOU-IcZoZu-tusJMBTJ-sKKDLjYr_6fcABAVx4qXpb_qSOGTG4TBxYQ/exec';
+if(!getURLProd())setURLProd(_defaultProdURL);
+const _urlProd=getURLProd(), _urlLog=getURLLog();
+if(_urlProd||_urlLog)setSyncUI('ok');
+if(_urlProd){
+  syncLotesFromSheet();
+  fetchPedidosProduccion();
+}
+if(_urlLog){
+  fetchLogistica();
 }
 initApp();
 
-// Auto-sync cada 30 segundos para recibir actualizaciones de otros dispositivos
+// Auto-sync cada 30s: ambos endpoints en paralelo, solo los que estén configurados
 let _autoSyncInterval=null;
 function startAutoSync(){
   if(_autoSyncInterval)clearInterval(_autoSyncInterval);
   _autoSyncInterval=setInterval(()=>{
-    if(!getRole()||document.getElementById('modal-ov')?.style.display==='flex')return;
-    const role=getRole();
-    if(role==='logistica'){
-      if(getURLLog())fetchLogisticaFromSheet();
-    }else{
-      if(!getURL())return;
-      syncLotesFromSheet();
-      fetchPedidosFromSheet();
-    }
+    if(document.getElementById('modal-ov')?.style.display==='flex')return;
+    if(getURLProd()){syncLotesFromSheet();fetchPedidosProduccion();}
+    if(getURLLog()){fetchLogistica();}
   },30000);
 }
-if(_url)startAutoSync();
-// Re-sync al volver a la app (cuando el usuario cambia de tab/app y regresa)
+if(_urlProd||_urlLog)startAutoSync();
+// Re-sync al volver a la app
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden)return;
-  const role=getRole();
-  if(role==='logistica'){
-    if(getURLLog()){fetchLogisticaFromSheet();startAutoSync();}
-  }else if(getURL()){
-    syncLotesFromSheet();fetchPedidosFromSheet();startAutoSync();
-  }
+  if(getURLProd()){syncLotesFromSheet();fetchPedidosProduccion();}
+  if(getURLLog()){fetchLogistica();}
+  if(getURLProd()||getURLLog())startAutoSync();
 });
 </script>
 </body>
