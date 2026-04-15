@@ -3,15 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <script>
-// Cache buster: si la versión cambió, forzar recarga limpia
+// Versión visible de la app (informativa)
+var APP_VERSION='2.4.0';
 (function(){
-  var APP_VERSION='2.3.1';
-  var stored=localStorage.getItem('crf_app_version');
-  if(stored!==APP_VERSION){
-    localStorage.setItem('crf_app_version',APP_VERSION);
-    if(stored){location.href=location.pathname+'?_='+Date.now();return;}
-  }
+  try{
+    var stored=localStorage.getItem('crf_app_version');
+    if(stored!==APP_VERSION)localStorage.setItem('crf_app_version',APP_VERSION);
+  }catch(e){}
 })();
+
+// Service Worker: garantiza que siempre se cargue la última versión del HTML
+// (network-first), con fallback a caché si no hay conexión. Auto-reload al detectar
+// versión nueva mientras la app está abierta.
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      // Chequear actualizaciones cada 60s (útil para tablets que quedan abiertas)
+      setInterval(function(){reg.update().catch(function(){});},60000);
+      // También chequear cuando la pestaña vuelve a primer plano
+      document.addEventListener('visibilitychange',function(){
+        if(!document.hidden)reg.update().catch(function(){});
+      });
+      reg.addEventListener('updatefound',function(){
+        var newWorker=reg.installing;
+        if(!newWorker)return;
+        newWorker.addEventListener('statechange',function(){
+          if(newWorker.state==='installed'&&navigator.serviceWorker.controller){
+            // Hay un SW nuevo instalado y ya hay uno activo → activar y recargar
+            newWorker.postMessage('SKIP_WAITING');
+          }
+        });
+      });
+      // Recargar la página cuando el SW nuevo toma el control
+      var reloaded=false;
+      navigator.serviceWorker.addEventListener('controllerchange',function(){
+        if(reloaded)return;
+        reloaded=true;
+        window.location.reload();
+      });
+    }).catch(function(err){console.warn('SW register failed:',err);});
+  });
+}
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -329,7 +361,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
       <span>HADE — Compras del día y entregas a clientes</span>
     </div>
   </div>
-  <div style="margin-top:20px;font-size:11px;color:#999;text-align:center">v2.3.1</div>
+  <div style="margin-top:20px;font-size:11px;color:#999;text-align:center">v2.4.0</div>
 </div>
 
 <div id="modal-ov" class="modal-ov" style="display:none" onclick="closeOut(event)">
