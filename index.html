@@ -375,7 +375,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.9.0';
+var APP_VERSION='2.10.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -748,6 +748,7 @@ function render(p){
   else if(p==='log_entregas')renderLogEntregas(el);
   else if(p==='log_vueltas')renderLogVueltas(el);
   else if(p==='log_admin')renderLogAdmin(el);
+  else if(p==='notas')renderNotas(el);
   updatePendBadge();
   setSyncUI((getURLProd()||getURLLog())?'ok':'off');
 }
@@ -785,7 +786,14 @@ function renderInicio(el){
         <div class="reg-name">${r.name}</div>
         <div class="reg-code">${r.code}</div>
         <div class="reg-st ${doneIds.has(r.id)?'s-done':'s-pend'}">${doneIds.has(r.id)?'✓ Registrado':'Pendiente'}</div>
-      </div>`).join('')}</div>
+      </div>`).join('')}
+      <div class="reg-card" onclick="goTo('notas')" style="background:linear-gradient(135deg,#fef9e7 0%,#fdf2d0 100%);border-color:#e8c967">
+        <div class="reg-icon">📝</div>
+        <div class="reg-name">Bloc de notas</div>
+        <div class="reg-code">Libreta del día</div>
+        <div class="reg-st s-hoy">${(getNotas()||[]).length} nota${(getNotas()||[]).length===1?'':'s'}</div>
+      </div>
+    </div>
     <div class="sec">Por evento</div>
     <div class="reg-grid">${REGS.filter(r=>r.freq!=='Diario').map(r=>`
       <div class="reg-card" onclick="openForm('${r.id}')">
@@ -1778,6 +1786,16 @@ const VUELTAS_KEY='crf_vueltas_logistica';
 function getVueltasAll(){return LS.get(VUELTAS_KEY)||[];}
 function setVueltasAll(v){LS.set(VUELTAS_KEY,v);}
 function getVueltas(){return getVueltasAll();}
+
+// ── BLOC DE NOTAS (producción) ─────────────────────────────────────────────
+// Cache local del Sheet _notas_produccion (append-only). Cada nota:
+// {id, date, createdAt, titulo, nota, autor}
+// - Se sincroniza al Sheet al crearse (POST addNota → Sheet Producción).
+// - El borrar es LOCAL SOLAMENTE — el Sheet conserva historial permanente.
+// - No hay edición (spec del usuario): una vez creada, solo se lee o borra local.
+const NOTAS_KEY='crf_notas_produccion';
+function getNotas(){return LS.get(NOTAS_KEY)||[];}
+function setNotas(v){LS.set(NOTAS_KEY,v);}
 function getInventarioSemanal(){return LS.get(INV_SEM_KEY)||[];}
 function setInventarioSemanal(v){LS.set(INV_SEM_KEY,v);}
 function getChecked(){return LS.get(PEDIDOS_CHECK_KEY)||{};}
@@ -1812,6 +1830,18 @@ async function fetchPedidosProduccion(){
     if(data.produccion)setPedidosProduccion(data.produccion);
     if(data.almacen)   setPedidosAlmacen(data.almacen);
     if(data.inventario)setInventarioHade(data.inventario);
+    if(Array.isArray(data.notas)){
+      // Merge Sheet → local preservando:
+      //  1) "borrados localmente" (crf_notas_deleted) → no vuelven a aparecer aquí
+      //  2) notas recién creadas que todavía no aterrizan en el Sheet
+      //     (evita el "blip" donde una nota recién guardada desaparece hasta
+      //      que la sync del Sheet la vuelve a traer)
+      const deleted=new Set(LS.get('crf_notas_deleted')||[]);
+      const fromSheet=data.notas.filter(function(n){return !deleted.has(String(n.id));});
+      const sheetIds=new Set(fromSheet.map(function(n){return String(n.id);}));
+      const pendientesLocal=(getNotas()||[]).filter(function(n){return !sheetIds.has(String(n.id))&&!deleted.has(String(n.id));});
+      setNotas(pendientesLocal.concat(fromSheet));
+    }
     if(data.timestamp){
       // Reset borrados si cambió el día
       const oldTs=LS.get('crf_pedidos_timestamp')||'';
@@ -2886,6 +2916,140 @@ function openVueltaMap(id){
   if(!q){toast('Sin lugar ni dirección','warn');return;}
   const url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
   window.open(url,'_blank','noopener');
+}
+
+// ══ BLOC DE NOTAS (producción) ══════════════════════════════════════════════
+// Libreta del día para registrar eventos libres. Título + nota.
+// - Append-only en Sheets (historial permanente para auditoría/seguimiento)
+// - Borrado local-only: añade id a crf_notas_deleted para que al próximo fetch
+//   no vuelva a aparecer en este dispositivo. El Sheet mantiene todas.
+function renderNotas(el){
+  const notas=getNotas();
+  // Ordenar más recientes primero
+  const sorted=notas.slice().sort(function(a,b){
+    return String(b.createdAt||b.date||'').localeCompare(String(a.createdAt||a.date||''));
+  });
+  // Agrupar por fecha (YYYY-MM-DD → "Hoy" / "Ayer" / fecha larga)
+  const today=todayKey();
+  const yesterday=(function(){const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split('T')[0];})();
+  function labelForDate(d){
+    if(!d)return 'Sin fecha';
+    if(d===today)return 'Hoy';
+    if(d===yesterday)return 'Ayer';
+    const [y,m,dd]=d.split('-').map(Number);
+    const dt=new Date(y,m-1,dd);
+    return dt.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  }
+  const groups={};
+  sorted.forEach(function(n){
+    const k=String(n.date||'').split('T')[0]||'';
+    if(!groups[k])groups[k]=[];
+    groups[k].push(n);
+  });
+  const orderedKeys=Object.keys(groups).sort(function(a,b){return b.localeCompare(a);});
+
+  let listHtml='';
+  if(sorted.length===0){
+    listHtml=`<div class="empty">Sin notas por ahora.<br>Toca <b>"+ Agregar nueva"</b> para registrar un evento del día.</div>`;
+  } else {
+    orderedKeys.forEach(function(k){
+      listHtml+=`<div class="sec" style="margin-top:14px;margin-bottom:8px;font-size:12px;color:var(--text2);text-transform:capitalize">${labelForDate(k)}</div>`;
+      groups[k].forEach(function(n){
+        const id=escAttr(n.id);
+        const titulo=escAttr(n.titulo||'(sin título)');
+        const nota=escAttr(n.nota||'');
+        const hora=n.createdAt?new Date(n.createdAt).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}):'';
+        listHtml+=`<div class="pedido-item" style="align-items:flex-start">
+          <div class="pedido-info" style="flex:1;min-width:0">
+            <div class="pedido-qty" style="font-size:14px">${titulo}</div>
+            ${nota?`<div class="pedido-name" style="white-space:pre-wrap;margin-top:4px;color:var(--text)">${nota}</div>`:''}
+            ${hora?`<div class="pedido-nota" style="font-size:11px;color:var(--text3);font-style:normal;margin-top:6px">🕒 ${hora}</div>`:''}
+          </div>
+          <div onclick="deleteNota('${id}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:flex-start;margin-top:2px" title="Borrar de este dispositivo">✕</div>
+        </div>`;
+      });
+    });
+  }
+
+  const ts=LS.get('crf_pedidos_timestamp')||'';
+  const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
+
+  el.innerHTML=`<div class="pad">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div>
+        <div class="greeting" style="font-size:22px">📝 Bloc de notas</div>
+        <div class="dateline">Libreta de eventos · ${fecha}</div>
+      </div>
+      <button class="btn btn-primary" style="flex:0;padding:8px 14px;font-size:13px" onclick="openNotaSheet()">+ Agregar nueva</button>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;padding:8px 10px;background:var(--bg2);border-radius:8px">
+      💡 Las notas se guardan en Sheets y se ven en los demás dispositivos. Borrarlas aquí solo las oculta en este dispositivo; el historial en Sheets se conserva.
+    </div>
+    <div id="notas-list">${listHtml}</div>
+  </div>`;
+}
+
+function openNotaSheet(){
+  const html=`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Nueva nota</div>
+    <div class="sheet-sub">Registra un evento del día</div>
+    <div class="sheet-label">Título <span style="color:var(--danger)">*</span></div>
+    <input class="sheet-input" id="sheet-n-titulo" type="text" placeholder="Ej. Falló la bomba del riego" autocomplete="off" maxlength="80">
+    <div class="sheet-label">Nota</div>
+    <textarea class="sheet-input" id="sheet-n-nota" rows="5" placeholder="Describe lo que pasó, qué hiciste o qué hace falta…"></textarea>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">El título es obligatorio. Una vez guardada, la nota no se puede editar.</div>
+    <div class="sheet-actions">
+      <button class="sheet-cancel" onclick="closeSheet()">Cancelar</button>
+      <button class="sheet-save" onclick="saveNota()">Agregar</button>
+    </div>`;
+  openSheet(html);
+  setTimeout(function(){
+    const inp=document.getElementById('sheet-n-titulo');
+    if(inp)inp.focus();
+  },340);
+}
+
+async function saveNota(){
+  const titulo=String(document.getElementById('sheet-n-titulo').value||'').trim();
+  const nota=String(document.getElementById('sheet-n-nota').value||'').trim();
+  if(!titulo){toast('El título es obligatorio','warn');return;}
+  const nueva={
+    id:'n_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    date:todayKey(),
+    createdAt:new Date().toISOString(),
+    titulo, nota,
+    autor:LS.get(ROLE_KEY)||'produccion'
+  };
+  // Optimista: guardar local + UI de inmediato
+  const all=getNotas();
+  all.unshift(nueva);
+  setNotas(all);
+  closeSheet();
+  render(page);
+  toast('Nota agregada','ok');
+  // Sincronizar al Sheet de Producción (append-only)
+  if(!getURLProd())return;
+  setSyncUI('ing');
+  const res=await postToEndpoint('prod',{action:'addNota',data:nueva});
+  if(res&&res.ok)setSyncUI('ok');
+  else{setSyncUI('off');toast('Nota local, no se pudo sincronizar','warn');}
+}
+
+// Borra la nota SOLO en este dispositivo. El Sheet conserva el historial.
+// El id se añade a crf_notas_deleted para que futuras syncs no la traigan
+// de vuelta.
+function deleteNota(id){
+  if(!confirm('¿Borrar esta nota de este dispositivo?\n\nEn Sheets se conserva como historial.'))return;
+  const all=getNotas().filter(function(n){return String(n.id)!==String(id);});
+  setNotas(all);
+  const deleted=LS.get('crf_notas_deleted')||[];
+  if(deleted.indexOf(String(id))<0){
+    deleted.push(String(id));
+    LS.set('crf_notas_deleted',deleted);
+  }
+  render(page);
+  toast('Nota borrada (solo local)','ok');
 }
 
 function renderLogAdmin(el){
