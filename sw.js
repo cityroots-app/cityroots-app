@@ -9,7 +9,7 @@
  * haya conexión, sin necesidad de hard-refresh manual.
  */
 
-const CACHE_NAME = 'crf-v5';
+const CACHE_NAME = 'crf-v6';
 
 // Instalación: activar inmediatamente sin esperar que cierren pestañas
 self.addEventListener('install', (event) => {

@@ -54,6 +54,8 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .sync-dot{width:7px;height:7px;border-radius:50%}
 .sync-ok{background:#4a8c3f;box-shadow:0 0 6px rgba(74,140,63,0.5)}.sync-off{background:#555}.sync-ing{background:#f5c842;animation:blink 1s infinite;box-shadow:0 0 6px rgba(245,200,66,0.4)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+/* Respetar prefers-reduced-motion (accesibilidad) */
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 .sync-lbl{font-size:10px;color:rgba(168,213,162,0.55);font-weight:500}
 
 /* CONTENT */
@@ -243,8 +245,46 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .empty{text-align:center;padding:48px 24px;color:var(--stone);font-size:14px;line-height:1.7;font-weight:400}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--green-deep);color:#fff;padding:11px 24px;border-radius:50px;font-size:13px;font-weight:500;z-index:400;opacity:0;transition:all .3s cubic-bezier(.16,1,.3,1);pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;box-shadow:var(--shadow-lg);font-family:var(--font-body)}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--green-deep);color:#fff;padding:11px 22px;border-radius:50px;font-size:13px;font-weight:500;z-index:400;opacity:0;transition:all .3s cubic-bezier(.16,1,.3,1);white-space:nowrap;max-width:92vw;text-align:center;box-shadow:var(--shadow-lg);font-family:var(--font-body);display:inline-flex;align-items:center;gap:10px;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast-error{background:var(--danger)}
+.toast-warn{background:var(--amber)}
+.toast-info{background:var(--info)}
+.toast-ok{background:var(--green-deep)}
+.toast .toast-icon{font-size:15px;line-height:1}
+.toast .toast-action{background:rgba(255,255,255,0.22);color:#fff;border:0;padding:5px 13px;border-radius:50px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.03em;transition:transform .08s}
+.toast .toast-action:active{transform:scale(0.95)}
+/* Animación sutil al marcar comprado */
+@keyframes checkPop{0%{transform:scale(1)}30%{transform:scale(1.04)}60%{transform:scale(0.99)}100%{transform:scale(1)}}
+.pedido-item.justChecked{animation:checkPop .4s ease both}
+/* Empty state educativo */
+.empty-ed{text-align:center;padding:44px 24px 28px;color:var(--text2)}
+.empty-art{font-size:56px;margin-bottom:10px;opacity:0.75;display:block;line-height:1}
+.empty-title{font-family:var(--font-display);font-size:18px;color:var(--text);margin:4px 0 6px;font-weight:600}
+.empty-sub{font-size:13px;line-height:1.5;max-width:280px;margin:0 auto;color:var(--text2)}
+.empty-cta{margin-top:14px;font-size:12px;color:var(--green-mid);font-weight:600;cursor:pointer;display:inline-block;padding:6px 14px;border:1px solid var(--green-mid);border-radius:50px;background:var(--bg);transition:all .15s}
+.empty-cta:active{transform:scale(0.96);background:var(--ok-bg)}
+/* Bottom sheet reutilizable (distinta a modal-ov ya que es dinámico) */
+.sheet-ov{position:fixed;inset:0;background:rgba(0,0,0,0.38);z-index:500;display:flex;align-items:flex-end;justify-content:center;animation:sheetFade .2s ease both}
+@keyframes sheetFade{from{opacity:0}to{opacity:1}}
+.sheet{background:var(--bg);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:8px 18px 22px;box-shadow:0 -8px 32px rgba(0,0,0,0.18);transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.9,.3,1);max-height:85vh;overflow-y:auto;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+.sheet.open{transform:translateY(0)}
+.sheet-handle{width:40px;height:4px;background:var(--border2);border-radius:50px;margin:8px auto 14px}
+.sheet-title{font-family:var(--font-display);font-size:19px;color:var(--text);font-weight:600;margin-bottom:2px}
+.sheet-sub{font-size:13px;color:var(--text2);margin-bottom:14px}
+.sheet-current{font-size:12px;color:var(--text2);margin-bottom:14px;padding:8px 12px;background:var(--bg2);border-radius:10px;border:1px solid var(--border)}
+.sheet-current b{color:var(--green-mid);font-weight:700}
+.sheet-label{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin:10px 0 8px}
+.sheet-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.sheet-chip{padding:8px 14px;background:var(--bg2);color:var(--text);border:1px solid var(--border2);border-radius:50px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:all .15s}
+.sheet-chip:active{transform:scale(0.96);background:var(--ok-bg);border-color:var(--green-mid);color:var(--green-mid)}
+.sheet-input{width:100%;padding:12px 14px;border:1.5px solid var(--border2);border-radius:12px;font-size:15px;font-family:var(--font-body);background:var(--bg);color:var(--text);outline:none;transition:border-color .15s}
+.sheet-input:focus{border-color:var(--green-mid)}
+.sheet-actions{display:flex;gap:10px;margin-top:18px}
+.sheet-actions button{flex:1;padding:12px 16px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-body);border:0;transition:transform .08s}
+.sheet-actions button:active{transform:scale(0.97)}
+.sheet-cancel{background:var(--bg2);color:var(--text2);border:1px solid var(--border)!important}
+.sheet-save{background:linear-gradient(135deg,var(--green-mid),var(--green-bright));color:#fff}
 .divider{height:1px;background:var(--border);margin:16px 0}
 </style>
 </head>
@@ -254,7 +294,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
     <div class="topbar-logo"><img src="ISOTIPO_VERDE_nobg.png" alt="City Roots Farm"></div>
     <div>
       <div class="topbar-title">CITYROOTS.FARM</div>
-      <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.5.0</div>
+      <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.6.0</div>
     </div>
     <div class="sync-row" id="role-switch" onclick="changeRole()" style="cursor:pointer;margin-right:4px;display:none">
       <span style="font-size:11px;color:rgba(168,213,162,0.8)">🔄</span>
@@ -322,10 +362,14 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
   <div class="modal" id="modal-body"></div>
 </div>
 <div class="toast" id="toast"></div>
+<!-- Bottom sheet dinámico (proveedor, etc.) -->
+<div id="sheet-ov" class="sheet-ov" style="display:none" onclick="closeSheetOut(event)">
+  <div class="sheet" id="sheet-body"></div>
+</div>
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.5.0';
+var APP_VERSION='2.6.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1637,7 +1681,37 @@ async function guardarEdicionLote(id){
 function closeModal(){document.getElementById('modal-ov').style.display='none';}
 function closeOut(e){if(e.target===document.getElementById('modal-ov'))closeModal();}
 let toastTimer;
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);}
+// toast(msg) — compat: un solo argumento sigue funcionando (variante 'ok' por default)
+// toast(msg, 'error'|'warn'|'info'|'ok') — con variante de color
+// toast(msg, type, {action:{label, onClick}, icon, duration}) — con botón Deshacer opcional
+function toast(msg,type,opts){
+  opts=opts||{};
+  const t=document.getElementById('toast');
+  if(!t)return;
+  // Reset clases (preserva 'show' si ya estaba para no parpadear)
+  t.className='toast';
+  const tp=type||'ok';
+  if(tp&&tp!=='default')t.classList.add('toast-'+tp);
+  const iconMap={ok:'✓',error:'⚠️',warn:'⚠️',info:'ℹ️'};
+  const icon=opts.icon!==undefined?opts.icon:(iconMap[tp]||'');
+  let html='';
+  if(icon)html+='<span class="toast-icon">'+icon+'</span>';
+  html+='<span>'+msg+'</span>';
+  if(opts.action&&typeof opts.action.onClick==='function'){
+    html+='<button class="toast-action" id="toast-action-btn">'+(opts.action.label||'Deshacer')+'</button>';
+  }
+  t.innerHTML=html;
+  // Forzar reflow antes de .show para que la animación corra
+  void t.offsetWidth;
+  t.classList.add('show');
+  if(opts.action){
+    const btn=t.querySelector('#toast-action-btn');
+    if(btn)btn.onclick=function(){clearTimeout(toastTimer);try{opts.action.onClick();}catch(e){console.error(e);}t.classList.remove('show');};
+  }
+  clearTimeout(toastTimer);
+  const dur=opts.duration||(opts.action?5200:3200);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},dur);
+}
 
 // ══ PEDIDOS PRODUCCIÓN + LOGÍSTICA ═════════════════════════════════════════════
 const PEDIDOS_PROD_KEY='crf_pedidos_produccion';
@@ -1805,15 +1879,21 @@ function renderPedidosProduccion(el){
 }
 
 function deleteProdItem(code){
-  if(!confirm('¿Eliminar este producto de la lista de producción?'))return;
+  // Patrón undo-toast: borra de inmediato y ofrece 5.2s para deshacer.
   const key=String(code);
-  const del=getDeletedProd();
+  const rawBefore=LS.get(PEDIDOS_PROD_KEY)||[];
+  const delBefore=getDeletedProd().slice();
+  const del=delBefore.slice();
   if(!del.includes(key))del.push(key);
   setDeletedProd(del);
-  const raw=LS.get(PEDIDOS_PROD_KEY)||[];
-  LS.set(PEDIDOS_PROD_KEY,raw.filter(i=>String(i.code||i.name)!==key));
-  toast('Producto eliminado ✓');
+  LS.set(PEDIDOS_PROD_KEY,rawBefore.filter(i=>String(i.code||i.name)!==key));
   render(page);
+  toast('Producto eliminado',null,{action:{label:'Deshacer',onClick:function(){
+    LS.set(PEDIDOS_PROD_KEY,rawBefore);
+    setDeletedProd(delBefore);
+    render(page);
+    toast('Restaurado','ok');
+  }}});
 }
 
 // ══ VISTAS ALMACÉN ════════════════════════════════════════════════════════════
@@ -1917,15 +1997,20 @@ function renderAlmPedidos(el){
 }
 
 function deleteAlmItem(code){
-  if(!confirm('¿Eliminar este producto de la lista de almacén?'))return;
   const key=String(code);
-  const del=getDeletedAlm();
+  const rawBefore=LS.get(PEDIDOS_ALM_KEY)||[];
+  const delBefore=getDeletedAlm().slice();
+  const del=delBefore.slice();
   if(!del.includes(key))del.push(key);
   setDeletedAlm(del);
-  const raw=LS.get(PEDIDOS_ALM_KEY)||[];
-  LS.set(PEDIDOS_ALM_KEY,raw.filter(i=>String(i.code||i.name)!==key));
-  toast('Producto eliminado ✓');
+  LS.set(PEDIDOS_ALM_KEY,rawBefore.filter(i=>String(i.code||i.name)!==key));
   render(page);
+  toast('Producto eliminado',null,{action:{label:'Deshacer',onClick:function(){
+    LS.set(PEDIDOS_ALM_KEY,rawBefore);
+    setDeletedAlm(delBefore);
+    render(page);
+    toast('Restaurado','ok');
+  }}});
 }
 
 // Marca una orden como preparada: escribe al Sheet de Logística y actualiza localStorage
@@ -2140,7 +2225,12 @@ function renderLogInicio(el){
     </div>
     ${pendCompra>0?`<div class="banner banner-warn" style="cursor:pointer" onclick="goTo('log_compras')">🛒 ${pendCompra} producto${pendCompra>1?'s':''} por comprar — toca para ver</div>`:''}
     ${entregas.length>0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;cursor:pointer" onclick="goTo('log_entregas')">🚚 ${entregas.length} entregas programadas hoy</div>`:''}
-    ${compras.length===0&&entregas.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">Sin compras ni entregas activas.</div>`:''}
+    ${compras.length===0&&entregas.length===0?`<div class="empty-ed">
+      <span class="empty-art">☕</span>
+      <div class="empty-title">Día tranquilo</div>
+      <div class="empty-sub">No hay compras ni entregas activas. Las nuevas llegan automáticamente desde ventas.</div>
+      ${urlOk?`<span class="empty-cta" onclick="fetchLogistica()">↻ Actualizar ahora</span>`:''}
+    </div>`:''}
   </div>`;
 }
 
@@ -2182,7 +2272,12 @@ function renderLogCompras(el){
     <div class="greeting">Compras del día</div>
     <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogistica()">↻ Actualizar</span></div>
     ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin para ver las compras.</div>`:''}
-    ${urlOk&&items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay compras pendientes hoy.</div>`:''}
+    ${urlOk&&items.length===0?`<div class="empty-ed">
+      <span class="empty-art">🧺</span>
+      <div class="empty-title">Sin compras por hoy</div>
+      <div class="empty-sub">El almacén tiene todo lo necesario. Si esperabas pedidos, toca actualizar.</div>
+      <span class="empty-cta" onclick="fetchLogistica()">↻ Actualizar ahora</span>
+    </div>`:''}
     <div id="log-compras-list"></div>
   </div>`;
 
@@ -2224,7 +2319,7 @@ function renderLogCompras(el){
       const unit=item.unit||'';
       const name=item.name||item.producto||'';
       const cambiadoPorChofer=!!getSupplierOverride(itemCode);
-      html+=`<div class="pedido-item ${isBought?'checked':''}" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px 14px">
+      html+=`<div class="pedido-item ${isBought?'checked':''}" data-code="${itemCode.replace(/"/g,'&quot;')}" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px 14px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
           <div style="flex:1;min-width:0">
             <div class="pedido-qty">${qty} ${unit}</div>
@@ -2248,20 +2343,90 @@ function renderLogCompras(el){
   document.getElementById('log-compras-list').innerHTML=html;
 }
 
-// Abre prompt para cambiar el proveedor de un item (solo localmente, hasta que
-// el chofer marque "Comprado" — ahí se persiste el supplier usado).
+// ══ BOTTOM SHEET HELPERS ═══════════════════════════════════════════════════════
+function openSheet(html){
+  const ov=document.getElementById('sheet-ov');
+  const body=document.getElementById('sheet-body');
+  if(!ov||!body) return;
+  body.innerHTML=html;
+  ov.style.display='flex';
+  void ov.offsetWidth;
+  body.classList.add('open');
+}
+function closeSheet(){
+  const ov=document.getElementById('sheet-ov');
+  const body=document.getElementById('sheet-body');
+  if(!ov||!body) return;
+  body.classList.remove('open');
+  setTimeout(function(){ov.style.display='none';body.innerHTML='';},320);
+}
+function closeSheetOut(e){
+  if(e.target&&e.target.id==='sheet-ov') closeSheet();
+}
+function escAttr(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Lista de proveedores "recientes" agregados desde la lista actual de compras
+// + alternativos del item (si los pasó el backend). Excluye el actual.
+function collectSupplierChips(item){
+  const set=new Set();
+  const all=getCompras();
+  all.forEach(it=>{
+    const s=effectiveSupplier(it);
+    if(s&&s!=='POR ASIGNAR') set.add(s);
+  });
+  // alternativos que mande el backend (p. ej. ['COSTCO','TRUELEAF'])
+  const alts=item&&item.alternativeSuppliers;
+  if(Array.isArray(alts)) alts.forEach(s=>{if(s) set.add(String(s));});
+  const current=effectiveSupplier(item);
+  set.delete(current);
+  return Array.from(set).slice(0,8);
+}
+
+// Abre bottom sheet para cambiar el proveedor de un item (solo localmente, hasta
+// que el chofer marque "Comprado" — ahí se persiste el supplier usado).
 function promptChangeSupplier(code){
   const items=getCompras();
   const item=items.find(i=>String(i.code||'')===String(code));
-  if(!item){toast('Item no encontrado');return;}
+  if(!item){toast('Item no encontrado','warn');return;}
   const current=effectiveSupplier(item);
-  const nuevo=prompt('¿Con qué proveedor compraste "'+(item.name||'')+'"?\n\nProveedor actual: '+current, current);
-  if(nuevo===null) return;
-  const trimmed=String(nuevo).trim();
-  if(!trimmed){toast('Proveedor vacío');return;}
-  setSupplierOverride(code,trimmed);
-  toast('Proveedor: '+trimmed);
+  const chips=collectSupplierChips(item);
+  const safeCode=escAttr(code);
+  const chipsHtml=chips.length
+    ? chips.map(s=>`<span class="sheet-chip" onclick="pickSupplier('${safeCode}','${escAttr(s).replace(/\\/g,'\\\\')}')">${escAttr(s)}</span>`).join('')
+    : `<span class="sheet-sub" style="margin:0">No hay proveedores recientes aún.</span>`;
+  const html=`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Cambiar proveedor</div>
+    <div class="sheet-sub">${escAttr(item.name||'')}</div>
+    <div class="sheet-current">Actual: <b>${escAttr(current)}</b></div>
+    <div class="sheet-label">Recientes</div>
+    <div class="sheet-chips">${chipsHtml}</div>
+    <div class="divider"></div>
+    <div class="sheet-label">Escribir otro</div>
+    <input class="sheet-input" id="sheet-sup-input" type="text" placeholder="Nombre del proveedor" autocomplete="off">
+    <div class="sheet-actions">
+      <button class="sheet-cancel" onclick="closeSheet()">Cancelar</button>
+      <button class="sheet-save" onclick="saveSupplierFromSheet('${safeCode}')">Guardar</button>
+    </div>`;
+  openSheet(html);
+  setTimeout(function(){
+    const inp=document.getElementById('sheet-sup-input');
+    if(inp)inp.focus();
+  },340);
+}
+function pickSupplier(code,supplier){
+  const s=String(supplier||'').trim();
+  if(!s){toast('Proveedor vacío','warn');return;}
+  setSupplierOverride(code,s);
+  closeSheet();
+  toast('Proveedor: '+s,'ok');
   render(page);
+}
+function saveSupplierFromSheet(code){
+  const inp=document.getElementById('sheet-sup-input');
+  const v=inp?String(inp.value||'').trim():'';
+  if(!v){toast('Escribe un proveedor','warn');return;}
+  pickSupplier(code,v);
 }
 
 // Marca el item como comprado: POST recordPurchase al Sheet de Logística
@@ -2273,7 +2438,7 @@ async function recordPurchase(code){
   const supplier=effectiveSupplier(item);
   const key='comp_'+comprasItemKey(item);
 
-  // Actualiza local inmediatamente
+  // Actualiza local inmediatamente (optimistic UI)
   item.comprado=true;
   item.compradoSupplier=supplier;
   item.compradoAt=new Date().toISOString();
@@ -2282,9 +2447,17 @@ async function recordPurchase(code){
   ch[todayKey()+'_'+key]=true;
   setLogCheck(ch);
   render(page);
+  // Microanimación de feedback en la card recién marcada
+  try{
+    requestAnimationFrame(function(){
+      const safeCode=(typeof CSS!=='undefined'&&CSS.escape)?CSS.escape(code):String(code).replace(/"/g,'\\"');
+      const card=document.querySelector('.pedido-item[data-code="'+safeCode+'"]');
+      if(card){card.classList.add('justChecked');setTimeout(function(){card.classList.remove('justChecked');},450);}
+    });
+  }catch(e){}
 
   if(!getURLLog()){
-    toast('✓ Marcado (sin sync — falta URL)');
+    toast('Marcado (sin sync — falta URL)','warn');
     return;
   }
   setSyncUI('ing');
@@ -2300,8 +2473,8 @@ async function recordPurchase(code){
       timestamp:item.compradoAt
     }
   });
-  if(res&&res.ok){setSyncUI('ok');toast('✓ Registrado: '+supplier);}
-  else{setSyncUI('off');toast('⚠️ Cambio local, reintentará en la próxima sync');}
+  if(res&&res.ok){setSyncUI('ok');toast('Registrado: '+supplier,'ok');}
+  else{setSyncUI('off');toast('Cambio local, reintentará en la próxima sync','warn');}
 }
 
 // Deshace la compra: POST undoPurchase para desmarcar la fila y borrar la
@@ -2321,26 +2494,31 @@ async function undoPurchase(code){
   setLogCheck(ch);
   render(page);
 
-  if(!getURLLog()){toast('↺ Deshecho (sin sync)');return;}
+  if(!getURLLog()){toast('Deshecho (sin sync)','info',{icon:'↺'});return;}
   setSyncUI('ing');
   const res=await postToEndpoint('log',{
     action:'undoPurchase',
     data:{code:item.code}
   });
-  if(res&&res.ok){setSyncUI('ok');toast('↺ Deshecho');}
-  else{setSyncUI('off');toast('⚠️ Cambio local, reintentará en la próxima sync');}
+  if(res&&res.ok){setSyncUI('ok');toast('Deshecho','info',{icon:'↺'});}
+  else{setSyncUI('off');toast('Cambio local, reintentará en la próxima sync','warn');}
 }
 
 function deleteLogCompra(id){
-  if(!confirm('¿Eliminar esta compra de la lista?'))return;
   const key=String(id);
-  const del=getDeletedCompras();
+  const rawBefore=LS.get(COMPRAS_KEY)||[];
+  const delBefore=getDeletedCompras().slice();
+  const del=delBefore.slice();
   if(!del.includes(key))del.push(key);
   setDeletedCompras(del);
-  const raw=LS.get(COMPRAS_KEY)||[];
-  LS.set(COMPRAS_KEY,raw.filter(i=>String(i.id||i.code||i.name)!==key));
-  toast('Compra eliminada ✓');
+  LS.set(COMPRAS_KEY,rawBefore.filter(i=>String(i.id||i.code||i.name)!==key));
   render(page);
+  toast('Compra eliminada',null,{action:{label:'Deshacer',onClick:function(){
+    LS.set(COMPRAS_KEY,rawBefore);
+    setDeletedCompras(delBefore);
+    render(page);
+    toast('Restaurada','ok');
+  }}});
 }
 
 function renderLogEntregas(el){
@@ -2355,7 +2533,12 @@ function renderLogEntregas(el){
     <div class="greeting">Ruta de entregas</div>
     <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogistica()">↻ Actualizar</span></div>
     ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin.</div>`:''}
-    ${urlOk&&items.length===0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">No hay entregas activas.</div>`:''}
+    ${urlOk&&items.length===0?`<div class="empty-ed">
+      <span class="empty-art">🚚</span>
+      <div class="empty-title">Sin entregas por ahora</div>
+      <div class="empty-sub">Ningún cliente pidió para hoy. Los pedidos se cargan automáticamente al llegar.</div>
+      <span class="empty-cta" onclick="fetchLogistica()">↻ Actualizar ahora</span>
+    </div>`:''}
     <div id="log-entregas-list"></div>
   </div>`;
 
@@ -2401,15 +2584,20 @@ function renderLogEntregas(el){
 }
 
 function deleteLogEntrega(orderNumber){
-  if(!confirm('¿Eliminar esta entrega de la ruta?'))return;
   const key=String(orderNumber);
-  const del=getDeletedEntregas();
+  const rawBefore=LS.get(ENTREGAS_KEY)||[];
+  const delBefore=getDeletedEntregas().slice();
+  const del=delBefore.slice();
   if(!del.includes(key))del.push(key);
   setDeletedEntregas(del);
-  const raw=LS.get(ENTREGAS_KEY)||[];
-  LS.set(ENTREGAS_KEY,raw.filter(i=>String(i.orderNumber||i.id)!==key));
-  toast('Entrega eliminada ✓');
+  LS.set(ENTREGAS_KEY,rawBefore.filter(i=>String(i.orderNumber||i.id)!==key));
   render(page);
+  toast('Entrega eliminada',null,{action:{label:'Deshacer',onClick:function(){
+    LS.set(ENTREGAS_KEY,rawBefore);
+    setDeletedEntregas(delBefore);
+    render(page);
+    toast('Restaurada','ok');
+  }}});
 }
 
 function renderLogAdmin(el){
