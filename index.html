@@ -299,7 +299,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
     <div class="topbar-logo"><img src="ISOTIPO_VERDE_nobg.png" alt="City Roots Farm"></div>
     <div>
       <div class="topbar-title">CITYROOTS.FARM</div>
-      <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.8.0</div>
+      <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.9.0</div>
     </div>
     <div class="sync-row" id="role-switch" onclick="changeRole()" style="cursor:pointer;margin-right:4px;display:none">
       <span style="font-size:11px;color:rgba(168,213,162,0.8)">🔄</span>
@@ -375,7 +375,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.8.0';
+var APP_VERSION='2.9.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -482,7 +482,7 @@ const setURL  = v  => setURLProd(v);
 // Router: qué endpoint usar para cada acción/tipo
 // prod: lotes, inocuidad, pedidos_produccion, inventario_hade (legacy)
 // log:  entregas, compras, preparado write-back, inventario_semanal
-const LOG_ACTIONS = new Set(['getEntregas','getCompras','updatePreparado','updateEntregado','saveInventarioSemanal','getInventarioSemanal']);
+const LOG_ACTIONS = new Set(['getEntregas','getCompras','updatePreparado','updateEntregado','saveInventarioSemanal','getInventarioSemanal','addVuelta','updateVuelta','toggleVueltaDone','deleteVuelta']);
 function getURLFor(action){
   if(LOG_ACTIONS.has(action)) return getURLLog();
   return getURLProd();
@@ -1771,19 +1771,13 @@ function getCompras(){
 function setCompras(v){LS.set(COMPRAS_KEY,v);}
 
 // ── VUELTAS (escalas manuales del chofer) ──────────────────────────────────
-// Storage local: cada vuelta guarda {id, date, lugar, mensaje, direccion, done, doneAt, createdAt}
-// Se filtra por fecha de hoy al renderizar; las de días previos se purgan automáticamente.
+// Cache local del Sheet _logistica_vueltas. Cada vuelta:
+// {id, date, lugar, mensaje, direccion, done, doneAt, createdAt}
+// El cron 7am borra las done=TRUE — las pendientes se arrastran hasta hacerse.
 const VUELTAS_KEY='crf_vueltas_logistica';
 function getVueltasAll(){return LS.get(VUELTAS_KEY)||[];}
 function setVueltasAll(v){LS.set(VUELTAS_KEY,v);}
-function getVueltas(){
-  // Devuelve solo vueltas de hoy (purgando las antiguas para evitar acumulación).
-  const t=todayKey();
-  const all=getVueltasAll();
-  const hoy=all.filter(v=>v&&v.date===t);
-  if(hoy.length!==all.length)setVueltasAll(hoy);
-  return hoy;
-}
+function getVueltas(){return getVueltasAll();}
 function getInventarioSemanal(){return LS.get(INV_SEM_KEY)||[];}
 function setInventarioSemanal(v){LS.set(INV_SEM_KEY,v);}
 function getChecked(){return LS.get(PEDIDOS_CHECK_KEY)||{};}
@@ -1830,16 +1824,26 @@ async function fetchPedidosProduccion(){
   }catch(e){console.warn('Error fetchPedidosProduccion:',e);}
 }
 
-// Fetch desde el Sheet de Logística: entregas del día + compras + inventario semanal capturado
+// Fetch desde el Sheet de Logística: entregas del día + compras + vueltas + inventario semanal
 async function fetchLogistica(){
   const url=getURLLog();if(!url)return;
   try{
     const data=await jsonpGet(url,'getLogistica');
-    // Schema erpweb: {logisticaCompras, logisticaEntregas, inventarioSemanal}
+    // Schema erpweb: {logisticaCompras, logisticaEntregas, logisticaVueltas, inventarioSemanal}
     const entregas=data.logisticaEntregas||data.entregas;
     const compras =data.logisticaCompras ||data.compras;
+    const vueltas =data.logisticaVueltas;
     if(entregas)setEntregas(entregas);
     if(compras) setCompras(compras);
+    if(Array.isArray(vueltas)){
+      // Normaliza done a boolean (Sheets puede devolver TRUE string o "VERDADERO")
+      const norm=vueltas.map(function(v){
+        var d=v.done;
+        v.done=(d===true||d==='true'||d==='TRUE'||d==='VERDADERO');
+        return v;
+      });
+      setVueltasAll(norm);
+    }
     if(data.inventarioSemanal)setInventarioSemanal(data.inventarioSemanal);
     if(data.timestamp){
       // Reset borrados si cambió el día
@@ -2793,45 +2797,63 @@ function openVueltaSheet(id){
   },340);
 }
 
-function saveVuelta(id){
+async function saveVuelta(id){
   const lugar=String(document.getElementById('sheet-v-lugar').value||'').trim();
   const mensaje=String(document.getElementById('sheet-v-mensaje').value||'').trim();
   const direccion=String(document.getElementById('sheet-v-direccion').value||'').trim();
   if(!lugar){toast('El lugar es obligatorio','warn');return;}
   const all=getVueltasAll();
+  let payload;
+  let action;
   if(id){
     const idx=all.findIndex(v=>String(v.id)===String(id));
     if(idx>=0){
       all[idx].lugar=lugar;
       all[idx].mensaje=mensaje;
       all[idx].direccion=direccion;
+      payload={id:all[idx].id,lugar,mensaje,direccion};
+      action='updateVuelta';
     }
   } else {
-    all.push({
+    const nueva={
       id:'v_'+Date.now()+'_'+Math.floor(Math.random()*1000),
       date:todayKey(),
       lugar, mensaje, direccion,
       done:false, doneAt:'',
       createdAt:new Date().toISOString()
-    });
+    };
+    all.push(nueva);
+    payload=nueva;
+    action='addVuelta';
   }
   setVueltasAll(all);
   closeSheet();
   render(page);
   toast(id?'Vuelta actualizada':'Vuelta agregada','ok');
+  if(!getURLLog())return;
+  setSyncUI('ing');
+  const res=await postToEndpoint('log',{action,data:payload});
+  if(res&&res.ok)setSyncUI('ok');
+  else{setSyncUI('off');toast('Cambio local, no se pudo sincronizar','warn');}
 }
 
-function toggleVueltaDone(id){
+async function toggleVueltaDone(id){
   const all=getVueltasAll();
   const idx=all.findIndex(v=>String(v.id)===String(id));
   if(idx<0)return;
   all[idx].done=!all[idx].done;
   all[idx].doneAt=all[idx].done?new Date().toISOString():'';
+  const v=all[idx];
   setVueltasAll(all);
   render(page);
+  if(!getURLLog())return;
+  setSyncUI('ing');
+  const res=await postToEndpoint('log',{action:'toggleVueltaDone',data:{id:v.id,done:v.done,doneAt:v.doneAt}});
+  if(res&&res.ok)setSyncUI('ok');
+  else{setSyncUI('off');toast('Cambio local, reintentará en la próxima sync','warn');}
 }
 
-function deleteVuelta(id){
+async function deleteVuelta(id){
   const all=getVueltasAll();
   const idx=all.findIndex(v=>String(v.id)===String(id));
   if(idx<0)return;
@@ -2839,13 +2861,20 @@ function deleteVuelta(id){
   const allAfter=all.filter(v=>String(v.id)!==String(id));
   setVueltasAll(allAfter);
   render(page);
-  toast('Vuelta eliminada',null,{action:{label:'Deshacer',onClick:function(){
+  toast('Vuelta eliminada',null,{action:{label:'Deshacer',onClick:async function(){
     const arr=getVueltasAll();
     arr.push(removed);
     setVueltasAll(arr);
     render(page);
     toast('Restaurada','ok');
+    if(!getURLLog())return;
+    await postToEndpoint('log',{action:'addVuelta',data:removed});
   }}});
+  if(!getURLLog())return;
+  setSyncUI('ing');
+  const res=await postToEndpoint('log',{action:'deleteVuelta',data:{id:removed.id}});
+  if(res&&res.ok)setSyncUI('ok');
+  else setSyncUI('off');
 }
 
 // Abre Google Maps con el lugar + dirección concatenados como query de búsqueda.
