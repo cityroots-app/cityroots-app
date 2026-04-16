@@ -299,7 +299,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
     <div class="topbar-logo"><img src="ISOTIPO_VERDE_nobg.png" alt="City Roots Farm"></div>
     <div>
       <div class="topbar-title">CITYROOTS.FARM</div>
-      <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.7.0</div>
+      <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.8.0</div>
     </div>
     <div class="sync-row" id="role-switch" onclick="changeRole()" style="cursor:pointer;margin-right:4px;display:none">
       <span style="font-size:11px;color:rgba(168,213,162,0.8)">🔄</span>
@@ -331,6 +331,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
     <button class="nav-btn active" id="nb-log-inicio" onclick="goTo('log_inicio')"><span class="ni">🏠</span>Inicio</button>
     <button class="nav-btn" id="nb-log-compras" onclick="goTo('log_compras')"><span class="ni">🛒</span>Compras</button>
     <button class="nav-btn" id="nb-log-entregas" onclick="goTo('log_entregas')"><span class="ni">🚚</span>Entregas</button>
+    <button class="nav-btn" id="nb-log-vueltas" onclick="goTo('log_vueltas')"><span class="ni">📍</span>Vueltas</button>
     <button class="nav-btn" id="nb-log-admin" onclick="goTo('log_admin')"><span class="ni">⚙️</span>Admin</button>
   </nav>
 </div>
@@ -374,7 +375,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.7.0';
+var APP_VERSION='2.8.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -745,6 +746,7 @@ function render(p){
   else if(p==='log_inicio')renderLogInicio(el);
   else if(p==='log_compras')renderLogCompras(el);
   else if(p==='log_entregas')renderLogEntregas(el);
+  else if(p==='log_vueltas')renderLogVueltas(el);
   else if(p==='log_admin')renderLogAdmin(el);
   updatePendBadge();
   setSyncUI((getURLProd()||getURLLog())?'ok':'off');
@@ -1767,6 +1769,21 @@ function getCompras(){
   return del.length===0?all:all.filter(i=>!del.includes(String(i.id||i.code||i.name)));
 }
 function setCompras(v){LS.set(COMPRAS_KEY,v);}
+
+// ── VUELTAS (escalas manuales del chofer) ──────────────────────────────────
+// Storage local: cada vuelta guarda {id, date, lugar, mensaje, direccion, done, doneAt, createdAt}
+// Se filtra por fecha de hoy al renderizar; las de días previos se purgan automáticamente.
+const VUELTAS_KEY='crf_vueltas_logistica';
+function getVueltasAll(){return LS.get(VUELTAS_KEY)||[];}
+function setVueltasAll(v){LS.set(VUELTAS_KEY,v);}
+function getVueltas(){
+  // Devuelve solo vueltas de hoy (purgando las antiguas para evitar acumulación).
+  const t=todayKey();
+  const all=getVueltasAll();
+  const hoy=all.filter(v=>v&&v.date===t);
+  if(hoy.length!==all.length)setVueltasAll(hoy);
+  return hoy;
+}
 function getInventarioSemanal(){return LS.get(INV_SEM_KEY)||[];}
 function setInventarioSemanal(v){LS.set(INV_SEM_KEY,v);}
 function getChecked(){return LS.get(PEDIDOS_CHECK_KEY)||{};}
@@ -2212,7 +2229,9 @@ function isLogChecked(key){
 function renderLogInicio(el){
   const compras=getCompras();
   const entregas=getEntregas();
+  const vueltas=getVueltas();
   const pendCompra=compras.filter(c=>!(c.comprado===true||c.comprado==='true')&&!isLogChecked('comp_'+comprasItemKey(c))).length;
+  const pendVueltas=vueltas.filter(v=>!v.done).length;
   const ts=LS.get('crf_log_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
   const hour=new Date().getHours();
@@ -2225,15 +2244,16 @@ function renderLogInicio(el){
     ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin.</div>`:''}
     <div class="stats">
       <div class="stat"><div class="stat-n n-amber">${pendCompra}</div><div class="stat-l">Por comprar</div></div>
-      <div class="stat"><div class="stat-n n-info">${compras.length}</div><div class="stat-l">Compras hoy</div></div>
       <div class="stat"><div class="stat-n n-ok">${entregas.length}</div><div class="stat-l">Entregas hoy</div></div>
+      <div class="stat"><div class="stat-n n-info">${pendVueltas}</div><div class="stat-l">Vueltas</div></div>
     </div>
     ${pendCompra>0?`<div class="banner banner-warn" style="cursor:pointer" onclick="goTo('log_compras')">🛒 ${pendCompra} producto${pendCompra>1?'s':''} por comprar — toca para ver</div>`:''}
     ${entregas.length>0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;cursor:pointer" onclick="goTo('log_entregas')">🚚 ${entregas.length} entregas programadas hoy</div>`:''}
-    ${compras.length===0&&entregas.length===0?`<div class="empty-ed">
+    ${pendVueltas>0?`<div class="banner" style="background:var(--bg2);border:1px solid var(--border2);cursor:pointer" onclick="goTo('log_vueltas')">📍 ${pendVueltas} vuelta${pendVueltas>1?'s':''} pendiente${pendVueltas>1?'s':''}</div>`:''}
+    ${compras.length===0&&entregas.length===0&&vueltas.length===0?`<div class="empty-ed">
       <span class="empty-art">☕</span>
       <div class="empty-title">Día tranquilo</div>
-      <div class="empty-sub">No hay compras ni entregas activas. Las nuevas llegan automáticamente desde ventas.</div>
+      <div class="empty-sub">No hay compras, entregas ni vueltas. Las compras/entregas llegan automáticamente; las vueltas las agregas manualmente.</div>
       ${urlOk?`<span class="empty-cta" onclick="fetchLogistica()">↻ Actualizar ahora</span>`:''}
     </div>`:''}
   </div>`;
@@ -2679,6 +2699,164 @@ function deleteLogEntrega(orderNumber){
     render(page);
     toast('Restaurada','ok');
   }}});
+}
+
+// ══ VUELTAS ═══════════════════════════════════════════════════════════════════
+// Tab manual del chofer para anotar escalas extra durante la ruta (p.ej. Home Depot,
+// banco, recoger algo). 100% local por ahora; cada vuelta está amarrada a la fecha
+// y se purga automáticamente al cambiar de día.
+function renderLogVueltas(el){
+  const items=getVueltas();
+  const pend=items.filter(v=>!v.done).length;
+  const done=items.length-pend;
+
+  el.innerHTML=`<div class="pad">
+    <div class="greeting">Vueltas del día</div>
+    <div class="dateline">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
+    <div class="btn-row" style="margin:12px 0 14px">
+      <button class="btn btn-primary" onclick="openVueltaSheet()">➕ Agregar vuelta</button>
+    </div>
+    ${items.length?`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">${pend} pendiente${pend===1?'':'s'} · ${done} completada${done===1?'':'s'}</div>`:''}
+    ${items.length===0?`<div class="empty-ed">
+      <span class="empty-art">📍</span>
+      <div class="empty-title">Sin vueltas por ahora</div>
+      <div class="empty-sub">Agrega paradas manuales durante la ruta: ferretería, banco, recoger algo…</div>
+    </div>`:''}
+    <div id="log-vueltas-list"></div>
+  </div>`;
+
+  if(items.length===0)return;
+
+  // Orden: pendientes primero (por createdAt asc), luego completadas
+  const sorted=items.slice().sort((a,b)=>{
+    if(a.done!==b.done)return a.done?1:-1;
+    return String(a.createdAt||'').localeCompare(String(b.createdAt||''));
+  });
+
+  let html='';
+  for(const v of sorted){
+    const safeId=escAttr(v.id);
+    const lugar=escAttr(v.lugar||'');
+    const mensaje=v.mensaje?`<div class="pedido-name" style="white-space:pre-wrap;margin-top:3px">${escAttr(v.mensaje)}</div>`:'';
+    const direccion=v.direccion?`<div class="pedido-nota" style="font-size:11px;color:var(--text2);font-style:normal;margin-top:3px">📍 ${escAttr(v.direccion)}</div>`:'';
+    const checkBtn=v.done
+      ? `<div onclick="toggleVueltaDone('${safeId}')" class="entrega-check done" title="Deshacer">✓</div>`
+      : `<div onclick="toggleVueltaDone('${safeId}')" class="entrega-check" title="Marcar hecha">○</div>`;
+    const hasQuery=!!(v.lugar||v.direccion);
+    const mapBtn=hasQuery
+      ? `<button onclick="openVueltaMap('${safeId}')" style="padding:7px 12px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px">🗺️ Mapas</button>`
+      : '';
+    html+=`<div class="pedido-item${v.done?' entrega-done':''}" style="align-items:flex-start">
+      ${checkBtn}
+      <div class="pedido-info" style="flex:1;min-width:0">
+        <div class="pedido-qty">${lugar||'(sin nombre)'}</div>
+        ${mensaje}
+        ${direccion}
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          ${mapBtn}
+          <button onclick="openVueltaSheet('${safeId}')" style="padding:7px 12px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">✎ Editar</button>
+        </div>
+      </div>
+      <div onclick="deleteVuelta('${safeId}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:flex-start;margin-top:2px">✕</div>
+    </div>`;
+  }
+  document.getElementById('log-vueltas-list').innerHTML=html;
+}
+
+// Abre el bottom sheet para crear (sin id) o editar (con id) una vuelta.
+function openVueltaSheet(id){
+  const existing=id?getVueltas().find(v=>String(v.id)===String(id)):null;
+  const titulo=existing?'Editar vuelta':'Nueva vuelta';
+  const lugarVal=existing?escAttr(existing.lugar||''):'';
+  const mensajeVal=existing?escAttr(existing.mensaje||''):'';
+  const dirVal=existing?escAttr(existing.direccion||''):'';
+  const safeId=existing?escAttr(existing.id):'';
+  const html=`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">${titulo}</div>
+    <div class="sheet-sub">Parada manual durante la ruta</div>
+    <div class="sheet-label">Lugar</div>
+    <input class="sheet-input" id="sheet-v-lugar" type="text" placeholder="Ej. Home Depot, Banco, Gasolinera…" value="${lugarVal}" autocomplete="off">
+    <div class="sheet-label">Mensaje / recordatorio</div>
+    <textarea class="sheet-input" id="sheet-v-mensaje" rows="3" placeholder="Ej. Comprar bote de basura, pintura blanca y escoba">${mensajeVal}</textarea>
+    <div class="sheet-label">Dirección (opcional)</div>
+    <input class="sheet-input" id="sheet-v-direccion" type="text" placeholder="Calle, colonia o referencia" value="${dirVal}" autocomplete="off">
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">Si lo dejas vacío, Mapas busca por el nombre del lugar.</div>
+    <div class="sheet-actions">
+      <button class="sheet-cancel" onclick="closeSheet()">Cancelar</button>
+      <button class="sheet-save" onclick="saveVuelta('${safeId}')">${existing?'Guardar':'Agregar'}</button>
+    </div>`;
+  openSheet(html);
+  setTimeout(function(){
+    const inp=document.getElementById('sheet-v-lugar');
+    if(inp)inp.focus();
+  },340);
+}
+
+function saveVuelta(id){
+  const lugar=String(document.getElementById('sheet-v-lugar').value||'').trim();
+  const mensaje=String(document.getElementById('sheet-v-mensaje').value||'').trim();
+  const direccion=String(document.getElementById('sheet-v-direccion').value||'').trim();
+  if(!lugar){toast('El lugar es obligatorio','warn');return;}
+  const all=getVueltasAll();
+  if(id){
+    const idx=all.findIndex(v=>String(v.id)===String(id));
+    if(idx>=0){
+      all[idx].lugar=lugar;
+      all[idx].mensaje=mensaje;
+      all[idx].direccion=direccion;
+    }
+  } else {
+    all.push({
+      id:'v_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+      date:todayKey(),
+      lugar, mensaje, direccion,
+      done:false, doneAt:'',
+      createdAt:new Date().toISOString()
+    });
+  }
+  setVueltasAll(all);
+  closeSheet();
+  render(page);
+  toast(id?'Vuelta actualizada':'Vuelta agregada','ok');
+}
+
+function toggleVueltaDone(id){
+  const all=getVueltasAll();
+  const idx=all.findIndex(v=>String(v.id)===String(id));
+  if(idx<0)return;
+  all[idx].done=!all[idx].done;
+  all[idx].doneAt=all[idx].done?new Date().toISOString():'';
+  setVueltasAll(all);
+  render(page);
+}
+
+function deleteVuelta(id){
+  const all=getVueltasAll();
+  const idx=all.findIndex(v=>String(v.id)===String(id));
+  if(idx<0)return;
+  const removed=all[idx];
+  const allAfter=all.filter(v=>String(v.id)!==String(id));
+  setVueltasAll(allAfter);
+  render(page);
+  toast('Vuelta eliminada',null,{action:{label:'Deshacer',onClick:function(){
+    const arr=getVueltasAll();
+    arr.push(removed);
+    setVueltasAll(arr);
+    render(page);
+    toast('Restaurada','ok');
+  }}});
+}
+
+// Abre Google Maps con el lugar + dirección concatenados como query de búsqueda.
+// En móvil esto abre la app nativa de Maps directamente.
+function openVueltaMap(id){
+  const v=getVueltas().find(x=>String(x.id)===String(id));
+  if(!v){toast('Vuelta no encontrada','warn');return;}
+  const q=[v.lugar||'',v.direccion||''].filter(x=>x.trim()).join(', ').trim();
+  if(!q){toast('Sin lugar ni dirección','warn');return;}
+  const url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
+  window.open(url,'_blank','noopener');
 }
 
 function renderLogAdmin(el){
