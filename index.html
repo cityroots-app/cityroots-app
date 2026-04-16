@@ -2325,6 +2325,8 @@ if(_urlProd){
 if(_urlLog){
   fetchLogistica();
 }
+// Siempre mostrar selector de rol al abrir la app (el usuario elige cada vez)
+localStorage.removeItem(ROLE_KEY);
 initApp();
 
 // Auto-sync cada 30s: ambos endpoints en paralelo, solo los que estén configurados
