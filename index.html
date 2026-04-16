@@ -375,7 +375,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.10.1';
+var APP_VERSION='2.10.2';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -3093,10 +3093,12 @@ function renderLogAdmin(el){
 // ══ INIT ══════════════════════════════════════════════════════════════════════
 // URLs default — se setean siempre que crf_url_produccion / crf_url_logistica no existan.
 // Así cualquier dispositivo nuevo autoconfigura sin ir a Admin.
-const _defaultProdURL='https://script.google.com/macros/s/AKfycbzHTGTDF7IYwiOfOU-IcZoZu-tusJMBTJ-sKKDLjYr_6fcABAVx4qXpb_qSOGTG4TBxYQ/exec';
+const _defaultProdURL='https://script.google.com/macros/s/AKfycbwZ6Ygo4GoMfjr1xnGYJBM7iQGeScTK5gt5vH73Q3XpaA2oY2HVLVbpWlOm-MPLTdF7RA/exec';
 const _defaultLogURL ='https://script.google.com/macros/s/AKfycbwckmWRIWm-cVia7mdQS9LZ6q6n_8uzHHQQSNFmCsTfhsbz9jPf8GDLQ3_k22JjGwlf/exec';
+// Migrar URL Producción legacy al deployment nuevo con bloc de notas (v2.10.2)
+(function(){try{var old=LS.get(SK.urlProd);if(old&&old.indexOf('AKfycbwZ6Y')<0){LS.set(SK.urlProd,_defaultProdURL);}}catch(e){}})();
 // Limpiar URL legacy rota que impide usar el default correcto
-(function(){try{var old=localStorage.getItem(SK.url);if(old&&old.indexOf('AKfycbzHTG')<0){localStorage.removeItem(SK.url);}}catch(e){}})();
+(function(){try{var old=localStorage.getItem(SK.url);if(old&&old.indexOf('AKfycbwZ6Y')<0){localStorage.removeItem(SK.url);}}catch(e){}})();
 // Migrar URL Logística legacy al deployment nuevo con supplier tracking (v2.5.0)
 (function(){try{var old=LS.get(SK.urlLog);if(old&&old.indexOf('AKfycbwckmWRIWm')<0){LS.set(SK.urlLog,_defaultLogURL);}}catch(e){}})();
 if(!LS.get(SK.urlProd))setURLProd(_defaultProdURL);
