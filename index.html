@@ -2321,9 +2321,14 @@ function renderLogAdmin(el){
 }
 
 // ══ INIT ══════════════════════════════════════════════════════════════════════
-// Default URL de Producción (legacy) — solo si no hay nada guardado
+// URLs default — se setean siempre que crf_url_produccion / crf_url_logistica no existan.
+// Así cualquier dispositivo nuevo autoconfigura sin ir a Admin.
 const _defaultProdURL='https://script.google.com/macros/s/AKfycbzHTGTDF7IYwiOfOU-IcZoZu-tusJMBTJ-sKKDLjYr_6fcABAVx4qXpb_qSOGTG4TBxYQ/exec';
-if(!getURLProd())setURLProd(_defaultProdURL);
+const _defaultLogURL ='https://script.google.com/macros/s/AKfycbzwJs1JwgA-9BaabkG_690Q9IELbDrJsKzZ9zHNi556K9udyJ2gb_Yctrrvi3wyC4ZN/exec';
+// Limpiar URL legacy rota que impide usar el default correcto
+(function(){try{var old=localStorage.getItem(SK.url);if(old&&old.indexOf('AKfycbzHTG')<0){localStorage.removeItem(SK.url);}}catch(e){}})();
+if(!LS.get(SK.urlProd))setURLProd(_defaultProdURL);
+if(!LS.get(SK.urlLog)) setURLLog(_defaultLogURL);
 const _urlProd=getURLProd(), _urlLog=getURLLog();
 if(_urlProd||_urlLog)setSyncUI('ok');
 if(_urlProd){
