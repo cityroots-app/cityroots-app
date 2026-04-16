@@ -375,7 +375,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.10.2';
+var APP_VERSION='2.10.3';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2265,6 +2265,10 @@ function renderLogInicio(el){
   const entregas=getEntregas();
   const vueltas=getVueltas();
   const pendCompra=compras.filter(c=>!(c.comprado===true||c.comprado==='true')&&!isLogChecked('comp_'+comprasItemKey(c))).length;
+  // Una entrega está "realizada" si entregado es truthy en cualquiera de sus formas
+  // (backend Sheets puede regresar 'TRUE'/'VERDADERO' según locale).
+  const isEntregaDone=e=>(e.entregado===true||e.entregado==='true'||e.entregado==='TRUE'||e.entregado==='VERDADERO');
+  const pendEntregas=entregas.filter(e=>!isEntregaDone(e)).length;
   const pendVueltas=vueltas.filter(v=>!v.done).length;
   const ts=LS.get('crf_log_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
@@ -2278,11 +2282,11 @@ function renderLogInicio(el){
     ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin.</div>`:''}
     <div class="stats">
       <div class="stat"><div class="stat-n n-amber">${pendCompra}</div><div class="stat-l">Por comprar</div></div>
-      <div class="stat"><div class="stat-n n-ok">${entregas.length}</div><div class="stat-l">Entregas hoy</div></div>
+      <div class="stat"><div class="stat-n n-ok">${pendEntregas}</div><div class="stat-l">Por entregar</div></div>
       <div class="stat"><div class="stat-n n-info">${pendVueltas}</div><div class="stat-l">Vueltas</div></div>
     </div>
     ${pendCompra>0?`<div class="banner banner-warn" style="cursor:pointer" onclick="goTo('log_compras')">🛒 ${pendCompra} producto${pendCompra>1?'s':''} por comprar — toca para ver</div>`:''}
-    ${entregas.length>0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;cursor:pointer" onclick="goTo('log_entregas')">🚚 ${entregas.length} entregas programadas hoy</div>`:''}
+    ${pendEntregas>0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;cursor:pointer" onclick="goTo('log_entregas')">🚚 ${pendEntregas} entrega${pendEntregas>1?'s':''} pendiente${pendEntregas>1?'s':''} hoy</div>`:''}
     ${pendVueltas>0?`<div class="banner" style="background:var(--bg2);border:1px solid var(--border2);cursor:pointer" onclick="goTo('log_vueltas')">📍 ${pendVueltas} vuelta${pendVueltas>1?'s':''} pendiente${pendVueltas>1?'s':''}</div>`:''}
     ${compras.length===0&&entregas.length===0&&vueltas.length===0?`<div class="empty-ed">
       <span class="empty-art">☕</span>
