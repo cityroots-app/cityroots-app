@@ -1639,16 +1639,46 @@ const ENTREGAS_KEY    ='crf_entregas_logistica';// lista del día para almacén 
 const COMPRAS_KEY     ='crf_compras_logistica'; // items a comprar (no se usa aún en UI)
 const INV_SEM_KEY     ='crf_inventario_semanal';// captura semanal del almacén
 const PEDIDOS_CHECK_KEY='crf_pedidos_checked';
+// Listas de items borrados manualmente (se resetean al cambiar de día vía timestamp)
+const DELETED_PROD_KEY   ='crf_deleted_prod';
+const DELETED_ALM_KEY    ='crf_deleted_alm';
+const DELETED_COMPRAS_KEY='crf_deleted_compras';
+const DELETED_ENTREGAS_KEY='crf_deleted_entregas';
 
-function getPedidosProduccion(){return LS.get(PEDIDOS_PROD_KEY)||[];}
+function getDeletedProd()   {return LS.get(DELETED_PROD_KEY)   ||[];}
+function setDeletedProd(v)  {LS.set(DELETED_PROD_KEY,v);}
+function getDeletedAlm()    {return LS.get(DELETED_ALM_KEY)    ||[];}
+function setDeletedAlm(v)   {LS.set(DELETED_ALM_KEY,v);}
+function getDeletedCompras(){return LS.get(DELETED_COMPRAS_KEY)||[];}
+function setDeletedCompras(v){LS.set(DELETED_COMPRAS_KEY,v);}
+function getDeletedEntregas(){return LS.get(DELETED_ENTREGAS_KEY)||[];}
+function setDeletedEntregas(v){LS.set(DELETED_ENTREGAS_KEY,v);}
+
+function getPedidosProduccion(){
+  const all=LS.get(PEDIDOS_PROD_KEY)||[];
+  const del=getDeletedProd();
+  return del.length===0?all:all.filter(i=>!del.includes(String(i.code||i.name)));
+}
 function setPedidosProduccion(v){LS.set(PEDIDOS_PROD_KEY,v);}
-function getPedidosAlmacen(){return LS.get(PEDIDOS_ALM_KEY)||[];}
+function getPedidosAlmacen(){
+  const all=LS.get(PEDIDOS_ALM_KEY)||[];
+  const del=getDeletedAlm();
+  return del.length===0?all:all.filter(i=>!del.includes(String(i.code||i.name)));
+}
 function setPedidosAlmacen(v){LS.set(PEDIDOS_ALM_KEY,v);}
 function getInventarioHade(){return LS.get(INV_HADE_KEY)||[];}
 function setInventarioHade(v){LS.set(INV_HADE_KEY,v);}
-function getEntregas(){return LS.get(ENTREGAS_KEY)||[];}
+function getEntregas(){
+  const all=LS.get(ENTREGAS_KEY)||[];
+  const del=getDeletedEntregas();
+  return del.length===0?all:all.filter(i=>!del.includes(String(i.orderNumber||i.id)));
+}
 function setEntregas(v){LS.set(ENTREGAS_KEY,v);}
-function getCompras(){return LS.get(COMPRAS_KEY)||[];}
+function getCompras(){
+  const all=LS.get(COMPRAS_KEY)||[];
+  const del=getDeletedCompras();
+  return del.length===0?all:all.filter(i=>!del.includes(String(i.id||i.code||i.name)));
+}
 function setCompras(v){LS.set(COMPRAS_KEY,v);}
 function getInventarioSemanal(){return LS.get(INV_SEM_KEY)||[];}
 function setInventarioSemanal(v){LS.set(INV_SEM_KEY,v);}
@@ -1689,7 +1719,14 @@ async function fetchPedidosProduccion(){
     if(data.produccion)setPedidosProduccion(data.produccion);
     if(data.almacen)   setPedidosAlmacen(data.almacen);
     if(data.inventario)setInventarioHade(data.inventario);
-    if(data.timestamp)LS.set('crf_pedidos_timestamp',data.timestamp);
+    if(data.timestamp){
+      // Reset borrados si cambió el día
+      const oldTs=LS.get('crf_pedidos_timestamp')||'';
+      const oldDay=oldTs?String(oldTs).split('T')[0]:'';
+      const newDay=String(data.timestamp).split('T')[0];
+      if(oldDay&&newDay!==oldDay){setDeletedProd([]);setDeletedAlm([]);}
+      LS.set('crf_pedidos_timestamp',data.timestamp);
+    }
     render(page);
   }catch(e){console.warn('Error fetchPedidosProduccion:',e);}
 }
@@ -1705,7 +1742,14 @@ async function fetchLogistica(){
     if(entregas)setEntregas(entregas);
     if(compras) setCompras(compras);
     if(data.inventarioSemanal)setInventarioSemanal(data.inventarioSemanal);
-    if(data.timestamp)LS.set('crf_log_timestamp',data.timestamp);
+    if(data.timestamp){
+      // Reset borrados si cambió el día
+      const oldTs=LS.get('crf_log_timestamp')||'';
+      const oldDay=oldTs?String(oldTs).split('T')[0]:'';
+      const newDay=String(data.timestamp).split('T')[0];
+      if(oldDay&&newDay!==oldDay){setDeletedCompras([]);setDeletedEntregas([]);}
+      LS.set('crf_log_timestamp',data.timestamp);
+    }
     render(page);
   }catch(e){console.warn('Error fetchLogistica:',e);}
 }
@@ -1742,17 +1786,31 @@ function renderPedidosProduccion(el){
     html+=`<div class="cat-header">${cat}</div>`;
     for(const item of catItems){
       const checked=isChecked(item.code);
-      html+=`<div class="pedido-item ${checked?'checked':''}">
+      const delKey=String(item.code||item.name).replace(/'/g,"\\'");
+      html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative">
         <div class="pedido-check ${checked?'done':''}" onclick="toggleCheck('${item.code}')">${checked?'✓':''}</div>
-        <div class="pedido-info">
+        <div class="pedido-info" style="flex:1">
           <div class="pedido-qty">${item.totalQty} ${item.unit}</div>
           <div class="pedido-name">${item.name}</div>
           ${item.nota?`<div class="pedido-nota">${item.nota}</div>`:''}
         </div>
+        <div onclick="deleteProdItem('${delKey}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:center">✕</div>
       </div>`;
     }
   }
   document.getElementById('pedidos-prod-list').innerHTML=html;
+}
+
+function deleteProdItem(code){
+  if(!confirm('¿Eliminar este producto de la lista de producción?'))return;
+  const key=String(code);
+  const del=getDeletedProd();
+  if(!del.includes(key))del.push(key);
+  setDeletedProd(del);
+  const raw=LS.get(PEDIDOS_PROD_KEY)||[];
+  LS.set(PEDIDOS_PROD_KEY,raw.filter(i=>String(i.code||i.name)!==key));
+  toast('Producto eliminado ✓');
+  render(page);
 }
 
 // ══ VISTAS ALMACÉN ════════════════════════════════════════════════════════════
@@ -1840,17 +1898,31 @@ function renderAlmPedidos(el){
       } else if(p.status==='faltante'){
         noteHtml=`<div class="pedido-nota" style="color:var(--danger);font-size:11px">⚠️ Faltante sin clasificar</div>`;
       }
-      html+=`<div class="pedido-item ${checked?'checked':''}">
+      const delKey=String(p.code||p.name).replace(/'/g,"\\'");
+      html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative">
         <div class="pedido-check ${checked?'done':''}" onclick="toggleCheck('${k.replace(/'/g,"\\'")}')">${checked?'✓':''}</div>
-        <div class="pedido-info">
+        <div class="pedido-info" style="flex:1">
           <div class="pedido-qty">${qtyStr} ${p.unit||''}</div>
           <div class="pedido-name">${p.name}</div>
           ${noteHtml}
         </div>
+        <div onclick="deleteAlmItem('${delKey}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:center">✕</div>
       </div>`;
     }
   }
   document.getElementById('pedidos-alm-list').innerHTML=html;
+}
+
+function deleteAlmItem(code){
+  if(!confirm('¿Eliminar este producto de la lista de almacén?'))return;
+  const key=String(code);
+  const del=getDeletedAlm();
+  if(!del.includes(key))del.push(key);
+  setDeletedAlm(del);
+  const raw=LS.get(PEDIDOS_ALM_KEY)||[];
+  LS.set(PEDIDOS_ALM_KEY,raw.filter(i=>String(i.code||i.name)!==key));
+  toast('Producto eliminado ✓');
+  render(page);
 }
 
 // Marca una orden como preparada: escribe al Sheet de Logística y actualiza localStorage
@@ -2104,18 +2176,32 @@ function renderLogCompras(el){
     for(const item of catItems){
       const key='comp_'+(item.id||item.code||item.name);
       const checked=isLogChecked(key);
-      html+=`<div class="pedido-item ${checked?'checked':''}">
+      const delKey=String(item.id||item.code||item.name).replace(/'/g,"\\'");
+      html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative">
         <div class="pedido-check ${checked?'done':''}" onclick="toggleLogCheck('${key.replace(/'/g,"\\'")}')">${checked?'✓':''}</div>
-        <div class="pedido-info">
+        <div class="pedido-info" style="flex:1">
           <div class="pedido-qty">${item.totalQty||item.qty||''} ${item.unit||''}</div>
           <div class="pedido-name">${item.name||item.producto||''}</div>
           ${item.proveedor?`<div class="pedido-nota">🏪 ${item.proveedor}</div>`:''}
           ${item.nota?`<div class="pedido-nota">${item.nota}</div>`:''}
         </div>
+        <div onclick="deleteLogCompra('${delKey}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:center">✕</div>
       </div>`;
     }
   }
   document.getElementById('log-compras-list').innerHTML=html;
+}
+
+function deleteLogCompra(id){
+  if(!confirm('¿Eliminar esta compra de la lista?'))return;
+  const key=String(id);
+  const del=getDeletedCompras();
+  if(!del.includes(key))del.push(key);
+  setDeletedCompras(del);
+  const raw=LS.get(COMPRAS_KEY)||[];
+  LS.set(COMPRAS_KEY,raw.filter(i=>String(i.id||i.code||i.name)!==key));
+  toast('Compra eliminada ✓');
+  render(page);
 }
 
 function renderLogEntregas(el){
@@ -2161,17 +2247,30 @@ function renderLogEntregas(el){
       const itemsHtml=itemsList.length>1
         ? '<ul style="margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--text2)">'+itemsList.map(l=>`<li>${l}</li>`).join('')+'</ul>'
         : `<div class="pedido-nota" style="white-space:pre-wrap">${item.itemsText||''}</div>`;
-      html+=`<div class="pedido-item">
-        <div class="pedido-info">
+      html+=`<div class="pedido-item" style="position:relative;align-items:flex-start">
+        <div class="pedido-info" style="flex:1">
           <div class="pedido-qty">#${orderId} ${badge}</div>
           ${itemsHtml}
           ${item.itemsCount?`<div class="pedido-nota" style="font-size:11px">📦 ${item.itemsCount} item${item.itemsCount>1?'s':''}${item.total?` · $${item.total}`:''}</div>`:''}
           ${item.deliveryDate?`<div class="pedido-nota" style="font-size:11px">📅 ${item.deliveryDate}</div>`:''}
         </div>
+        <div onclick="deleteLogEntrega('${orderId.replace(/'/g,"\\'")}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:flex-start;margin-top:2px">✕</div>
       </div>`;
     }
   }
   document.getElementById('log-entregas-list').innerHTML=html;
+}
+
+function deleteLogEntrega(orderNumber){
+  if(!confirm('¿Eliminar esta entrega de la ruta?'))return;
+  const key=String(orderNumber);
+  const del=getDeletedEntregas();
+  if(!del.includes(key))del.push(key);
+  setDeletedEntregas(del);
+  const raw=LS.get(ENTREGAS_KEY)||[];
+  LS.set(ENTREGAS_KEY,raw.filter(i=>String(i.orderNumber||i.id)!==key));
+  toast('Entrega eliminada ✓');
+  render(page);
 }
 
 function renderLogAdmin(el){
