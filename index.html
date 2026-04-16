@@ -375,7 +375,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.10.0';
+var APP_VERSION='2.10.1';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2644,7 +2644,6 @@ function renderLogEntregas(el){
           ${item.deliveryDate?`<div class="pedido-nota" style="font-size:11px">📅 ${item.deliveryDate}</div>`:''}
           ${notasHtml}
         </div>
-        <div onclick="deleteLogEntrega('${orderId.replace(/'/g,"\\'")}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:flex-start;margin-top:2px">✕</div>
       </div>`;
     }
   }
