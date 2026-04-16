@@ -86,6 +86,11 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .pedido-item.checked{opacity:.5;text-decoration:line-through}
 .pedido-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
 .pedido-check.done{background:var(--ok);border-color:var(--ok);color:#fff}
+.entrega-check{width:32px;height:32px;border-radius:50%;border:2px solid var(--border2);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;font-size:18px;font-weight:700;line-height:1;transition:all .18s;user-select:none}
+.entrega-check:active{transform:scale(0.92)}
+.entrega-check.done{background:var(--ok);border-color:var(--ok);color:#fff}
+.pedido-item.entrega-done{opacity:.62;background:var(--ok-bg)}
+.pedido-item.entrega-done .pedido-qty{text-decoration:line-through}
 .pedido-info{flex:1}
 .pedido-qty{font-size:15px;font-weight:600;color:var(--text)}
 .pedido-name{font-size:13px;color:var(--text2)}
@@ -294,7 +299,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
     <div class="topbar-logo"><img src="ISOTIPO_VERDE_nobg.png" alt="City Roots Farm"></div>
     <div>
       <div class="topbar-title">CITYROOTS.FARM</div>
-      <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.6.1</div>
+      <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.7.0</div>
     </div>
     <div class="sync-row" id="role-switch" onclick="changeRole()" style="cursor:pointer;margin-right:4px;display:none">
       <span style="font-size:11px;color:rgba(168,213,162,0.8)">🔄</span>
@@ -369,7 +374,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.6.1';
+var APP_VERSION='2.7.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -476,7 +481,7 @@ const setURL  = v  => setURLProd(v);
 // Router: qué endpoint usar para cada acción/tipo
 // prod: lotes, inocuidad, pedidos_produccion, inventario_hade (legacy)
 // log:  entregas, compras, preparado write-back, inventario_semanal
-const LOG_ACTIONS = new Set(['getEntregas','getCompras','updatePreparado','saveInventarioSemanal','getInventarioSemanal']);
+const LOG_ACTIONS = new Set(['getEntregas','getCompras','updatePreparado','updateEntregado','saveInventarioSemanal','getInventarioSemanal']);
 function getURLFor(action){
   if(LOG_ACTIONS.has(action)) return getURLLog();
   return getURLProd();
@@ -2558,9 +2563,12 @@ function renderLogEntregas(el){
     html+=`<div class="cat-header">👤 ${cli}${totalOrders>1?` <span style="font-weight:400;color:var(--text2);font-size:11px">· ${totalOrders} órdenes</span>`:''}</div>`;
     for(const item of cliItems){
       const orderId=String(item.orderNumber||item.id||'');
+      const entregado=(item.entregado===true||item.entregado==='true'||item.entregado==='TRUE'||item.entregado==='VERDADERO');
       const st=(item.status||'').toString().toLowerCase();
       let badge='';
-      if(st==='pendiente'){
+      if(entregado){
+        badge=`<span class="badge" style="background:var(--ok-bg);color:#1B5E35;border:1px solid var(--ok);font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px">✓ Entregado</span>`;
+      } else if(st==='pendiente'){
         badge=`<span class="badge" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px">⏳ Pendiente</span>`;
       } else if(st==='listo'||st==='preparado'){
         badge=`<span class="badge" style="background:var(--ok-bg);color:#1B5E35;border:1px solid var(--ok);font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px">✓ Listo</span>`;
@@ -2569,18 +2577,91 @@ function renderLogEntregas(el){
       const itemsHtml=itemsList.length>1
         ? '<ul style="margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--text2)">'+itemsList.map(l=>`<li>${l}</li>`).join('')+'</ul>'
         : `<div class="pedido-nota" style="white-space:pre-wrap">${item.itemsText||''}</div>`;
-      html+=`<div class="pedido-item" style="position:relative;align-items:flex-start">
+      const notasHtml=entregado&&item.entregadoNotas?`<div class="pedido-nota" style="font-size:11px;color:var(--green-bright);margin-top:3px">📝 ${String(item.entregadoNotas).replace(/</g,'&lt;')}</div>`:'';
+      const checkBtn=entregado
+        ? `<div onclick="undoEntregado('${orderId.replace(/'/g,"\\'")}')" class="entrega-check done" title="Deshacer entrega">✓</div>`
+        : `<div onclick="openEntregaSheet('${orderId.replace(/'/g,"\\'")}')" class="entrega-check" title="Confirmar entrega">○</div>`;
+      html+=`<div class="pedido-item${entregado?' entrega-done':''}" style="position:relative;align-items:flex-start">
+        ${checkBtn}
         <div class="pedido-info" style="flex:1">
           <div class="pedido-qty">#${orderId} ${badge}</div>
           ${itemsHtml}
           ${item.itemsCount?`<div class="pedido-nota" style="font-size:11px">📦 ${item.itemsCount} item${item.itemsCount>1?'s':''}${item.total?` · $${item.total}`:''}</div>`:''}
           ${item.deliveryDate?`<div class="pedido-nota" style="font-size:11px">📅 ${item.deliveryDate}</div>`:''}
+          ${notasHtml}
         </div>
         <div onclick="deleteLogEntrega('${orderId.replace(/'/g,"\\'")}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:flex-start;margin-top:2px">✕</div>
       </div>`;
     }
   }
   document.getElementById('log-entregas-list').innerHTML=html;
+}
+
+// Abre bottom sheet para confirmar entrega de una orden, con campo opcional de notas.
+function openEntregaSheet(orderId){
+  const items=getEntregas();
+  const item=items.find(e=>String(e.orderNumber||e.id||'')===String(orderId));
+  if(!item){toast('Orden no encontrada','warn');return;}
+  const safeId=escAttr(orderId);
+  const html=`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Confirmar entrega</div>
+    <div class="sheet-sub">#${escAttr(orderId)} · ${escAttr(item.clientName||'')}</div>
+    <div class="sheet-label">Notas (opcional)</div>
+    <textarea class="sheet-input" id="sheet-ent-notes" rows="3" placeholder="Ej. Recibió el chef / Dejar con recepción / Pedido incompleto…"></textarea>
+    <div class="sheet-actions">
+      <button class="sheet-cancel" onclick="closeSheet()">Cancelar</button>
+      <button class="sheet-save" onclick="confirmEntrega('${safeId}')">Confirmar entrega</button>
+    </div>`;
+  openSheet(html);
+  setTimeout(function(){
+    const inp=document.getElementById('sheet-ent-notes');
+    if(inp)inp.focus();
+  },340);
+}
+
+function confirmEntrega(orderId){
+  const inp=document.getElementById('sheet-ent-notes');
+  const notes=inp?String(inp.value||'').trim():'';
+  closeSheet();
+  markEntregado(orderId,notes);
+}
+
+// Marca orden como entregada con notas opcionales (escribe al Sheet de Logística).
+async function markEntregado(orderId,notes){
+  const id=String(orderId);
+  const entregas=getEntregas();
+  const idx=entregas.findIndex(e=>String(e.orderNumber||e.id||'')===id);
+  if(idx<0){toast('Orden no encontrada','warn');return;}
+  const ts=new Date().toISOString();
+  entregas[idx].entregado=true;
+  entregas[idx].entregadoAt=ts;
+  entregas[idx].entregadoNotas=notes||'';
+  setEntregas(entregas);
+  render(page);
+  if(!getURLLog()){toast('Entrega confirmada (sin sync)','info');return;}
+  setSyncUI('ing');
+  const res=await postToEndpoint('log',{action:'updateEntregado',data:{orderNumber:id,id:id,entregado:true,notes:notes||'',timestamp:ts}});
+  if(res&&res.ok){setSyncUI('ok');toast('✓ Entrega confirmada','ok');}
+  else{setSyncUI('off');toast('Cambio local, reintentará en la próxima sync','warn');}
+}
+
+// Deshace la confirmación de entrega (vuelve a estado "por entregar").
+async function undoEntregado(orderId){
+  const id=String(orderId);
+  const entregas=getEntregas();
+  const idx=entregas.findIndex(e=>String(e.orderNumber||e.id||'')===id);
+  if(idx<0){toast('Orden no encontrada','warn');return;}
+  entregas[idx].entregado=false;
+  entregas[idx].entregadoAt='';
+  entregas[idx].entregadoNotas='';
+  setEntregas(entregas);
+  render(page);
+  if(!getURLLog()){toast('Deshecho (sin sync)','info',{icon:'↺'});return;}
+  setSyncUI('ing');
+  const res=await postToEndpoint('log',{action:'updateEntregado',data:{orderNumber:id,id:id,entregado:false,notes:'',timestamp:new Date().toISOString()}});
+  if(res&&res.ok){setSyncUI('ok');toast('Deshecho','info',{icon:'↺'});}
+  else{setSyncUI('off');toast('Cambio local, reintentará en la próxima sync','warn');}
 }
 
 function deleteLogEntrega(orderNumber){
