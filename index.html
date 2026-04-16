@@ -254,7 +254,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
     <div class="topbar-logo"><img src="ISOTIPO_VERDE_nobg.png" alt="City Roots Farm"></div>
     <div>
       <div class="topbar-title">CITYROOTS.FARM</div>
-      <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.4.1</div>
+      <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.5.0</div>
     </div>
     <div class="sync-row" id="role-switch" onclick="changeRole()" style="cursor:pointer;margin-right:4px;display:none">
       <span style="font-size:11px;color:rgba(168,213,162,0.8)">🔄</span>
@@ -292,7 +292,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <!-- SELECTOR DE ROL -->
 <div class="role-screen" id="role-screen" style="display:none">
-  <div id="role-version-badge" style="position:absolute;top:14px;right:16px;background:#1a3a1a;color:#a8d5a2;padding:5px 12px;border-radius:14px;font-size:12px;font-weight:700;letter-spacing:.5px;box-shadow:0 2px 6px rgba(0,0,0,.15)">v2.4.1</div>
+  <div id="role-version-badge" style="position:absolute;top:14px;right:16px;background:#1a3a1a;color:#a8d5a2;padding:5px 12px;border-radius:14px;font-size:12px;font-weight:700;letter-spacing:.5px;box-shadow:0 2px 6px rgba(0,0,0,.15)">v2.5.0</div>
   <h1>Bienvenido</h1>
   <p>Selecciona tu área de trabajo</p>
   <div class="role-card" onclick="selectRole('produccion')">
@@ -325,7 +325,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.4.1';
+var APP_VERSION='2.5.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2122,7 +2122,7 @@ function isLogChecked(key){
 function renderLogInicio(el){
   const compras=getCompras();
   const entregas=getEntregas();
-  const pendCompra=compras.filter(c=>!isLogChecked('comp_'+(c.id||c.code||c.name))).length;
+  const pendCompra=compras.filter(c=>!(c.comprado===true||c.comprado==='true')&&!isLogChecked('comp_'+comprasItemKey(c))).length;
   const ts=LS.get('crf_log_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
   const hour=new Date().getHours();
@@ -2144,6 +2144,34 @@ function renderLogInicio(el){
   </div>`;
 }
 
+// Normaliza el código del item para usarlo como identificador estable.
+// Un mismo producto aparece como una sola fila porque shortage-router consolida por code.
+function comprasItemKey(item){
+  return String(item.code||item.id||item.name||'').replace(/'/g,"\\'");
+}
+// Proveedor efectivo del item: el que el chofer capturó si ya marcó comprado,
+// o el override local, o el sugerido por backend (supplier), o 'POR ASIGNAR'.
+function effectiveSupplier(item){
+  if(item.comprado && item.compradoSupplier) return String(item.compradoSupplier);
+  const override=getSupplierOverride(item.code);
+  if(override) return override;
+  return String(item.supplier||item.proveedor||'POR ASIGNAR');
+}
+const SUPPLIER_OVERRIDE_KEY='crf_supplier_override';
+function getSupplierOverrides(){return LS.get(SUPPLIER_OVERRIDE_KEY)||{};}
+function getSupplierOverride(code){
+  if(!code) return '';
+  const ov=getSupplierOverrides();
+  const k=todayKey()+'_'+code;
+  return ov[k]||'';
+}
+function setSupplierOverride(code,supplier){
+  if(!code) return;
+  const ov=getSupplierOverrides();
+  ov[todayKey()+'_'+code]=String(supplier||'');
+  LS.set(SUPPLIER_OVERRIDE_KEY,ov);
+}
+
 function renderLogCompras(el){
   const items=getCompras();
   const ts=LS.get('crf_log_timestamp')||'';
@@ -2160,39 +2188,147 @@ function renderLogCompras(el){
 
   if(items.length===0)return;
 
-  // Agrupar por categoría
-  const byCategory={};
+  // Agrupar por proveedor efectivo
+  const bySupplier={};
   items.forEach(item=>{
-    const cat=item.category||'GENERAL';
-    if(!byCategory[cat])byCategory[cat]=[];
-    byCategory[cat].push(item);
+    const sup=effectiveSupplier(item)||'POR ASIGNAR';
+    if(!bySupplier[sup])bySupplier[sup]=[];
+    bySupplier[sup].push(item);
+  });
+  // Orden: proveedores con más items primero; "POR ASIGNAR" al final
+  const suppliers=Object.keys(bySupplier).sort((a,b)=>{
+    if(a==='POR ASIGNAR')return 1;
+    if(b==='POR ASIGNAR')return -1;
+    return bySupplier[b].length-bySupplier[a].length;
   });
 
   const total=items.length;
-  const comprados=items.filter(i=>isLogChecked('comp_'+(i.id||i.code||i.name))).length;
+  const comprados=items.filter(i=>i.comprado===true||i.comprado==='true'||isLogChecked('comp_'+comprasItemKey(i))).length;
   let html='';
   html+=`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">Progreso: ${comprados}/${total} comprados</div>`;
   html+=`<div style="height:4px;background:var(--bg3);border-radius:4px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:${total?Math.round(comprados/total*100):0}%;background:var(--amber);border-radius:4px;transition:width .3s"></div></div>`;
 
-  for(const [cat,catItems] of Object.entries(byCategory)){
-    html+=`<div class="cat-header">${cat}</div>`;
-    for(const item of catItems){
-      const key='comp_'+(item.id||item.code||item.name);
-      const checked=isLogChecked(key);
-      const delKey=String(item.id||item.code||item.name).replace(/'/g,"\\'");
-      html+=`<div class="pedido-item ${checked?'checked':''}" style="position:relative">
-        <div class="pedido-check ${checked?'done':''}" onclick="toggleLogCheck('${key.replace(/'/g,"\\'")}')">${checked?'✓':''}</div>
-        <div class="pedido-info" style="flex:1">
-          <div class="pedido-qty">${item.totalQty||item.qty||''} ${item.unit||''}</div>
-          <div class="pedido-name">${item.name||item.producto||''}</div>
-          ${item.proveedor?`<div class="pedido-nota">🏪 ${item.proveedor}</div>`:''}
-          ${item.nota?`<div class="pedido-nota">${item.nota}</div>`:''}
+  for(const sup of suppliers){
+    const list=bySupplier[sup];
+    html+=`<details open style="margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2)">
+      <summary style="padding:10px 14px;cursor:pointer;font-weight:600;color:var(--green);display:flex;justify-content:space-between;align-items:center;list-style:none">
+        <span>🏪 ${sup}</span>
+        <span style="font-size:12px;color:var(--text2);font-weight:500">${list.length} item${list.length>1?'s':''}</span>
+      </summary>
+      <div style="padding:8px 10px 12px 10px">`;
+    for(const item of list){
+      const itemCode=String(item.code||'');
+      const isBought=(item.comprado===true||item.comprado==='true')||isLogChecked('comp_'+comprasItemKey(item));
+      const currentSup=effectiveSupplier(item);
+      const qty=item.qty||item.totalQty||'';
+      const unit=item.unit||'';
+      const name=item.name||item.producto||'';
+      const cambiadoPorChofer=!!getSupplierOverride(itemCode);
+      html+=`<div class="pedido-item ${isBought?'checked':''}" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div class="pedido-qty">${qty} ${unit}</div>
+            <div class="pedido-name">${name}</div>
+            ${cambiadoPorChofer?`<div class="pedido-nota" style="color:var(--amber)">✎ Cambiado: ${currentSup}</div>`:''}
+            ${item.derivedFrom?`<div class="pedido-nota" style="font-size:11px">← ${item.derivedFrom}</div>`:''}
+          </div>
         </div>
-        <div onclick="deleteLogCompra('${delKey}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:center">✕</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          ${isBought?`
+            <button onclick="undoPurchase('${itemCode.replace(/'/g,"\\'")}')" style="padding:7px 14px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">↺ Deshacer</button>
+          `:`
+            <button onclick="promptChangeSupplier('${itemCode.replace(/'/g,"\\'")}')" style="padding:7px 14px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Cambiar</button>
+            <button onclick="recordPurchase('${itemCode.replace(/'/g,"\\'")}')" style="padding:7px 18px;background:var(--ok);color:#fff;border:0;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✓ Comprado</button>
+          `}
+        </div>
       </div>`;
     }
+    html+=`</div></details>`;
   }
   document.getElementById('log-compras-list').innerHTML=html;
+}
+
+// Abre prompt para cambiar el proveedor de un item (solo localmente, hasta que
+// el chofer marque "Comprado" — ahí se persiste el supplier usado).
+function promptChangeSupplier(code){
+  const items=getCompras();
+  const item=items.find(i=>String(i.code||'')===String(code));
+  if(!item){toast('Item no encontrado');return;}
+  const current=effectiveSupplier(item);
+  const nuevo=prompt('¿Con qué proveedor compraste "'+(item.name||'')+'"?\n\nProveedor actual: '+current, current);
+  if(nuevo===null) return;
+  const trimmed=String(nuevo).trim();
+  if(!trimmed){toast('Proveedor vacío');return;}
+  setSupplierOverride(code,trimmed);
+  toast('Proveedor: '+trimmed);
+  render(page);
+}
+
+// Marca el item como comprado: POST recordPurchase al Sheet de Logística
+// y actualiza el estado local para feedback inmediato.
+async function recordPurchase(code){
+  const items=getCompras();
+  const item=items.find(i=>String(i.code||'')===String(code));
+  if(!item){toast('Item no encontrado');return;}
+  const supplier=effectiveSupplier(item);
+  const key='comp_'+comprasItemKey(item);
+
+  // Actualiza local inmediatamente
+  item.comprado=true;
+  item.compradoSupplier=supplier;
+  item.compradoAt=new Date().toISOString();
+  setCompras(items);
+  const ch=getLogCheck();
+  ch[todayKey()+'_'+key]=true;
+  setLogCheck(ch);
+  render(page);
+
+  if(!getURLLog()){
+    toast('✓ Marcado (sin sync — falta URL)');
+    return;
+  }
+  setSyncUI('ing');
+  const res=await postToEndpoint('log',{
+    action:'recordPurchase',
+    data:{
+      code:item.code,
+      name:item.name,
+      supplier:supplier,
+      qty:item.qty||item.totalQty||'',
+      unit:item.unit||'',
+      chofer:LS.get('crf_chofer_name')||'',
+      timestamp:item.compradoAt
+    }
+  });
+  if(res&&res.ok){setSyncUI('ok');toast('✓ Registrado: '+supplier);}
+  else{setSyncUI('off');toast('⚠️ Cambio local, reintentará en la próxima sync');}
+}
+
+// Deshace la compra: POST undoPurchase para desmarcar la fila y borrar la
+// última entrada del historial para ese code.
+async function undoPurchase(code){
+  const items=getCompras();
+  const item=items.find(i=>String(i.code||'')===String(code));
+  if(!item){toast('Item no encontrado');return;}
+  const key='comp_'+comprasItemKey(item);
+
+  item.comprado=false;
+  item.compradoSupplier='';
+  item.compradoAt='';
+  setCompras(items);
+  const ch=getLogCheck();
+  delete ch[todayKey()+'_'+key];
+  setLogCheck(ch);
+  render(page);
+
+  if(!getURLLog()){toast('↺ Deshecho (sin sync)');return;}
+  setSyncUI('ing');
+  const res=await postToEndpoint('log',{
+    action:'undoPurchase',
+    data:{code:item.code}
+  });
+  if(res&&res.ok){setSyncUI('ok');toast('↺ Deshecho');}
+  else{setSyncUI('off');toast('⚠️ Cambio local, reintentará en la próxima sync');}
 }
 
 function deleteLogCompra(id){
@@ -2319,9 +2455,11 @@ function renderLogAdmin(el){
 // URLs default — se setean siempre que crf_url_produccion / crf_url_logistica no existan.
 // Así cualquier dispositivo nuevo autoconfigura sin ir a Admin.
 const _defaultProdURL='https://script.google.com/macros/s/AKfycbzHTGTDF7IYwiOfOU-IcZoZu-tusJMBTJ-sKKDLjYr_6fcABAVx4qXpb_qSOGTG4TBxYQ/exec';
-const _defaultLogURL ='https://script.google.com/macros/s/AKfycbzwJs1JwgA-9BaabkG_690Q9IELbDrJsKzZ9zHNi556K9udyJ2gb_Yctrrvi3wyC4ZN/exec';
+const _defaultLogURL ='https://script.google.com/macros/s/AKfycbwckmWRIWm-cVia7mdQS9LZ6q6n_8uzHHQQSNFmCsTfhsbz9jPf8GDLQ3_k22JjGwlf/exec';
 // Limpiar URL legacy rota que impide usar el default correcto
 (function(){try{var old=localStorage.getItem(SK.url);if(old&&old.indexOf('AKfycbzHTG')<0){localStorage.removeItem(SK.url);}}catch(e){}})();
+// Migrar URL Logística legacy al deployment nuevo con supplier tracking (v2.5.0)
+(function(){try{var old=LS.get(SK.urlLog);if(old&&old.indexOf('AKfycbwckmWRIWm')<0){LS.set(SK.urlLog,_defaultLogURL);}}catch(e){}})();
 if(!LS.get(SK.urlProd))setURLProd(_defaultProdURL);
 if(!LS.get(SK.urlLog)) setURLLog(_defaultLogURL);
 const _urlProd=getURLProd(), _urlLog=getURLLog();
