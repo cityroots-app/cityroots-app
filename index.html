@@ -1706,17 +1706,12 @@ function isChecked(code){
 }
 
 // JSONP helper genérico
-function jsonpGet(url,action){
-  return new Promise((resolve,reject)=>{
-    const cbName='_crf_jp_'+Date.now()+'_'+Math.floor(Math.random()*10000);
-    const script=document.createElement('script');
-    const cleanup=()=>{delete window[cbName];try{document.body.removeChild(script);}catch(e){}};
-    window[cbName]=function(d){cleanup();resolve(d);};
-    script.onerror=function(){cleanup();reject(new Error('JSONP failed: '+action));};
-    script.src=url+'?action='+action+'&callback='+cbName+'&_='+Date.now();
-    document.body.appendChild(script);
-    setTimeout(()=>{if(window[cbName]){cleanup();reject(new Error('JSONP timeout: '+action));}},8000);
-  });
+// fetch-based GET (reemplaza JSONP — más confiable, sin problemas de redirects/cookies).
+// Los endpoints Apps Script ya tienen access-control-allow-origin: * así que CORS funciona.
+async function jsonpGet(url,action){
+  const res=await fetch(url+'?action='+action+'&_='+Date.now(),{redirect:'follow'});
+  if(!res.ok)throw new Error('Fetch failed ('+res.status+'): '+action);
+  return res.json();
 }
 
 // Fetch desde el Sheet de Producción: pedidos de producción (lectura del ERP) + inventario HADE
