@@ -375,7 +375,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.10.3';
+var APP_VERSION='2.10.4';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2388,7 +2388,6 @@ function renderLogCompras(el){
             <div class="pedido-qty">${qty} ${unit}</div>
             <div class="pedido-name">${name}</div>
             ${cambiadoPorChofer?`<div class="pedido-nota" style="color:var(--amber)">✎ Cambiado: ${currentSup}</div>`:''}
-            ${item.derivedFrom?`<div class="pedido-nota" style="font-size:11px">← ${item.derivedFrom}</div>`:''}
           </div>
         </div>
         <div style="display:flex;gap:8px;justify-content:flex-end">

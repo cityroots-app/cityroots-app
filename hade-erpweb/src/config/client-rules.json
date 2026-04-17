@@ -1,0 +1,276 @@
+{
+  "_doc": "Reglas de negocio por cliente para interpretación de pedidos. Cada cliente puede tener reglas de conversión de productos, unidades preferidas, y notas operativas.",
+
+  "_globalRulesDoc": "globalRules.productRules aplica a TODOS los clientes, como fallback cuando no hay regla específica del cliente. Mismo formato que rules[].productRules.",
+
+  "globalRules": {
+    "productRules": [
+      {
+        "inputPattern": "FLOR PENSAMIENTO 50|PENSAMIENTO 50",
+        "bindProductCode": "2002",
+        "bindProductName": "FLOR COMESTIBLE PENSAMIENTO 50 PZ",
+        "unit": "PZ",
+        "forceQty": 1,
+        "conversionNote": "Pensamiento 50 piezas = 1 paquete de 50pz (code 2002). El '50' describe el tamaño del paquete, no la cantidad. forceQty:1."
+      },
+      {
+        "inputPattern": "FLOR PENSAMIENTO 100|PENSAMIENTO 100",
+        "bindProductCode": "2003",
+        "bindProductName": "FLOR COMESTIBLE PENSAMIENTO 100 PZ",
+        "unit": "PZ",
+        "forceQty": 1,
+        "conversionNote": "Pensamiento 100 piezas = 1 paquete de 100pz (code 2003). forceQty:1."
+      },
+      {
+        "inputPattern": "HOJA DE SORREL BABY|SORREL BABY|HOJA SORREL BABY",
+        "bindProductCode": "4006",
+        "bindProductName": "SORREL 50PZ",
+        "unit": "PZ",
+        "conversionNote": "Sorrel baby = paquete terminado de 50 piezas (code 4006). NO usar 4007 (GRANEL = materia prima). Cantidad pedida = número de paquetes."
+      },
+      {
+        "inputPattern": "CALABAZA ZUCCINI VERDE|CALABAZA ZUCCHINI VERDE|ZUCCINI VERDE|ZUCCHINI VERDE|CALABAZA VERDE",
+        "bindProductCode": "6016",
+        "bindProductName": "CALABAZA ZUCCINI BABY",
+        "unit": "KG",
+        "conversionNote": "Calabaza zuccini verde del pedido = calabaza zuccini baby en Bind (code 6016). Cantidad directa en KG. El fuzzy matcher confundía 'verde' con 'limon verde'."
+      },
+      {
+        "inputPattern": "HONGO SHIMEJI BLANCO|SHIMEJI BLANCO",
+        "bindProductCode": "5003",
+        "bindProductName": "HONGO COMESTIBLE SHIMEJI BLANCO 150GR",
+        "unit": "PZ",
+        "conversionNote": "Shimeji blanco 150gr (code 5003). Solo aplicar si el cliente confirmó 'blanco' en el cuerpo del correo."
+      },
+      {
+        "inputPattern": "HONGO SHIMEJI CAFE|SHIMEJI CAFE|SHIMEJI CAFÉ",
+        "bindProductCode": "5004",
+        "bindProductName": "HONGO COMESTIBLE SHIMEJI CAFE 150GR",
+        "unit": "PZ",
+        "conversionNote": "Shimeji café 150gr (code 5004). Solo aplicar si el cliente confirmó 'café' en el cuerpo del correo."
+      }
+    ],
+    "inventoryAwareRules": [
+      {
+        "inputPattern": "HONGO ENOKI|ENOKI",
+        "candidates": [
+          { "bindProductCode": "5002", "preference": 1, "note": "Presentación preferida si hay stock" },
+          { "bindProductCode": "5001", "preference": 2, "note": "Fallback" }
+        ],
+        "unit": "PZ",
+        "conversionNote": "Enoki — preferir 200GR (5002); si stock=0, usar 150GR (5001). Si ninguna tiene stock, crear igual con 5002 para que aparezca en lista de compras."
+      }
+    ]
+  },
+
+
+  "rules": [
+    {
+      "clientPattern": "CHAPULIN|IMPULSORA DE EMPRESAS TURISTICAS",
+      "bindClientID": "6a3c0379-773e-4e31-a430-f58c5064040e",
+      "bindClientName": "CHAPULIN",
+      "aliases": ["CHAPULIN", "RESTAURANTE CHAPULIN", "IMPULSORA DE EMPRESAS TURISTICAS"],
+      "notes": "Restaurante Chapulín MTY — Grupo Presidente (razón social: Impulsora de Empresas Turísticas SA de CV). Pide 'brotes' en KG, convertir a piezas de 50gr. Pide 'arugula baby' en KG.",
+      "hasOC": true,
+      "productRules": [
+        {
+          "inputPattern": "ARUGULA BABY",
+          "bindProductCode": "4005",
+          "bindProductName": "ARUGULA BABY KG",
+          "unit": "KG",
+          "conversionNote": "Cliente pide por KG. Redondear hacia arriba al múltiplo de 0.2 (cada domo = 200gr). Ej: 0.3kg → 0.4kg (2 domos)",
+          "roundUpTo": 0.2
+        },
+        {
+          "inputPattern": "BROTE DE CHICHARO|BROTE CHICHARO|CHICHARO DESPEINADO",
+          "bindProductCode": "7003",
+          "bindProductName": "MICROGREENS DE CHICHARO 50GR",
+          "unit": "PZ",
+          "conversionNote": "Cliente pide 'brote de chícharo despeinado' en KG. Convertir: qty_kg / 0.050 = piezas de 50gr. Ej: 0.200 KG = 4 piezas.",
+          "convertKgToPieces": 0.050
+        },
+        {
+          "inputPattern": "BROTE DE CILANTRO|BROTE CILANTRO",
+          "bindProductCode": "7009",
+          "bindProductName": "MICROGREENS CILANTRO FRESCO 50GR",
+          "unit": "PZ",
+          "conversionNote": "Cliente pide 'brote de cilantro' en KG. Convertir: qty_kg / 0.050 = piezas de 50gr.",
+          "convertKgToPieces": 0.050
+        },
+        {
+          "inputPattern": "BROTE DE BETABEL|BROTE BETABEL|BETABEL BROTE",
+          "bindProductCode": "7011",
+          "bindProductName": "MICROGREENS BETABEL FRESCO 50GR",
+          "unit": "PZ",
+          "conversionNote": "Cliente pide 'brote betabel' en KG o PZA. Si KG, convertir: qty_kg / 0.050 = piezas de 50gr.",
+          "convertKgToPieces": 0.050
+        },
+        {
+          "materialCode": "10011730",
+          "inputPattern": "FLOR PENSAMIENTO 100|PENSAMIENTO 100",
+          "bindProductCode": "2003",
+          "bindProductName": "FLOR COMESTIBLE PENSAMIENTO 100 PZ",
+          "unit": "PZ",
+          "forceQty": 1,
+          "conversionNote": "Material SAP 10011730 = Pensamiento 100PZ. Match prioritario por código. forceQty:1 porque el '100' es tamaño de paquete, no cantidad. Resultado: 1 paquete de 100 flores (code 2003)."
+        },
+        {
+          "inputPattern": "FLOR PENSAMIENTO 50|PENSAMIENTO 50",
+          "bindProductCode": "2002",
+          "bindProductName": "FLOR COMESTIBLE PENSAMIENTO 50 PZ",
+          "unit": "PZ",
+          "forceQty": 1,
+          "conversionNote": "OC dice 'pensamiento 50 piezas' = 1 domo de 50pz (code 2002). El '50' describe el tamaño del paquete, no la cantidad."
+        },
+        {
+          "inputPattern": "FLOR PENSAMIENTO|PENSAMIENTO",
+          "bindProductCode": "2002",
+          "bindProductName": "FLOR COMESTIBLE PENSAMIENTO 50 PZ",
+          "unit": "PZ",
+          "conversionNote": "Fallback genérico: si el OC dice solo 'flor pensamiento' sin tamaño → asume domos de 50pz, qty = cantidad pedida."
+        },
+        {
+          "materialCode": "40000850",
+          "inputPattern": "CARBON|CARBÓN|CARBON VEGETAL",
+          "bindProductCode": "8013",
+          "bindProductName": "CARBON VEGETAL",
+          "unit": "KG",
+          "conversionNote": "Material SAP 40000850 = Carbón por KG. Cantidad directa en KG (code 8013)."
+        },
+        {
+          "materialCode": "30002915",
+          "inputPattern": "LEÑA|LENA",
+          "bindProductCode": "8012",
+          "bindProductName": "LEÑA",
+          "unit": "PZ",
+          "conversionNote": "Material SAP 30002915 = Leña. Cliente pide en KG, cada pieza = 3 KG. Convierte: qty_kg / 3 = piezas. Si nombre contiene 'XKG', extrae ese valor.",
+          "convertKgToPieces": 3,
+          "extractKgFromName": true
+        }
+      ]
+    },
+    {
+      "clientPattern": "HOTEL HYATT|PROMOTORA Y OPERADORA|HOTELES VALLE ORIENTE",
+      "bindClientID": "7b4b4dd7-6038-4374-b5c5-57afe08b0e91",
+      "bindClientName": "HOTEL HYATT",
+      "aliases": ["HOTEL HYATT", "PROMOTORA Y OPERADORA DE HOTELES VALLE ORIENTE", "HYATT REGENCY"],
+      "notes": "Hotel Hyatt Regency Valle Oriente — Grupo Presidente (razón social: Promotora y Operadora de Hoteles Valle Oriente SA de CV). Pide 'brotes' en KG (0.050 = 1 pieza de 50gr) o PZA directamente.",
+      "hasOC": true,
+      "productRules": [
+        {
+          "inputPattern": "BROTE DE CHICHARO|BROTE CHICHARO",
+          "bindProductCode": "7003",
+          "bindProductName": "MICROGREENS DE CHICHARO 50GR",
+          "unit": "PZ",
+          "conversionNote": "0.050 KG = 1 pieza de 50gr",
+          "convertKgToPieces": 0.050
+        },
+        {
+          "inputPattern": "BROTE DE CILANTRO|BROTE CILANTRO",
+          "bindProductCode": "7009",
+          "bindProductName": "MICROGREENS CILANTRO FRESCO 50GR",
+          "unit": "PZ",
+          "conversionNote": "0.050 KG = 1 pieza de 50gr",
+          "convertKgToPieces": 0.050
+        },
+        {
+          "inputPattern": "BROTE DE BETABEL|BROTE BETABEL|BETABEL BROTE",
+          "bindProductCode": "7011",
+          "bindProductName": "MICROGREENS BETABEL FRESCO 50GR",
+          "unit": "PZ",
+          "conversionNote": "Si viene en PZA ya es directo. Si viene en KG: 0.050 = 1 pieza de 50gr.",
+          "convertKgToPieces": 0.050
+        },
+        {
+          "inputPattern": "BROTE DE GIRASOL|BROTE GIRASOL",
+          "bindProductCode": "7005",
+          "bindProductName": "MICROGREENS DE GIRASOL 50GR",
+          "unit": "PZ",
+          "conversionNote": "0.050 KG = 1 pieza de 50gr",
+          "convertKgToPieces": 0.050
+        }
+      ]
+    },
+    {
+      "clientPattern": "LILOU|MIZUNA",
+      "bindClientID": "6e6ae93a-a919-4622-bee9-b37ed56bed4b",
+      "bindClientName": "LILOU",
+      "aliases": ["LILOU", "MIZUNA", "MIZUNA SA DE CV"],
+      "notes": "Restaurante Lilou — Grupo Presidente (razón social: MIZUNA SA de CV). Pide productos en KG. Usar versiones KG de los productos.",
+      "hasOC": true,
+      "productRules": [
+        {
+          "inputPattern": "ARUGULA BABY",
+          "bindProductCode": "4005",
+          "bindProductName": "ARUGULA BABY KG",
+          "unit": "KG",
+          "conversionNote": "Pide por KG directo"
+        },
+        {
+          "inputPattern": "ESPINACA BABY",
+          "bindProductCode": "4002",
+          "bindProductName": "ESPINACA BABY KG",
+          "unit": "KG",
+          "conversionNote": "Pide por KG directo"
+        },
+        {
+          "inputPattern": "ESPARRAGO",
+          "bindProductCode": "6001",
+          "bindProductName": "ESPARRAGO",
+          "unit": "KG",
+          "conversionNote": "Pide por KG directo"
+        }
+      ]
+    },
+    {
+      "clientPattern": "OUM|RESTAURANTE TIERRA|TIERRA",
+      "bindClientID": "b13c1f42-dd25-4906-98b0-e8582c8b72b3",
+      "bindClientName": "OUM",
+      "aliases": ["OUM", "OUM-HOLDING", "RESTAURANTE TIERRA", "TIERRA"],
+      "notes": "OUM (razón social: OUM-HOLDING). El restaurante se llama 'Tierra'. Contacto: halonso@oum.mx",
+      "hasOC": true,
+      "productRules": [
+        {
+          "inputPattern": "CHICHARO DESPEINADO|CHICHARO FRESCO|MICROGREENS CHICHARO|BROTE DE CHICHARO|BROTE CHICHARO",
+          "bindProductCode": "7003",
+          "bindProductName": "MICROGREENS DE CHICHARO 50GR",
+          "unit": "PZ",
+          "conversionNote": "Chícharo despeinado/fresco = MICROGREENS DE CHICHARO 50GR (7003), NO CT"
+        }
+      ]
+    },
+    {
+      "clientPattern": "LA TORRADA|TORRADA|RENACIMIENTO",
+      "bindClientID": "3dfce7c3-6f6a-47a1-a894-8a9d2c7c45bf",
+      "bindClientName": "LA TORRADA",
+      "aliases": ["LA TORRADA", "RENACIMIENTO GOURMET", "TORRADA VALLE ORIENTE"],
+      "notes": "LA TORRADA = RENACIMIENTO GOURMET. Restaurante en Valle Oriente, Monterrey. Pedidos llegan como 'La Torrada' o 'Renacimiento Gourmet'. Sus PDFs tienen campo OC# que se debe extraer como orderNumber.",
+      "hasOC": true,
+      "productRules": [
+        {
+          "inputPattern": "BROTES DE GIRASOL|BROTES GIRASOL|GIRASOL BROTES",
+          "bindProductCode": "7006",
+          "bindProductName": "MICROGREENS DE GIRASOL 200GR",
+          "unit": "200GR",
+          "conversionNote": "Cliente pide 'brotes de girasol' — es contenedor de 200gr de microgreens de girasol"
+        }
+      ]
+    }
+  ],
+
+  "_templateRule": {
+    "clientPattern": "NOMBRE DEL CLIENTE (como aparece en pedidos)",
+    "bindClientID": "UUID del cliente en Bind (opcional, se usa para match directo)",
+    "notes": "Notas operativas del cliente",
+    "productRules": [
+      {
+        "inputPattern": "NOMBRE DEL PRODUCTO como lo pide el cliente",
+        "bindProductCode": "Código en Bind del producto correcto",
+        "bindProductName": "Nombre en Bind del producto correcto",
+        "unit": "Unidad correcta",
+        "conversionNote": "Explicación de la regla de conversión",
+        "roundUpTo": 0.0
+      }
+    ]
+  }
+}
