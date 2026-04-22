@@ -6,20 +6,20 @@
   "globalRules": {
     "productRules": [
       {
-        "inputPattern": "FLOR PENSAMIENTO 50|PENSAMIENTO 50",
-        "bindProductCode": "2002",
-        "bindProductName": "FLOR COMESTIBLE PENSAMIENTO 50 PZ",
-        "unit": "PZ",
-        "forceQty": 1,
-        "conversionNote": "Pensamiento 50 piezas = 1 paquete de 50pz (code 2002). El '50' describe el tamaño del paquete, no la cantidad. forceQty:1."
-      },
-      {
-        "inputPattern": "FLOR PENSAMIENTO 100|PENSAMIENTO 100",
+        "inputPattern": "FLOR PENSAMIENTO 100|PENSAMIENTO 100|FLOR COMESTIBLE PENSAMIENTO 100",
         "bindProductCode": "2003",
         "bindProductName": "FLOR COMESTIBLE PENSAMIENTO 100 PZ",
         "unit": "PZ",
         "forceQty": 1,
-        "conversionNote": "Pensamiento 100 piezas = 1 paquete de 100pz (code 2003). forceQty:1."
+        "conversionNote": "Pensamiento 100 piezas = 1 paquete de 100pz (code 2003). forceQty:1. Va ANTES de la regla genérica para tener prioridad."
+      },
+      {
+        "inputPattern": "FLOR PENSAMIENTO 50|PENSAMIENTO 50|FLOR COMESTIBLE PENSAMIENTO|PENSAMIENTO",
+        "bindProductCode": "2002",
+        "bindProductName": "FLOR COMESTIBLE PENSAMIENTO 50 PZ",
+        "unit": "PZ",
+        "forceQty": 1,
+        "conversionNote": "Pensamiento genérico/50pz = 1 paquete de 50pz (code 2002). El parser puede extraer '50' como qty — forceQty:1 lo corrige. Regla catch-all para pensamiento sin especificar tamaño."
       },
       {
         "inputPattern": "HOJA DE SORREL BABY|SORREL BABY|HOJA SORREL BABY",
@@ -240,19 +240,99 @@
       ]
     },
     {
+      "clientPattern": "INMOBILIARIA HOTELERA EL PRESIDENTE|HOTEL EL PRESIDENTE|HOTEL PRESIDENTE SAN JOSE|HOTEL PRESIDENTE CABO|PRESIDENTE SAN JOSE|PRESIDENTE CABO",
+      "bindClientID": "e9ad971e-b6bd-46c2-b4de-bacf9fe32a1b",
+      "bindClientName": "INMOBILIARIA HOTELERA EL PRESIDENTE SAN JOSE DEL CABO",
+      "aliases": ["INMOBILIARIA HOTELERA EL PRESIDENTE SAN JOSE DEL CABO SAPI DE CV", "HOTEL EL PRESIDENTE SAN JOSE DEL CABO", "GRUPO PRESIDENTE", "HOTEL PRESIDENTE"],
+      "notes": "Hotel El Presidente San José del Cabo (Grupo Presidente, razón social: Inmobiliaria Hotelera El Presidente SAPI de CV). Pide productos en KG pero nuestros domos son de 200gr — redondear al múltiplo superior. Brotes/microgreens vienen en KG, convertir a piezas de 50gr.",
+      "hasOC": true,
+      "productRules": [
+        {
+          "inputPattern": "ARUGULA BABY",
+          "bindProductCode": "4005",
+          "bindProductName": "ARUGULA BABY KG",
+          "unit": "KG",
+          "conversionNote": "Cliente pide KG. Redondear hacia arriba al múltiplo de 0.2 (cada domo = 200gr). Ej: 0.7kg → 0.8kg (4 domos).",
+          "roundUpTo": 0.2
+        },
+        {
+          "inputPattern": "BROTE DE BETABEL|BROTE BETABEL|BETABEL BROTE|MICROGREENS BETABEL",
+          "bindProductCode": "7011",
+          "bindProductName": "MICROGREENS BETABEL FRESCO 50GR",
+          "unit": "PZ",
+          "defaultPrice": 159,
+          "conversionNote": "Cliente pide 'brote betabel' en KG. Convertir: qty_kg / 0.050 = piezas de 50gr. Ej: 0.5kg = 10 piezas. Precio cliente Presidente = $159/pz (NO $129). NO confundir con 6003 BETABEL AMARILLO (KG, verdura).",
+          "convertKgToPieces": 0.050
+        },
+        {
+          "inputPattern": "BROTE DE RABANO|BROTE RABANO|RABANO BROTE|MICROGREENS RABANO|MICROGREENS DE RABANO",
+          "bindProductCode": "7001",
+          "bindProductName": "MICROGREENS DE RABANO FRESCO 50GR",
+          "unit": "PZ",
+          "conversionNote": "Cliente pide 'brote rabano' en KG. Convertir: qty_kg / 0.050 = piezas de 50gr. Ej: 0.5kg = 10 piezas. NO confundir con 6006 RABANO SANDIA ni 6007 RABANO VIOLETA (KG, verdura).",
+          "convertKgToPieces": 0.050
+        },
+        {
+          "inputPattern": "FLOR PENSAMIENTO 100|FLORES PENSAMIENTO 100|PENSAMIENTO 100|FLOR COMESTIBLE PENSAMIENTO 100",
+          "bindProductCode": "2003",
+          "bindProductName": "FLOR COMESTIBLE PENSAMIENTO 100 PZ",
+          "unit": "PZ",
+          "forceQty": 1,
+          "conversionNote": "OC dice 'flores pensamiento 100 pza' = 1 domo de 100pz (code 2003). El '100' es tamaño del paquete, no cantidad. forceQty:1. Va ANTES del catch-all de la regla global."
+        },
+        {
+          "inputPattern": "ESPARRAGO VERDE JUMBO|ESPARRAGO JUMBO|ESPARRAGO VERDE|ESPARRAGO",
+          "bindProductCode": "6001",
+          "bindProductName": "ESPARRAGO",
+          "unit": "KG",
+          "conversionNote": "Cliente pide 'esparrago verde jumbo' en KG. Cantidad directa en KG (code 6001)."
+        }
+      ]
+    },
+    {
+      "clientPattern": "FAUSTO|CERVECERIA FAUSTO|CERVECERÍA FAUSTO|CERVECERIA ARTESANAL|CASA PRODUCTORA DE CERVEZA ARTESANAL",
+      "bindClientID": "2825d522-5962-4e04-b734-e7df993f9d21",
+      "bindClientName": "CERVECERA",
+      "aliases": ["FAUSTO", "CERVECERIA FAUSTO", "CERVECERA", "CASA PRODUCTORA DE CERVEZA ARTESANAL"],
+      "notes": "Cervecería Fausto — razón social: CASA PRODUCTORA DE CERVEZA ARTESANAL. Nombre interno en Bind: CERVECERA. Los pedidos llegan firmados como 'Fausto'.",
+      "hasOC": false,
+      "productRules": []
+    },
+    {
       "clientPattern": "LA TORRADA|TORRADA|RENACIMIENTO",
       "bindClientID": "3dfce7c3-6f6a-47a1-a894-8a9d2c7c45bf",
       "bindClientName": "LA TORRADA",
       "aliases": ["LA TORRADA", "RENACIMIENTO GOURMET", "TORRADA VALLE ORIENTE"],
-      "notes": "LA TORRADA = RENACIMIENTO GOURMET. Restaurante en Valle Oriente, Monterrey. Pedidos llegan como 'La Torrada' o 'Renacimiento Gourmet'. Sus PDFs tienen campo OC# que se debe extraer como orderNumber.",
+      "notes": "LA TORRADA = RENACIMIENTO GOURMET. Restaurante en Valle Oriente, Monterrey. Pedidos llegan como 'La Torrada' o 'Renacimiento Gourmet'. Sus PDFs tienen campo OC# que se debe extraer como orderNumber. Pide brotes en presentación 200GR (NO 50GR, NO granel).",
       "hasOC": true,
       "productRules": [
         {
-          "inputPattern": "BROTES DE GIRASOL|BROTES GIRASOL|GIRASOL BROTES",
+          "inputPattern": "BROTES DE GIRASOL|BROTES GIRASOL|GIRASOL BROTES|BROTE DE GIRASOL 200|BROTE GIRASOL 200",
           "bindProductCode": "7006",
           "bindProductName": "MICROGREENS DE GIRASOL 200GR",
           "unit": "200GR",
           "conversionNote": "Cliente pide 'brotes de girasol' — es contenedor de 200gr de microgreens de girasol"
+        },
+        {
+          "inputPattern": "BROTE DE CHICHARO|BROTES DE CHICHARO|BROTE CHICHARO|MICROGREENS CHICHARO|MICROGREEN DE CHICHARO|CHICHARO FRESCO|CHICHARO GRANEL",
+          "bindProductCode": "7004",
+          "bindProductName": "MICROGREENS DE CHICHARO FRESCO 200GR",
+          "unit": "200GR",
+          "conversionNote": "Renacimiento SIEMPRE pide chícharo 200gr → code 7004. El parser puede extraer '200gr' como unit y dejar solo 'BROTE DE CHICHARO' en el nombre; la regla matchea sin importar. NO usar MP7003 (GRANEL = materia prima) ni 7003 (50GR). Cantidad = número de piezas."
+        },
+        {
+          "inputPattern": "BROTE DE CILANTRO|BROTES DE CILANTRO|BROTE CILANTRO|MICROGREENS CILANTRO|MICROGREENS DE CILANTRO|CILANTRO FRESCO|CILANTRO GRANEL",
+          "bindProductCode": "7010",
+          "bindProductName": "MICROGREENS CILANTRO FRESCO 200GR",
+          "unit": "200GR",
+          "conversionNote": "Renacimiento SIEMPRE pide cilantro 200gr → code 7010 (NO el orgánico 7023). El parser puede extraer '200gr' como unit; la regla matchea sin importar. NO usar MP7010 (GRANEL) ni 7009 (50GR) ni 7023 (ORGANICO). Cantidad = número de piezas."
+        },
+        {
+          "inputPattern": "BETABEL AMARILLO",
+          "bindProductCode": "6003",
+          "bindProductName": "BETABEL AMARILLO",
+          "unit": "KG",
+          "conversionNote": "Betabel amarillo = verdura (code 6003). Cantidad directa en KG. NO confundir con 7011 (microgreens) ni 6004 (baby) ni 8020 CABRERIA NACIONAL."
         }
       ]
     }

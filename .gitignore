@@ -1,0 +1,108 @@
+# ═══════════════════════════════════════════════════════════
+# .gitignore del repo cityroots-app/cityroots-app (PWA)
+# ═══════════════════════════════════════════════════════════
+#
+# Este workspace sirve dos propósitos:
+#   1. Es el repo público de la PWA (GitHub Pages)
+#   2. Contiene carpetas locales de otros proyectos del ecosistema
+#
+# Este .gitignore asegura que SOLO los archivos públicos de la
+# PWA (y los selectos del backend ya versionados) se suban.
+# Todo lo demás queda local.
+
+# ─── macOS / editores ────────────────────────────────────
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── Backups accidentales ────────────────────────────────
+*.bak
+*.orig
+
+# ─── Logs / temporales ───────────────────────────────────
+*.log
+*.tmp
+
+# ─── Dependencias Node.js (a cualquier profundidad) ──────
+node_modules/
+
+# ─── Secrets (a cualquier profundidad) ───────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── CLAUDE.md local del workspace (NO es del repo PWA) ──
+# Es el índice que usa Claude Code para navegar este workspace
+# NO contiene nada que deba ir al repo público.
+/CLAUDE.md
+/CLAUDE.md.bak
+
+# ─── Configuración local de Claude Code ──────────────────
+.claude/
+
+# ─── Carpetas de otros proyectos del ecosistema ──────────
+# NO son parte del repo PWA — son workspace local
+/cityrootsfarm-ventas/
+/cityrootsfarm-produccion/
+/cityrootsfarm-pwa/
+/cityrootsfarm-socialmkt/
+/cityrootsfarm-btlmkt/
+/cityrootsfarm-landing/
+
+# ─── HADE-WEBERP — bloquear todo excepto lo selectivo ────
+# El backend HADE vive en esta carpeta. Solo unos archivos
+# se versionan junto con la PWA (los que ya están tracked).
+# El resto (código, logs, secretos, facturas) queda local.
+hade-erpweb/node_modules/
+hade-erpweb/.env
+hade-erpweb/.env.example
+hade-erpweb/.DS_Store
+hade-erpweb/.gitignore
+hade-erpweb/CLAUDE.md
+hade-erpweb/Prospectos_HADE.csv
+hade-erpweb/package.json
+hade-erpweb/package-lock.json
+hade-erpweb/AppsScript_Logistica.js
+
+# hade-erpweb src/ — código fuente, queda local (excepto 2 selectos)
+hade-erpweb/src/index.js
+hade-erpweb/src/routes/**
+hade-erpweb/src/services/**
+hade-erpweb/src/config/**
+hade-erpweb/src/middleware/**
+hade-erpweb/src/models/**
+hade-erpweb/src/tests/**
+hade-erpweb/src/utils/**
+
+# hade-erpweb logs operativos
+hade-erpweb/logs/*.log
+hade-erpweb/logs/*.txt
+hade-erpweb/logs/orders-registry.json
+hade-erpweb/logs/pending-review.json
+hade-erpweb/logs/supply-lists.json
+
+# hade-erpweb docs (PDFs sensibles de clientes)
+hade-erpweb/docs/facturas-emitidas/
+hade-erpweb/docs/ordenes-compra/
+hade-erpweb/docs/bind-api-requests.md
+
+# hade-erpweb scripts (la mayoría) — solo cron-process-orders.js va al repo
+hade-erpweb/scripts/check-inventory.js
+hade-erpweb/scripts/cron-daily-7am.js
+hade-erpweb/scripts/download-invoices.js
+hade-erpweb/scripts/generate-prospects-csv.js
+hade-erpweb/scripts/health-check.js
+hade-erpweb/scripts/process-today-only.js
+hade-erpweb/scripts/push-prospects-to-sheets.js
+hade-erpweb/scripts/reprocess-order.js
+hade-erpweb/scripts/send-prospect-emails.js
+hade-erpweb/scripts/test-*.js
+
+# UNIGNORAR explícitamente lo que SÍ debe ir al repo
+# (los archivos que ya están tracked en el repo público)
+!hade-erpweb/scripts/cron-process-orders.js
+!hade-erpweb/src/config/client-rules.json
+!hade-erpweb/src/services/shortage-router.js
+!hade-erpweb/logs/manual-compras.json

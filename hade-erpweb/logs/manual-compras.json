@@ -1,19 +1,4 @@
 {
   "_doc": "Compras manuales temporales. El cron las inyecta en la lista del chofer. Cada item tiene expiresAt — el cron ignora items expirados. Borrar manualmente o esperar a que expiren.",
-  "items": [
-    {
-      "code": "MANUAL_ARUGULA_COSTCO",
-      "name": "ARUGULA BABY 300GR (COSTCO)",
-      "qty": 24,
-      "unit": "PZ",
-      "category": "COMPRAS",
-      "supplier": "COSTCO",
-      "supplierSource": "manual",
-      "alternativeSuppliers": "",
-      "derivedFrom": "",
-      "orderRefs": "2905",
-      "nota": "Compra manual — proveedor foráneo no entregó esta semana. 7kg / 0.3kg = 23.33 → 24 paquetes cerrados.",
-      "expiresAt": "2026-04-18T00:00:00"
-    }
-  ]
+  "items": []
 }
