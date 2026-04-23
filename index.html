@@ -100,8 +100,25 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 /* INVENTARIO */
 .inv-table{width:100%;border-collapse:collapse;font-size:12px}
 .inv-table th{text-align:left;padding:8px 6px;background:var(--bg3);font-weight:600;color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border2)}
-.inv-table td{padding:8px 6px;border-bottom:1px solid var(--border)}
+.inv-table td{padding:8px 6px;border-bottom:1px solid var(--border);vertical-align:middle}
 .inv-low{color:var(--danger);font-weight:600}
+/* Combobox búsqueda producto (v2.11) */
+.inv-combo{position:relative}
+.inv-combo-input{width:100%;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);font-size:14px;font-family:var(--font-body);box-sizing:border-box}
+.inv-combo-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg1);border:1px solid var(--border2);border-radius:var(--radius);max-height:280px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:50}
+.inv-combo-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.12s}
+.inv-combo-item:last-child{border-bottom:none}
+.inv-combo-item:hover,.inv-combo-item.active{background:var(--green-pale);color:var(--green-deep)}
+.inv-combo-name{font-weight:600;font-size:13px;color:var(--text)}
+.inv-combo-meta{font-size:11px;color:var(--text2);margin-top:2px}
+.inv-combo-code{color:var(--green-mid);font-weight:500}
+.inv-combo-empty{padding:16px;text-align:center;color:var(--text2);font-size:13px}
+.inv-selected-box{background:var(--green-pale);border:1px solid var(--green-light);border-radius:var(--radius);padding:12px;margin-top:8px}
+.inv-selected-head{display:flex;justify-content:space-between;align-items:start;margin-bottom:10px}
+.inv-selected-name{font-weight:600;color:var(--green-deep);font-size:13px}
+.inv-selected-meta{font-size:11px;color:var(--stone);margin-top:2px}
+.inv-selected-clear{cursor:pointer;color:var(--danger);font-size:18px;padding:0 4px;line-height:1}
+.inv-legacy-badge{display:inline-block;background:var(--amber-light,#f0c678);color:#6b4a00;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;margin-left:6px;vertical-align:middle}
 
 /* PAD & GREETING */
 .pad{padding:18px}
@@ -375,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.10.4';
+var APP_VERSION='2.11.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2094,37 +2111,65 @@ async function markPreparado(itemId){
 // ══ INVENTARIO SEMANAL ═════════════════════════════════════════════════════════
 // Captura lunes por el almacén: producto + cantidad. Se guarda en Logística y
 // después se sube manualmente a Bind. Pre-llena con la última captura si existe.
+// ══════════════════════════════════════════════════════════════════════════
+// CAPTURA DE INVENTARIO (v2.11.0)
+// Combobox con búsqueda contra catálogo HADE — modo estricto.
+// Solo permite agregar productos seleccionados del catálogo Bind.
+// Cada item guarda: code, name, category, unit, stock, lote, fechaRecepcion.
+// Items capturados ANTES de v2.11 no tienen code → se marcan como "legacy".
+// ══════════════════════════════════════════════════════════════════════════
+
 function renderAlmInventario(el){
   const prev=getInventarioSemanal();  // último set guardado
-  const inv =getInventarioHade();     // catálogo ERP (opcional, para sugerir nombres)
+  const inv =getInventarioHade();     // catálogo ERP HADE (fuente de verdad)
   const ts=LS.get('crf_log_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
   const urlOk=!!getURLLog();
+  const catalogOk=Array.isArray(inv)&&inv.length>0;
 
   // Borrador en memoria: lo que lleva capturado esta sesión
-  if(!window._invDraft)window._invDraft=prev.map(p=>({name:p.name,unit:p.unit||'pz',stock:p.stock,category:p.category||''}));
+  // Migración legacy: items sin `code` se marcan como legacy=true
+  if(!window._invDraft){
+    window._invDraft=prev.map(p=>({
+      code:p.code||'',
+      name:p.name||'',
+      category:p.category||'',
+      unit:p.unit||'pz',
+      stock:p.stock||0,
+      lote:p.lote||'',
+      fechaRecepcion:p.fechaRecepcion||'',
+      legacy:!p.code,  // sin code → viene de v2.10 o anterior
+    }));
+  }
   const draft=window._invDraft;
+  // Estado del selector actual (lo que el user va eligiendo del dropdown)
+  if(!window._invSelected)window._invSelected=null;
+
+  const today=new Date().toISOString().split('T')[0];
+  const legacyCount=draft.filter(d=>d.legacy).length;
 
   el.innerHTML=`<div class="pad">
     <div class="greeting">Captura de inventario</div>
-    <div class="dateline">Último: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogistica()">↻ Cargar</span></div>
+    <div class="dateline">Último: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogistica()">↻ Cargar catálogo</span></div>
     ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin para guardar la captura.</div>`:''}
-    <div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;font-size:13px">📋 Capture el conteo de este lunes. Se guarda en Logística para subirlo manualmente a Bind.</div>
+    ${!catalogOk?`<div class="banner banner-warn">⚠️ Catálogo HADE no cargado. Presiona "↻ Cargar catálogo" arriba o ve a Admin. Sin catálogo no se pueden capturar productos.</div>`:''}
+    ${legacyCount>0?`<div class="banner banner-warn">⚠️ ${legacyCount} producto${legacyCount>1?'s':''} en la captura sin código Bind (capturados en versión anterior). Re-captúralos para que suban a Bind correctamente.</div>`:''}
+    <div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;font-size:13px">📋 Capture el conteo semanal. Se guarda en Logística para subirlo a Bind.</div>
 
-    <div class="sec" style="margin-top:12px">Productos (${draft.length})</div>
+    <div class="sec" style="margin-top:12px">Productos capturados (${draft.length})</div>
     <div id="inv-draft-list"></div>
 
-    <div class="sec" style="margin-top:16px">Agregar producto</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <input id="inv-new-name" type="text" placeholder="Nombre del producto" list="inv-name-suggest" style="padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);font-size:14px;font-family:var(--font-body)">
-      <datalist id="inv-name-suggest">${inv.map(i=>`<option value="${(i.name||'').replace(/"/g,'&quot;')}">`).join('')}</datalist>
-      <div style="display:flex;gap:8px">
-        <input id="inv-new-qty" type="number" step="0.01" placeholder="Cantidad" style="flex:2;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);font-size:14px;font-family:var(--font-body)">
-        <input id="inv-new-unit" type="text" placeholder="Unidad (pz/kg/lt)" value="pz" style="flex:1;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);font-size:14px;font-family:var(--font-body)">
-      </div>
-      <button class="btn btn-secondary" onclick="addInvRow()">+ Agregar a la lista</button>
+    <div class="sec" style="margin-top:18px">Agregar producto</div>
+    <div class="inv-combo">
+      <input id="inv-combo-input" class="inv-combo-input" type="text" placeholder="${catalogOk?'Busca: betabel, arugula, enoki…':'Carga el catálogo primero'}"
+        ${catalogOk?'':'disabled'}
+        oninput="filterInvSuggestions(this.value)"
+        onfocus="filterInvSuggestions(this.value)"
+        onblur="setTimeout(closeInvDropdown,200)"
+        onkeydown="onInvComboKey(event)">
+      <div id="inv-combo-dropdown" style="display:none"></div>
     </div>
-
+    <div id="inv-selected-wrap"></div>
     <div class="btn-row" style="margin-top:18px">
       <button class="btn btn-primary" onclick="saveInvSemanal()" ${!urlOk?'disabled':''}>💾 Guardar captura</button>
       <button class="btn btn-secondary" onclick="clearInvDraft()">Limpiar</button>
@@ -2132,19 +2177,123 @@ function renderAlmInventario(el){
   </div>`;
 
   renderInvDraft();
+  renderInvSelectedBox();
 }
 
+// ── Dropdown de búsqueda ──────────────────────────────────────────
+// Filtra el catálogo HADE por substring del texto escrito.
+// Normaliza para que "betab" encuentre "BETABEL" aunque difiera en mayúsculas/acentos.
+function normInv(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+
+function filterInvSuggestions(q){
+  const inv=getInventarioHade();
+  const drop=document.getElementById('inv-combo-dropdown');
+  if(!drop)return;
+  const query=normInv(q||'').trim();
+  // Si el texto coincide 100% con el producto ya seleccionado, oculta el dropdown
+  if(window._invSelected && normInv(window._invSelected.name)===query){drop.style.display='none';return;}
+  let matches;
+  if(!query){
+    matches=inv.slice(0,30);  // sin query muestra primeros 30
+  } else {
+    matches=inv.filter(p=>normInv(p.name).includes(query)||normInv(p.code).includes(query)).slice(0,30);
+  }
+  if(matches.length===0){
+    drop.innerHTML='<div class="inv-combo-empty">Sin resultados</div>';
+    drop.style.display='block';
+    return;
+  }
+  drop.innerHTML=matches.map((p,idx)=>{
+    const name=String(p.name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const cat=String(p.category||'').replace(/"/g,'&quot;');
+    const unit=String(p.unit||'pz').replace(/"/g,'&quot;');
+    const code=String(p.code||'').replace(/"/g,'&quot;');
+    const stock=p.stock!==undefined?` · ${p.stock} stock Bind`:'';
+    return `<div class="inv-combo-item" onclick="selectInvProduct('${code}','${name}','${cat}','${unit}')">
+      <div class="inv-combo-name">${p.name||''} <span class="inv-combo-code">(${p.code||'?'})</span></div>
+      <div class="inv-combo-meta">${p.category||'—'} · ${p.unit||'pz'}${stock}</div>
+    </div>`;
+  }).join('');
+  drop.style.display='block';
+}
+function closeInvDropdown(){
+  const drop=document.getElementById('inv-combo-dropdown');
+  if(drop)drop.style.display='none';
+}
+function onInvComboKey(ev){
+  if(ev.key==='Escape'){ev.target.value='';window._invSelected=null;renderInvSelectedBox();closeInvDropdown();}
+}
+// ── Producto seleccionado ──────────────────────────────────────────
+// Muestra la card verde con el producto elegido + campos cantidad/lote/fecha
+function selectInvProduct(code,name,category,unit){
+  window._invSelected={code,name,category,unit};
+  const input=document.getElementById('inv-combo-input');
+  if(input)input.value=name;
+  closeInvDropdown();
+  renderInvSelectedBox();
+  setTimeout(()=>{const q=document.getElementById('inv-qty-input');if(q)q.focus();},50);
+}
+function renderInvSelectedBox(){
+  const wrap=document.getElementById('inv-selected-wrap');
+  if(!wrap)return;
+  const s=window._invSelected;
+  if(!s){wrap.innerHTML='';return;}
+  const today=new Date().toISOString().split('T')[0];
+  wrap.innerHTML=`<div class="inv-selected-box">
+    <div class="inv-selected-head">
+      <div>
+        <div class="inv-selected-name">${s.name} <span class="inv-combo-code">(${s.code})</span></div>
+        <div class="inv-selected-meta">${s.category||'—'} · unidad ${s.unit}</div>
+      </div>
+      <span class="inv-selected-clear" onclick="clearInvSelection()" title="Cancelar selección">×</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <div>
+        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Cantidad *</label>
+        <input id="inv-qty-input" type="number" step="0.01" min="0" placeholder="0"
+          style="width:100%;padding:9px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg1);font-size:14px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Unidad</label>
+        <input type="text" value="${s.unit}" readonly
+          style="width:100%;padding:9px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:14px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Lote *</label>
+        <input id="inv-lote-input" type="text" placeholder="ej: A-2024"
+          style="width:100%;padding:9px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg1);font-size:14px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Recepción *</label>
+        <input id="inv-fecha-input" type="date" value="${today}" max="${today}"
+          style="width:100%;padding:9px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg1);font-size:14px;box-sizing:border-box">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="addInvRow()" style="margin-top:10px;width:100%">+ Agregar a la lista</button>
+  </div>`;
+}
+function clearInvSelection(){
+  window._invSelected=null;
+  const input=document.getElementById('inv-combo-input');
+  if(input)input.value='';
+  renderInvSelectedBox();
+}
+// ── Lista de productos capturados ──────────────────────────────────
 function renderInvDraft(){
   const wrap=document.getElementById('inv-draft-list');
   if(!wrap)return;
   const draft=window._invDraft||[];
-  if(draft.length===0){wrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px 0">Sin productos aún. Agrégalos abajo.</div>';return;}
-  let html='<table class="inv-table"><thead><tr><th>Producto</th><th>Stock</th><th>Unidad</th><th></th></tr></thead><tbody>';
+  if(draft.length===0){wrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px 0">Sin productos aún. Busca y agrega el primero.</div>';return;}
+  let html='<table class="inv-table"><thead><tr><th>Producto</th><th>Cant.</th><th>Lote</th><th>Recep.</th><th></th></tr></thead><tbody>';
   draft.forEach((it,i)=>{
+    const legacyTag=it.legacy?'<span class="inv-legacy-badge">LEGACY</span>':'';
+    const fechaTxt=it.fechaRecepcion?new Date(it.fechaRecepcion+'T00:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'}):'—';
+    const codeTxt=it.code?`<span class="inv-combo-code" style="font-size:11px">(${it.code})</span>`:'';
     html+=`<tr>
-      <td>${it.name}</td>
-      <td><input type="number" step="0.01" value="${it.stock||0}" onchange="updInvQty(${i},this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--bg2);font-size:13px"></td>
-      <td>${it.unit||'pz'}</td>
+      <td><div style="font-weight:600;font-size:12px">${it.name}${legacyTag}</div><div style="font-size:10px;color:var(--text2)">${codeTxt} ${it.unit||''}</div></td>
+      <td><input type="number" step="0.01" value="${it.stock||0}" onchange="updInvQty(${i},this.value)" style="width:60px;padding:4px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--bg2);font-size:12px"></td>
+      <td style="font-size:11px">${it.lote||'—'}</td>
+      <td style="font-size:11px">${fechaTxt}</td>
       <td><span style="cursor:pointer;color:var(--danger);font-size:18px" onclick="removeInvRow(${i})">×</span></td>
     </tr>`;
   });
@@ -2152,19 +2301,25 @@ function renderInvDraft(){
   wrap.innerHTML=html;
 }
 function addInvRow(){
-  const name=document.getElementById('inv-new-name').value.trim();
-  const qty =parseFloat(document.getElementById('inv-new-qty').value);
-  const unit=document.getElementById('inv-new-unit').value.trim()||'pz';
-  if(!name){toast('Nombre requerido');return;}
-  if(isNaN(qty)){toast('Cantidad inválida');return;}
-  window._invDraft=window._invDraft||[];
-  window._invDraft.push({name,stock:qty,unit,category:''});
-  document.getElementById('inv-new-name').value='';
-  document.getElementById('inv-new-qty').value='';
-  renderInvDraft();
-  // actualizar contador
-  const sec=document.querySelector('.pad .sec');
-  if(sec)sec.textContent=`Productos (${window._invDraft.length})`;
+  const s=window._invSelected;
+  if(!s){toast('Selecciona un producto del catálogo');return;}
+  const qty=parseFloat(document.getElementById('inv-qty-input')?.value);
+  const lote=(document.getElementById('inv-lote-input')?.value||'').trim();
+  const fecha=(document.getElementById('inv-fecha-input')?.value||'').trim();
+  if(isNaN(qty)||qty<=0){toast('Cantidad inválida');return;}
+  if(!lote){toast('Lote requerido');return;}
+  if(!fecha){toast('Fecha de recepción requerida');return;}
+  // Evitar duplicados exactos (mismo code + mismo lote)
+  const dup=(window._invDraft||[]).findIndex(d=>d.code===s.code&&d.lote===lote);
+  if(dup>=0){
+    if(!confirm(`Ya existe ${s.name} con lote ${lote}. ¿Sobrescribir?`))return;
+    window._invDraft[dup]={code:s.code,name:s.name,category:s.category,unit:s.unit,stock:qty,lote,fechaRecepcion:fecha,legacy:false};
+  } else {
+    window._invDraft=window._invDraft||[];
+    window._invDraft.push({code:s.code,name:s.name,category:s.category,unit:s.unit,stock:qty,lote,fechaRecepcion:fecha,legacy:false});
+  }
+  clearInvSelection();
+  render(page);  // refresh para actualizar contador
 }
 function updInvQty(i,v){
   if(window._invDraft&&window._invDraft[i])window._invDraft[i].stock=parseFloat(v)||0;
@@ -2177,12 +2332,18 @@ function removeInvRow(i){
 function clearInvDraft(){
   if(!confirm('¿Borrar la captura actual (sin guardar)?'))return;
   window._invDraft=[];
+  window._invSelected=null;
   render(page);
 }
 async function saveInvSemanal(){
   const draft=window._invDraft||[];
   if(draft.length===0){toast('Captura vacía');return;}
   if(!getURLLog()){toast('Falta URL de Logística');return;}
+  // Bloquear guardado si hay items legacy (incompletos)
+  const legacyCount=draft.filter(d=>d.legacy).length;
+  if(legacyCount>0){
+    if(!confirm(`Hay ${legacyCount} producto${legacyCount>1?'s':''} LEGACY sin código Bind. Se guardarán pero no serán utilizables para subir a Bind automáticamente. ¿Continuar?`))return;
+  }
   setSyncUI('ing');
   const payload={fecha:new Date().toISOString(),semana:getWeek(),items:draft};
   const res=await postToEndpoint('log',{action:'saveInventarioSemanal',data:payload});
