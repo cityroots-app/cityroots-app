@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.11.0';
+var APP_VERSION='2.11.1';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2150,9 +2150,10 @@ function renderAlmInventario(el){
 
   el.innerHTML=`<div class="pad">
     <div class="greeting">Captura de inventario</div>
-    <div class="dateline">Último: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogistica()">↻ Cargar catálogo</span></div>
+    <div class="dateline">Último: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchPedidosProduccion().then(()=>{toast('Catálogo actualizado','ok');render(page)})">↻ Cargar catálogo</span></div>
     ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin para guardar la captura.</div>`:''}
-    ${!catalogOk?`<div class="banner banner-warn">⚠️ Catálogo HADE no cargado. Presiona "↻ Cargar catálogo" arriba o ve a Admin. Sin catálogo no se pueden capturar productos.</div>`:''}
+    ${!getURLProd()?`<div class="banner banner-warn">⚠️ Falta URL de Producción (Sheet Principal). El catálogo HADE viene de ahí. Configúralo en Admin.</div>`:''}
+    ${!catalogOk?`<div class="banner banner-warn">⚠️ Catálogo HADE vacío. Presiona "↻ Cargar catálogo" arriba (trae el inventario del Sheet Principal).</div>`:''}
     ${legacyCount>0?`<div class="banner banner-warn">⚠️ ${legacyCount} producto${legacyCount>1?'s':''} en la captura sin código Bind (capturados en versión anterior). Re-captúralos para que suban a Bind correctamente.</div>`:''}
     <div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;font-size:13px">📋 Capture el conteo semanal. Se guarda en Logística para subirlo a Bind.</div>
 
