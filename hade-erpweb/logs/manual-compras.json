@@ -1,4 +1,0 @@
-{
-  "_doc": "Compras manuales temporales. El cron las inyecta en la lista del chofer. Cada item tiene expiresAt — el cron ignora items expirados. Borrar manualmente o esperar a que expiren.",
-  "items": []
-}
