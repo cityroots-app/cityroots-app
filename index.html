@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.12.1';
+var APP_VERSION='2.12.2';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -3059,6 +3059,8 @@ function buildEvidenciaFileName(item){
 
 // Foto pendiente seleccionada (transferida del input file al bottom sheet de preview)
 var _pendingFoto=null;
+// Set de orderNumber con upload en progreso (evita doble click → 2 archivos en Drive).
+var _uploadingEvidencia=new Set();
 
 // Click en ○ check → dispara directo la cámara del celular (capture=environment).
 // Cuando el chofer toma la foto, abre el bottom sheet con preview + nota opcional.
@@ -3128,15 +3130,17 @@ function openMarcarPendienteSheet(orderId){
 
 // Confirma entrega usando la foto ya tomada (almacenada en _pendingFoto).
 async function confirmEntregaConFotoTomada(orderId){
+  const id=String(orderId);
+  if(_uploadingEvidencia.has(id)){toast('Ya está subiendo, espera…','warn');return;}
   const file=_pendingFoto;
   _pendingFoto=null;
   const notesInp=document.getElementById('sheet-ent-notes');
   const notes=notesInp?String(notesInp.value||'').trim():'';
   if(!file){toast('Sin foto, vuelve a tocar el ○','warn');closeSheet();return;}
-  const id=String(orderId);
   const items=getEntregas();
   const item=items.find(e=>String(e.orderNumber||e.id||'')===id)||{};
   closeSheet();
+  _uploadingEvidencia.add(id);
   toast('Comprimiendo foto…','info',{icon:'⏳'});
   let img;
   try{ img=await compressImage(file); }
@@ -3196,6 +3200,7 @@ async function confirmEntregaConFotoTomada(orderId){
     }
     toast('No se pudo subir, quedó pendiente — usa 📎 para reintentar','warn');
   }
+  _uploadingEvidencia.delete(id);
 }
 
 // Marca la entrega como pendiente de evidencia: entregada físicamente pero sin foto.
@@ -3249,10 +3254,11 @@ function openSubirEvidenciaSheet(orderId){
 
 // Sube la foto pendiente — cierra el flujo (limpia pendienteEvidencia).
 async function subirEvidencia(orderId){
+  const id=String(orderId);
+  if(_uploadingEvidencia.has(id)){toast('Ya está subiendo, espera…','warn');return;}
   const fileInp=document.getElementById('sheet-evi-foto');
   const file=fileInp&&fileInp.files&&fileInp.files[0];
   if(!file){toast('Falta seleccionar la foto','warn');return;}
-  const id=String(orderId);
   const items=getEntregas();
   const item=items.find(e=>String(e.orderNumber||e.id||'')===id)||{};
   closeSheet();
@@ -3265,6 +3271,7 @@ async function subirEvidencia(orderId){
 
   if(!getURLLog()){toast('Sin URL — no se puede subir','warn');return;}
   setSyncUI('ing');
+  _uploadingEvidencia.add(id);
   toast('Subiendo foto ('+img.sizeKB+'KB)…','info',{icon:'📤'});
   const res=await postToEndpoint('log',{action:'uploadEvidencia',data:{
     orderNumber:id, id:id,
@@ -3291,6 +3298,7 @@ async function subirEvidencia(orderId){
     setSyncUI('off');
     toast('No se pudo subir, intenta de nuevo','warn');
   }
+  _uploadingEvidencia.delete(id);
 }
 
 // Marca orden como entregada con notas opcionales (escribe al Sheet de Logística).
