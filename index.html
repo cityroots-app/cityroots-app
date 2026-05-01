@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.12.0';
+var APP_VERSION='2.12.1';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2974,17 +2974,22 @@ function renderLogEntregas(el){
         : `<div class="pedido-nota" style="white-space:pre-wrap">${item.itemsText||''}</div>`;
       const notaColor=(entregado&&pendEvi)?'var(--amber)':'var(--green-bright)';
       const notasHtml=(entregado||pendEvi)&&item.entregadoNotas?`<div class="pedido-nota" style="font-size:11px;color:${notaColor};margin-top:3px;white-space:pre-wrap">📝 ${String(item.entregadoNotas).replace(/</g,'&lt;')}</div>`:'';
-      // 3 estados de check:
+      // 3 estados de check + botón secundario para "marcar pendiente sin foto":
       //   cerrado          → ✓ verde, click para deshacer
       //   pendEvidencia    → 📎 ámbar, click para subir foto pendiente
-      //   sin entregar     → ○ vacío, click para abrir flujo de entrega
+      //   sin entregar     → ○ vacío + ⏳ secundario abajo
+      //                      ○ dispara cámara directo (capture=environment)
+      //                      ⏳ abre sheet de "marcar pendiente con nota" (cuando no hay foto)
       let checkBtn;
       if(cerrado){
         checkBtn=`<div onclick="undoEntregado('${idEsc}')" class="entrega-check done" title="Deshacer entrega">✓</div>`;
       } else if(entregado&&pendEvi){
         checkBtn=`<div onclick="openSubirEvidenciaSheet('${idEsc}')" class="entrega-check" style="background:var(--amber);color:#fff;border-color:var(--amber)" title="Subir foto pendiente">📎</div>`;
       } else {
-        checkBtn=`<div onclick="openEntregaSheet('${idEsc}')" class="entrega-check" title="Confirmar entrega">○</div>`;
+        checkBtn=`<div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+          <div onclick="captureEntregaFoto('${idEsc}')" class="entrega-check" title="Tomar foto y confirmar entrega">○</div>
+          <button onclick="openMarcarPendienteSheet('${idEsc}')" style="padding:3px 7px;background:var(--bg3);color:var(--amber);border:1px solid var(--border);border-radius:6px;font-size:11px;line-height:1;cursor:pointer" title="Marcar pendiente sin foto">⏳</button>
+        </div>`;
       }
       html+=`<div class="pedido-item${cerrado?' entrega-done':''}" style="position:relative;align-items:flex-start">
         ${checkBtn}
@@ -3034,49 +3039,103 @@ async function compressImage(file, maxSide=1280, quality=0.75){
   });
 }
 
-// Abre el bottom sheet de confirmación de entrega:
-// - Foto obligatoria de la factura firmada (cierra el flujo)
-// - Nota opcional (sirve para marcar pendiente de evidencia si no hay foto en el momento)
-function openEntregaSheet(orderId){
+// Construye nombre de archivo descriptivo para Drive:
+//   DDMMYY-<orderNumber>-<cliente_slug>.jpg
+//   ej: 010526-2804-la_torrada.jpg
+function buildEvidenciaFileName(item){
+  const d=new Date();
+  const dd=String(d.getDate()).padStart(2,'0');
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  const yy=String(d.getFullYear()).slice(-2);
+  const ord=String(item.orderNumber||item.id||'').replace(/[^0-9A-Za-z]/g,'');
+  const cli=String(item.clientName||'cliente')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9]+/g,'_')
+    .replace(/^_+|_+$/g,'')
+    .substring(0,30);
+  return `${dd}${mm}${yy}-${ord}-${cli||'cliente'}.jpg`;
+}
+
+// Foto pendiente seleccionada (transferida del input file al bottom sheet de preview)
+var _pendingFoto=null;
+
+// Click en ○ check → dispara directo la cámara del celular (capture=environment).
+// Cuando el chofer toma la foto, abre el bottom sheet con preview + nota opcional.
+function captureEntregaFoto(orderId){
+  const inp=document.createElement('input');
+  inp.type='file';
+  inp.accept='image/*';
+  inp.capture='environment';
+  inp.style.position='fixed'; inp.style.left='-9999px';
+  inp.onchange=function(e){
+    const f=e.target.files&&e.target.files[0];
+    if(document.body.contains(inp))document.body.removeChild(inp);
+    if(!f)return; // cancelado
+    openEntregaConFoto(orderId,f);
+  };
+  document.body.appendChild(inp);
+  inp.click();
+}
+
+// Bottom sheet con la foto recién tomada: preview grande + nota opcional + confirmar.
+function openEntregaConFoto(orderId,file){
+  _pendingFoto=file;
+  const items=getEntregas();
+  const item=items.find(e=>String(e.orderNumber||e.id||'')===String(orderId));
+  if(!item){toast('Orden no encontrada','warn');_pendingFoto=null;return;}
+  const safeId=escAttr(orderId);
+  const photoUrl=URL.createObjectURL(file);
+  const html=`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Confirmar entrega</div>
+    <div class="sheet-sub">#${escAttr(orderId)} · ${escAttr(item.clientName||'')}</div>
+    <div style="margin:14px 0;text-align:center">
+      <img src="${photoUrl}" style="max-width:100%;max-height:280px;border-radius:8px;border:1px solid var(--border);object-fit:contain" alt="Factura firmada">
+      <div style="font-size:12px;color:var(--text2);margin-top:6px">📷 ${(file.size/1024).toFixed(0)} KB · se comprime al subir</div>
+    </div>
+    <button onclick="captureEntregaFoto('${safeId}')" style="padding:8px 12px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;width:100%;margin-bottom:14px">📸 Tomar otra foto</button>
+    <div class="sheet-label">Nota (opcional)</div>
+    <textarea class="sheet-input" id="sheet-ent-notes" rows="2" placeholder="Ej. recibió chef · faltó 1 shimeji · …"></textarea>
+    <div class="sheet-actions" style="flex-direction:column;gap:8px;align-items:stretch">
+      <button class="sheet-save" onclick="confirmEntregaConFotoTomada('${safeId}')" style="width:100%">✓ Confirmar entrega</button>
+      <button class="sheet-cancel" onclick="cancelEntregaFoto()" style="width:100%">Cancelar</button>
+    </div>`;
+  openSheet(html);
+}
+function cancelEntregaFoto(){_pendingFoto=null; closeSheet();}
+
+// Bottom sheet alternativo (solo nota, sin foto) — para cuando el chofer entregó
+// pero NO tiene foto en el momento. La nota es obligatoria.
+function openMarcarPendienteSheet(orderId){
   const items=getEntregas();
   const item=items.find(e=>String(e.orderNumber||e.id||'')===String(orderId));
   if(!item){toast('Orden no encontrada','warn');return;}
   const safeId=escAttr(orderId);
   const html=`
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Confirmar entrega</div>
+    <div class="sheet-title">Marcar pendiente sin foto</div>
     <div class="sheet-sub">#${escAttr(orderId)} · ${escAttr(item.clientName||'')}</div>
-    <div class="sheet-label" style="margin-top:6px">Foto de la factura firmada *</div>
-    <input type="file" id="sheet-ent-foto" accept="image/*" capture="environment" onchange="previewEvidenciaFoto(this,'sheet-ent-foto-preview')" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);box-sizing:border-box;font-family:inherit;font-size:13px">
-    <div id="sheet-ent-foto-preview" style="margin-top:8px"></div>
-    <div class="sheet-label" style="margin-top:14px">Nota (solo si no hay foto)</div>
-    <textarea class="sheet-input" id="sheet-ent-notes" rows="3" placeholder="Ej. almacén estaba en hora de comida / faltó 1 shimeji café / cliente fuera, dejé en recepción…"></textarea>
+    <div style="margin:10px 0 14px;padding:10px 12px;background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;font-size:12px;color:var(--amber)">⏳ Esta entrega NO se cierra hasta que subas la foto. La nota explica por qué no hay foto en el momento.</div>
+    <div class="sheet-label">Motivo *</div>
+    <textarea class="sheet-input" id="sheet-ent-notes" rows="3" placeholder="Ej. almacén estaba en hora de comida · faltó 1 shimeji café · cliente fuera, dejé en recepción…"></textarea>
     <div class="sheet-actions" style="flex-direction:column;gap:8px;align-items:stretch">
-      <button class="sheet-save" onclick="confirmEntregaConFoto('${safeId}')" style="width:100%">📸 Confirmar entrega con foto</button>
-      <button onclick="marcarPendienteEvidencia('${safeId}')" style="width:100%;padding:12px 14px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">⏳ Sin foto aún — marcar pendiente</button>
+      <button onclick="marcarPendienteEvidencia('${safeId}')" style="width:100%;padding:12px 14px;background:var(--amber);color:#fff;border:0;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">⏳ Marcar pendiente</button>
       <button class="sheet-cancel" onclick="closeSheet()" style="width:100%">Cancelar</button>
     </div>`;
   openSheet(html);
 }
 
-// Muestra info de la foto seleccionada (nombre + tamaño) bajo el input.
-function previewEvidenciaFoto(input, targetId){
-  const f=input&&input.files&&input.files[0];
-  const tgt=document.getElementById(targetId);
-  if(!tgt)return;
-  if(!f){tgt.innerHTML=''; return;}
-  tgt.innerHTML=`<div style="font-size:12px;color:var(--text2);padding:6px 0">📷 ${escAttr(f.name)} · ${(f.size/1024).toFixed(0)} KB (se comprime al subir)</div>`;
-}
-
-// Confirma entrega completa: comprime + sube foto a Drive vía Apps Script.
-// Optimistic UI: marca local como entregado completo, revierte a pendiente si falla.
-async function confirmEntregaConFoto(orderId){
-  const fileInp=document.getElementById('sheet-ent-foto');
+// Confirma entrega usando la foto ya tomada (almacenada en _pendingFoto).
+async function confirmEntregaConFotoTomada(orderId){
+  const file=_pendingFoto;
+  _pendingFoto=null;
   const notesInp=document.getElementById('sheet-ent-notes');
-  const file=fileInp&&fileInp.files&&fileInp.files[0];
   const notes=notesInp?String(notesInp.value||'').trim():'';
-  if(!file){toast('Falta la foto de la factura firmada','warn');return;}
+  if(!file){toast('Sin foto, vuelve a tocar el ○','warn');closeSheet();return;}
   const id=String(orderId);
+  const items=getEntregas();
+  const item=items.find(e=>String(e.orderNumber||e.id||'')===id)||{};
   closeSheet();
   toast('Comprimiendo foto…','info',{icon:'⏳'});
   let img;
@@ -3084,7 +3143,7 @@ async function confirmEntregaConFoto(orderId){
   catch(e){ toast('Error procesando la foto: '+e.message,'warn'); return; }
 
   const ts=new Date().toISOString();
-  const fileName=id+'_'+ts.replace(/[:.]/g,'-')+'.jpg';
+  const fileName=buildEvidenciaFileName({orderNumber:id, clientName:item.clientName});
 
   // Optimistic local
   const entregas=getEntregas();
@@ -3194,13 +3253,15 @@ async function subirEvidencia(orderId){
   const file=fileInp&&fileInp.files&&fileInp.files[0];
   if(!file){toast('Falta seleccionar la foto','warn');return;}
   const id=String(orderId);
+  const items=getEntregas();
+  const item=items.find(e=>String(e.orderNumber||e.id||'')===id)||{};
   closeSheet();
   toast('Comprimiendo…','info',{icon:'⏳'});
   let img;
   try{ img=await compressImage(file); }
   catch(e){ toast('Error procesando la foto: '+e.message,'warn'); return; }
   const ts=new Date().toISOString();
-  const fileName=id+'_'+ts.replace(/[:.]/g,'-')+'.jpg';
+  const fileName=buildEvidenciaFileName({orderNumber:id, clientName:item.clientName});
 
   if(!getURLLog()){toast('Sin URL — no se puede subir','warn');return;}
   setSyncUI('ing');
