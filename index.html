@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.11.5';
+var APP_VERSION='2.11.6';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -3070,6 +3070,29 @@ function deleteLogEntrega(orderNumber){
 // Tab manual del chofer para anotar escalas extra durante la ruta (p.ej. Home Depot,
 // banco, recoger algo). 100% local por ahora; cada vuelta está amarrada a la fecha
 // y se purga automáticamente al cambiar de día.
+// Orden manual de vueltas pendientes del día (las hechas van al final por createdAt).
+// Storage: { 'YYYY-MM-DD': [id1, id2, ...] }. Mismo patrón que crf_supplier_order.
+const LOG_VUELTAS_ORDER_KEY='crf_vueltas_order';
+function getVueltasOrderToday(){
+  const all=LS.get(LOG_VUELTAS_ORDER_KEY)||{};
+  return Array.isArray(all[todayKey()])?all[todayKey()]:[];
+}
+function setVueltasOrderToday(order){
+  LS.set(LOG_VUELTAS_ORDER_KEY,{[todayKey()]:order});
+}
+function moveVuelta(id,dir){
+  const order=getVueltasOrderToday().slice();
+  const idx=order.indexOf(String(id));
+  if(idx<0)return;
+  const target=idx+dir;
+  if(target<0||target>=order.length)return;
+  const tmp=order[target];
+  order[target]=String(id);
+  order[idx]=tmp;
+  setVueltasOrderToday(order);
+  render(page);
+}
+
 function renderLogVueltas(el){
   const items=getVueltas();
   const pend=items.filter(v=>!v.done).length;
@@ -3092,15 +3115,26 @@ function renderLogVueltas(el){
 
   if(items.length===0)return;
 
-  // Orden: pendientes primero (por createdAt asc), luego completadas
-  const sorted=items.slice().sort((a,b)=>{
-    if(a.done!==b.done)return a.done?1:-1;
-    return String(a.createdAt||'').localeCompare(String(b.createdAt||''));
-  });
+  // Pendientes: aplicar orden manual del día (chofer reordena con ↑↓), resto por createdAt asc.
+  // Hechas: siempre al final por createdAt asc — no se incluyen en el orden manual.
+  const pendientes=items.filter(v=>!v.done);
+  const hechas=items.filter(v=>v.done).sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+  const byId={};
+  pendientes.forEach(v=>{byId[String(v.id)]=v;});
+  const savedOrder=getVueltasOrderToday().filter(id=>byId[id]);
+  const remaining=pendientes
+    .filter(v=>!savedOrder.includes(String(v.id)))
+    .sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')))
+    .map(v=>String(v.id));
+  const pendOrder=[...savedOrder,...remaining];
+  if(pendOrder.join('|')!==getVueltasOrderToday().join('|'))setVueltasOrderToday(pendOrder);
+  const sorted=[...pendOrder.map(id=>byId[id]),...hechas];
 
   let html='';
-  for(const v of sorted){
+  for(let i=0;i<sorted.length;i++){
+    const v=sorted[i];
     const safeId=escAttr(v.id);
+    const idEsc=String(v.id).replace(/'/g,"\\'");
     const lugar=escAttr(v.lugar||'');
     const mensaje=v.mensaje?`<div class="pedido-name" style="white-space:pre-wrap;margin-top:3px">${escAttr(v.mensaje)}</div>`:'';
     const direccion=v.direccion?`<div class="pedido-nota" style="font-size:11px;color:var(--text2);font-style:normal;margin-top:3px">📍 ${escAttr(v.direccion)}</div>`:'';
@@ -3111,6 +3145,14 @@ function renderLogVueltas(el){
     const mapBtn=hasQuery
       ? `<button onclick="openVueltaMap('${safeId}')" style="padding:7px 12px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px">🗺️ Mapas</button>`
       : '';
+    // Flechas ↑↓ solo en pendientes (las hechas no se reordenan).
+    let arrows='';
+    if(!v.done){
+      const isFirst=i===0;
+      const isLast=i===pendOrder.length-1;
+      const arrowBtn=(label,dir,disabled)=>`<button onclick="moveVuelta('${idEsc}',${dir})" ${disabled?'disabled':''} style="padding:5px 9px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:13px;line-height:1;cursor:${disabled?'not-allowed':'pointer'};opacity:${disabled?0.35:1}" aria-label="${label}">${label}</button>`;
+      arrows=`<div style="display:flex;gap:4px;margin-top:8px">${arrowBtn('↑',-1,isFirst)}${arrowBtn('↓',+1,isLast)}</div>`;
+    }
     html+=`<div class="pedido-item${v.done?' entrega-done':''}" style="align-items:flex-start">
       ${checkBtn}
       <div class="pedido-info" style="flex:1;min-width:0">
@@ -3121,6 +3163,7 @@ function renderLogVueltas(el){
           ${mapBtn}
           <button onclick="openVueltaSheet('${safeId}')" style="padding:7px 12px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">✎ Editar</button>
         </div>
+        ${arrows}
       </div>
       <div onclick="deleteVuelta('${safeId}')" style="padding:8px 12px;color:var(--danger);font-size:18px;cursor:pointer;display:flex;align-items:flex-start;margin-top:2px">✕</div>
     </div>`;
