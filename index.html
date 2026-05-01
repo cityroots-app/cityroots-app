@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.11.1';
+var APP_VERSION='2.11.2';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1824,10 +1824,43 @@ function toggleCheck(code){
   ch[key]=!ch[key];
   setChecked(ch);
   render(page);
+  // Si estamos en la vista de producción (rol Producción, tab pedidos),
+  // sincronizar el "hecho" al Sheet para que sobreviva al cron de 5 min.
+  // El cron de 7am limpia los hechos (mode='fresh' en sheets-pusher).
+  // Almacén / logística siguen usando solo localStorage (su flujo es distinto).
+  if(role==='produccion'&&page==='pedidos'){
+    const url=getURLProd();
+    if(url){
+      const payload={code:String(code),hecho:!!ch[key],hechoAt:new Date().toISOString(),hechoBy:LS.get('crf_user_name')||''};
+      fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'markProduccionHecho',data:payload})})
+        .then(r=>r.json()).then(res=>{
+          if(!res||!res.ok)console.warn('markProduccionHecho:',res);
+        }).catch(e=>console.warn('markProduccionHecho fetch:',e));
+    }
+  }
 }
 function isChecked(code){
   const ch=getChecked();
   return !!ch[todayKey()+'_'+code];
+}
+// Hidrata localStorage con el campo 'hecho' del Sheet (fuente de verdad).
+// Llamada después de fetchPedidosProduccion para que dispositivos distintos
+// vean el mismo estado (si producción A marca, producción B también lo ve).
+function hydrateProdHechoFromSheet(prodItems){
+  if(!Array.isArray(prodItems))return;
+  const ch=getChecked();
+  const today=todayKey();
+  let changed=false;
+  prodItems.forEach(p=>{
+    const code=String(p.code||'');
+    if(!code)return;
+    const k=today+'_'+code;
+    const sheetHecho=String(p.hecho||'').toUpperCase()==='TRUE';
+    if(sheetHecho&&!ch[k]){ch[k]=true;changed=true;}
+    // Nota: NO desmarcamos si el Sheet dice false — para evitar deshacer una marca
+    // local que aún no se sincronizó. El cron de 7am hará el reset definitivo via mode='fresh'.
+  });
+  if(changed)setChecked(ch);
 }
 
 // JSONP helper genérico
@@ -1844,7 +1877,11 @@ async function fetchPedidosProduccion(){
   const url=getURLProd();if(!url)return;
   try{
     const data=await jsonpGet(url,'getPedidos');
-    if(data.produccion)setPedidosProduccion(data.produccion);
+    if(data.produccion){
+      setPedidosProduccion(data.produccion);
+      // Hidratar el campo 'hecho' del Sheet a localStorage — fuente de verdad multi-dispositivo.
+      hydrateProdHechoFromSheet(data.produccion);
+    }
     if(data.almacen)   setPedidosAlmacen(data.almacen);
     if(data.inventario)setInventarioHade(data.inventario);
     if(Array.isArray(data.notas)){
