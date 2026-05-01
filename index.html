@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.11.6';
+var APP_VERSION='2.12.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2464,10 +2464,14 @@ function renderLogInicio(el){
   const entregas=getEntregas();
   const vueltas=getVueltas();
   const pendCompra=compras.filter(c=>!(c.comprado===true||c.comprado==='true')&&!isLogChecked('comp_'+comprasItemKey(c))).length;
-  // Una entrega está "realizada" si entregado es truthy en cualquiera de sus formas
-  // (backend Sheets puede regresar 'TRUE'/'VERDADERO' según locale).
-  const isEntregaDone=e=>(e.entregado===true||e.entregado==='true'||e.entregado==='TRUE'||e.entregado==='VERDADERO');
-  const pendEntregas=entregas.filter(e=>!isEntregaDone(e)).length;
+  // Una entrega está CERRADA si entregado=TRUE Y pendienteEvidencia=FALSE.
+  // Las pendientes de foto cuentan como pendientes en el dashboard (no han cerrado el flujo).
+  const isEntregaCerrada=e=>{
+    const ent=(e.entregado===true||e.entregado==='true'||e.entregado==='TRUE'||e.entregado==='VERDADERO');
+    const pend=(e.pendienteEvidencia===true||e.pendienteEvidencia==='true'||e.pendienteEvidencia==='TRUE'||e.pendienteEvidencia==='VERDADERO');
+    return ent&&!pend;
+  };
+  const pendEntregas=entregas.filter(e=>!isEntregaCerrada(e)).length;
   const pendVueltas=vueltas.filter(v=>!v.done).length;
   const ts=LS.get('crf_log_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
@@ -2949,11 +2953,16 @@ function renderLogEntregas(el){
     </div>`;
     for(const item of cliItems){
       const orderId=String(item.orderNumber||item.id||'');
+      const idEsc=orderId.replace(/'/g,"\\'");
       const entregado=(item.entregado===true||item.entregado==='true'||item.entregado==='TRUE'||item.entregado==='VERDADERO');
+      const pendEvi=(item.pendienteEvidencia===true||item.pendienteEvidencia==='true'||item.pendienteEvidencia==='TRUE'||item.pendienteEvidencia==='VERDADERO');
+      const cerrado=entregado&&!pendEvi;
       const st=(item.status||'').toString().toLowerCase();
       let badge='';
-      if(entregado){
+      if(cerrado){
         badge=`<span class="badge" style="background:var(--ok-bg);color:#1B5E35;border:1px solid var(--ok);font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px">✓ Entregado</span>`;
+      } else if(entregado&&pendEvi){
+        badge=`<span class="badge" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px">⏳ Falta foto</span>`;
       } else if(st==='pendiente'){
         badge=`<span class="badge" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px">⏳ Pendiente</span>`;
       } else if(st==='listo'||st==='preparado'){
@@ -2963,11 +2972,21 @@ function renderLogEntregas(el){
       const itemsHtml=itemsList.length>1
         ? '<ul style="margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--text2)">'+itemsList.map(l=>`<li>${l}</li>`).join('')+'</ul>'
         : `<div class="pedido-nota" style="white-space:pre-wrap">${item.itemsText||''}</div>`;
-      const notasHtml=entregado&&item.entregadoNotas?`<div class="pedido-nota" style="font-size:11px;color:var(--green-bright);margin-top:3px">📝 ${String(item.entregadoNotas).replace(/</g,'&lt;')}</div>`:'';
-      const checkBtn=entregado
-        ? `<div onclick="undoEntregado('${orderId.replace(/'/g,"\\'")}')" class="entrega-check done" title="Deshacer entrega">✓</div>`
-        : `<div onclick="openEntregaSheet('${orderId.replace(/'/g,"\\'")}')" class="entrega-check" title="Confirmar entrega">○</div>`;
-      html+=`<div class="pedido-item${entregado?' entrega-done':''}" style="position:relative;align-items:flex-start">
+      const notaColor=(entregado&&pendEvi)?'var(--amber)':'var(--green-bright)';
+      const notasHtml=(entregado||pendEvi)&&item.entregadoNotas?`<div class="pedido-nota" style="font-size:11px;color:${notaColor};margin-top:3px;white-space:pre-wrap">📝 ${String(item.entregadoNotas).replace(/</g,'&lt;')}</div>`:'';
+      // 3 estados de check:
+      //   cerrado          → ✓ verde, click para deshacer
+      //   pendEvidencia    → 📎 ámbar, click para subir foto pendiente
+      //   sin entregar     → ○ vacío, click para abrir flujo de entrega
+      let checkBtn;
+      if(cerrado){
+        checkBtn=`<div onclick="undoEntregado('${idEsc}')" class="entrega-check done" title="Deshacer entrega">✓</div>`;
+      } else if(entregado&&pendEvi){
+        checkBtn=`<div onclick="openSubirEvidenciaSheet('${idEsc}')" class="entrega-check" style="background:var(--amber);color:#fff;border-color:var(--amber)" title="Subir foto pendiente">📎</div>`;
+      } else {
+        checkBtn=`<div onclick="openEntregaSheet('${idEsc}')" class="entrega-check" title="Confirmar entrega">○</div>`;
+      }
+      html+=`<div class="pedido-item${cerrado?' entrega-done':''}" style="position:relative;align-items:flex-start">
         ${checkBtn}
         <div class="pedido-info" style="flex:1">
           <div class="pedido-qty">#${orderId} ${badge}</div>
@@ -2982,7 +3001,42 @@ function renderLogEntregas(el){
   document.getElementById('log-entregas-list').innerHTML=html;
 }
 
-// Abre bottom sheet para confirmar entrega de una orden, con campo opcional de notas.
+// ── Compresión de imagen para evidencias de entrega ────────────────────────
+// Reduce a 1280px lado mayor + JPEG 0.75 → típico 250-450 KB. Suficiente para
+// que se lea una firma sin saturar el payload del Apps Script.
+async function compressImage(file, maxSide=1280, quality=0.75){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const ratio=Math.min(maxSide/img.width, maxSide/img.height, 1);
+      const w=Math.round(img.width*ratio);
+      const h=Math.round(img.height*ratio);
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      canvas.toBlob(blob=>{
+        URL.revokeObjectURL(url);
+        if(!blob){reject(new Error('compresión falló'));return;}
+        const reader=new FileReader();
+        reader.onload=()=>{
+          const dataUrl=String(reader.result||'');
+          const base64=dataUrl.split(',')[1]||'';
+          resolve({blob, base64, mimeType:'image/jpeg', sizeKB: Math.round(blob.size/1024)});
+        };
+        reader.onerror=()=>reject(reader.error||new Error('lectura falló'));
+        reader.readAsDataURL(blob);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url); reject(new Error('no se pudo leer la imagen'));};
+    img.src=url;
+  });
+}
+
+// Abre el bottom sheet de confirmación de entrega:
+// - Foto obligatoria de la factura firmada (cierra el flujo)
+// - Nota opcional (sirve para marcar pendiente de evidencia si no hay foto en el momento)
 function openEntregaSheet(orderId){
   const items=getEntregas();
   const item=items.find(e=>String(e.orderNumber||e.id||'')===String(orderId));
@@ -2992,24 +3046,190 @@ function openEntregaSheet(orderId){
     <div class="sheet-handle"></div>
     <div class="sheet-title">Confirmar entrega</div>
     <div class="sheet-sub">#${escAttr(orderId)} · ${escAttr(item.clientName||'')}</div>
-    <div class="sheet-label">Notas (opcional)</div>
-    <textarea class="sheet-input" id="sheet-ent-notes" rows="3" placeholder="Ej. Recibió el chef / Dejar con recepción / Pedido incompleto…"></textarea>
-    <div class="sheet-actions">
-      <button class="sheet-cancel" onclick="closeSheet()">Cancelar</button>
-      <button class="sheet-save" onclick="confirmEntrega('${safeId}')">Confirmar entrega</button>
+    <div class="sheet-label" style="margin-top:6px">Foto de la factura firmada *</div>
+    <input type="file" id="sheet-ent-foto" accept="image/*" capture="environment" onchange="previewEvidenciaFoto(this,'sheet-ent-foto-preview')" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);box-sizing:border-box;font-family:inherit;font-size:13px">
+    <div id="sheet-ent-foto-preview" style="margin-top:8px"></div>
+    <div class="sheet-label" style="margin-top:14px">Nota (solo si no hay foto)</div>
+    <textarea class="sheet-input" id="sheet-ent-notes" rows="3" placeholder="Ej. almacén estaba en hora de comida / faltó 1 shimeji café / cliente fuera, dejé en recepción…"></textarea>
+    <div class="sheet-actions" style="flex-direction:column;gap:8px;align-items:stretch">
+      <button class="sheet-save" onclick="confirmEntregaConFoto('${safeId}')" style="width:100%">📸 Confirmar entrega con foto</button>
+      <button onclick="marcarPendienteEvidencia('${safeId}')" style="width:100%;padding:12px 14px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">⏳ Sin foto aún — marcar pendiente</button>
+      <button class="sheet-cancel" onclick="closeSheet()" style="width:100%">Cancelar</button>
     </div>`;
   openSheet(html);
-  setTimeout(function(){
-    const inp=document.getElementById('sheet-ent-notes');
-    if(inp)inp.focus();
-  },340);
 }
 
-function confirmEntrega(orderId){
-  const inp=document.getElementById('sheet-ent-notes');
-  const notes=inp?String(inp.value||'').trim():'';
+// Muestra info de la foto seleccionada (nombre + tamaño) bajo el input.
+function previewEvidenciaFoto(input, targetId){
+  const f=input&&input.files&&input.files[0];
+  const tgt=document.getElementById(targetId);
+  if(!tgt)return;
+  if(!f){tgt.innerHTML=''; return;}
+  tgt.innerHTML=`<div style="font-size:12px;color:var(--text2);padding:6px 0">📷 ${escAttr(f.name)} · ${(f.size/1024).toFixed(0)} KB (se comprime al subir)</div>`;
+}
+
+// Confirma entrega completa: comprime + sube foto a Drive vía Apps Script.
+// Optimistic UI: marca local como entregado completo, revierte a pendiente si falla.
+async function confirmEntregaConFoto(orderId){
+  const fileInp=document.getElementById('sheet-ent-foto');
+  const notesInp=document.getElementById('sheet-ent-notes');
+  const file=fileInp&&fileInp.files&&fileInp.files[0];
+  const notes=notesInp?String(notesInp.value||'').trim():'';
+  if(!file){toast('Falta la foto de la factura firmada','warn');return;}
+  const id=String(orderId);
   closeSheet();
-  markEntregado(orderId,notes);
+  toast('Comprimiendo foto…','info',{icon:'⏳'});
+  let img;
+  try{ img=await compressImage(file); }
+  catch(e){ toast('Error procesando la foto: '+e.message,'warn'); return; }
+
+  const ts=new Date().toISOString();
+  const fileName=id+'_'+ts.replace(/[:.]/g,'-')+'.jpg';
+
+  // Optimistic local
+  const entregas=getEntregas();
+  const idx=entregas.findIndex(e=>String(e.orderNumber||e.id||'')===id);
+  if(idx>=0){
+    entregas[idx].entregado=true;
+    entregas[idx].entregadoAt=ts;
+    entregas[idx].entregadoNotas=notes;
+    entregas[idx].pendienteEvidencia=false;
+    entregas[idx].evidenciaUploading=true;
+    setEntregas(entregas);
+    render(page);
+  }
+
+  if(!getURLLog()){toast('Sin URL de Logística — guardado local','warn');return;}
+  setSyncUI('ing');
+  toast('Subiendo foto ('+img.sizeKB+'KB)…','info',{icon:'📤'});
+  const res=await postToEndpoint('log',{action:'uploadEvidencia',data:{
+    orderNumber:id, id:id,
+    fileName:fileName,
+    mimeType:'image/jpeg',
+    base64:img.base64,
+    notes:notes,
+    timestamp:ts,
+    chofer:LS.get('crf_user_name')||''
+  }});
+  if(res&&res.ok&&res.fileID){
+    const e2=getEntregas();
+    const i2=e2.findIndex(e=>String(e.orderNumber||e.id||'')===id);
+    if(i2>=0){
+      e2[i2].evidenciaFileID=res.fileID;
+      e2[i2].evidenciaURL=res.url||'';
+      e2[i2].evidenciaAt=ts;
+      delete e2[i2].evidenciaUploading;
+      setEntregas(e2);
+      render(page);
+    }
+    setSyncUI('ok');
+    toast('✓ Entrega cerrada con foto','ok');
+  } else {
+    setSyncUI('off');
+    // Falló — revertir a pendiente de evidencia para que reintente con 📎
+    const e2=getEntregas();
+    const i2=e2.findIndex(e=>String(e.orderNumber||e.id||'')===id);
+    if(i2>=0){
+      e2[i2].pendienteEvidencia=true;
+      delete e2[i2].evidenciaUploading;
+      setEntregas(e2);
+      render(page);
+    }
+    toast('No se pudo subir, quedó pendiente — usa 📎 para reintentar','warn');
+  }
+}
+
+// Marca la entrega como pendiente de evidencia: entregada físicamente pero sin foto.
+// La nota es obligatoria — explica por qué (almacén comiendo, faltó producto, etc).
+// El item NO desaparece de la lista hasta que se suba la foto.
+async function marcarPendienteEvidencia(orderId){
+  const notesInp=document.getElementById('sheet-ent-notes');
+  const notes=notesInp?String(notesInp.value||'').trim():'';
+  if(!notes){toast('Necesitas explicar por qué no hay foto','warn');return;}
+  const id=String(orderId);
+  closeSheet();
+  const entregas=getEntregas();
+  const idx=entregas.findIndex(e=>String(e.orderNumber||e.id||'')===id);
+  if(idx<0){toast('Orden no encontrada','warn');return;}
+  const ts=new Date().toISOString();
+  entregas[idx].entregado=true;
+  entregas[idx].entregadoAt=ts;
+  entregas[idx].entregadoNotas=notes;
+  entregas[idx].pendienteEvidencia=true;
+  setEntregas(entregas);
+  render(page);
+  if(!getURLLog()){toast('Pendiente local (sin sync)','info');return;}
+  setSyncUI('ing');
+  const res=await postToEndpoint('log',{action:'markPendienteEvidencia',data:{orderNumber:id,id:id,notes:notes,timestamp:ts}});
+  if(res&&res.ok){setSyncUI('ok');toast('⏳ Pendiente de foto — recuerda subirla con 📎','info');}
+  else{setSyncUI('off');toast('Cambio local, reintentará en la próxima sync','warn');}
+}
+
+// Bottom sheet para subir la foto a una entrega que quedó pendiente de evidencia.
+// Solo pide foto (la nota anterior se conserva).
+function openSubirEvidenciaSheet(orderId){
+  const items=getEntregas();
+  const item=items.find(e=>String(e.orderNumber||e.id||'')===String(orderId));
+  if(!item){toast('Orden no encontrada','warn');return;}
+  const safeId=escAttr(orderId);
+  const prevNote=item.entregadoNotas?escAttr(item.entregadoNotas):'';
+  const html=`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Subir foto pendiente</div>
+    <div class="sheet-sub">#${escAttr(orderId)} · ${escAttr(item.clientName||'')}</div>
+    ${prevNote?`<div style="margin:10px 0;padding:8px 10px;background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;font-size:12px;color:var(--amber);white-space:pre-wrap">📝 ${prevNote}</div>`:''}
+    <div class="sheet-label" style="margin-top:6px">Foto de la factura firmada *</div>
+    <input type="file" id="sheet-evi-foto" accept="image/*" capture="environment" onchange="previewEvidenciaFoto(this,'sheet-evi-foto-preview')" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);box-sizing:border-box;font-family:inherit;font-size:13px">
+    <div id="sheet-evi-foto-preview" style="margin-top:8px"></div>
+    <div class="sheet-actions">
+      <button class="sheet-cancel" onclick="closeSheet()">Cancelar</button>
+      <button class="sheet-save" onclick="subirEvidencia('${safeId}')">📸 Subir y cerrar</button>
+    </div>`;
+  openSheet(html);
+}
+
+// Sube la foto pendiente — cierra el flujo (limpia pendienteEvidencia).
+async function subirEvidencia(orderId){
+  const fileInp=document.getElementById('sheet-evi-foto');
+  const file=fileInp&&fileInp.files&&fileInp.files[0];
+  if(!file){toast('Falta seleccionar la foto','warn');return;}
+  const id=String(orderId);
+  closeSheet();
+  toast('Comprimiendo…','info',{icon:'⏳'});
+  let img;
+  try{ img=await compressImage(file); }
+  catch(e){ toast('Error procesando la foto: '+e.message,'warn'); return; }
+  const ts=new Date().toISOString();
+  const fileName=id+'_'+ts.replace(/[:.]/g,'-')+'.jpg';
+
+  if(!getURLLog()){toast('Sin URL — no se puede subir','warn');return;}
+  setSyncUI('ing');
+  toast('Subiendo foto ('+img.sizeKB+'KB)…','info',{icon:'📤'});
+  const res=await postToEndpoint('log',{action:'uploadEvidencia',data:{
+    orderNumber:id, id:id,
+    fileName:fileName,
+    mimeType:'image/jpeg',
+    base64:img.base64,
+    timestamp:ts,
+    chofer:LS.get('crf_user_name')||''
+  }});
+  if(res&&res.ok&&res.fileID){
+    const entregas=getEntregas();
+    const idx=entregas.findIndex(e=>String(e.orderNumber||e.id||'')===id);
+    if(idx>=0){
+      entregas[idx].pendienteEvidencia=false;
+      entregas[idx].evidenciaFileID=res.fileID;
+      entregas[idx].evidenciaURL=res.url||'';
+      entregas[idx].evidenciaAt=ts;
+      setEntregas(entregas);
+      render(page);
+    }
+    setSyncUI('ok');
+    toast('✓ Foto subida — entrega cerrada','ok');
+  } else {
+    setSyncUI('off');
+    toast('No se pudo subir, intenta de nuevo','warn');
+  }
 }
 
 // Marca orden como entregada con notas opcionales (escribe al Sheet de Logística).
