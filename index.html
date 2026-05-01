@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.11.3';
+var APP_VERSION='2.11.4';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2872,6 +2872,28 @@ function deleteLogCompra(id){
   }}});
 }
 
+// Orden de clientes en la ruta del día (solo del día). Una parada = un cliente,
+// aunque tenga múltiples pedidos (van juntos). Mismo patrón que crf_supplier_order.
+const LOG_ENTREGAS_ORDER_KEY='crf_entregas_order';
+function getEntregasOrderToday(){
+  const all=LS.get(LOG_ENTREGAS_ORDER_KEY)||{};
+  return Array.isArray(all[todayKey()])?all[todayKey()]:[];
+}
+function setEntregasOrderToday(order){
+  LS.set(LOG_ENTREGAS_ORDER_KEY,{[todayKey()]:order});
+}
+function moveEntregaCliente(currentOrder,cliente,dir){
+  const idx=currentOrder.indexOf(cliente);
+  if(idx<0)return;
+  const target=idx+dir;
+  if(target<0||target>=currentOrder.length)return;
+  const tmp=currentOrder[target];
+  currentOrder[target]=cliente;
+  currentOrder[idx]=tmp;
+  setEntregasOrderToday(currentOrder);
+  render(page);
+}
+
 function renderLogEntregas(el){
   // Ruta del chofer: lista de órdenes del día (solo lectura)
   // Campos: orderNumber, clientName, deliveryDate, itemsCount, itemsText, total, status
@@ -2902,11 +2924,27 @@ function renderLogEntregas(el){
     if(!byCliente[c])byCliente[c]=[];
     byCliente[c].push(item);
   });
+  // Orden: 1) los del orden guardado del día (chofer reordena con ↑↓);
+  //        2) el resto en el orden de aparición original.
+  const allClientes=Object.keys(byCliente);
+  const saved=getEntregasOrderToday().filter(c=>byCliente[c]);
+  const remaining=allClientes.filter(c=>!saved.includes(c));
+  const clientes=[...saved,...remaining];
+  if(clientes.join('|')!==getEntregasOrderToday().join('|'))setEntregasOrderToday(clientes);
 
   let html='';
-  for(const [cli,cliItems] of Object.entries(byCliente)){
+  for(let i=0;i<clientes.length;i++){
+    const cli=clientes[i];
+    const cliItems=byCliente[cli];
     const totalOrders=cliItems.length;
-    html+=`<div class="cat-header">👤 ${cli}${totalOrders>1?` <span style="font-weight:400;color:var(--text2);font-size:11px">· ${totalOrders} órdenes</span>`:''}</div>`;
+    const isFirst=i===0;
+    const isLast=i===clientes.length-1;
+    const cliEsc=cli.replace(/'/g,"\\'");
+    const arrowBtn=(label,dir,disabled)=>`<button onclick="event.stopPropagation();moveEntregaCliente(${JSON.stringify(clientes)},'${cliEsc}',${dir})" ${disabled?'disabled':''} style="padding:3px 8px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:13px;line-height:1;cursor:${disabled?'not-allowed':'pointer'};opacity:${disabled?0.35:1}" aria-label="${label}">${label}</button>`;
+    html+=`<div class="cat-header" style="display:flex;align-items:center;gap:8px">
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👤 ${cli}${totalOrders>1?` <span style="font-weight:400;color:var(--text2);font-size:11px">· ${totalOrders} órdenes</span>`:''}</span>
+      <span style="display:flex;gap:4px;flex-shrink:0">${arrowBtn('↑',-1,isFirst)}${arrowBtn('↓',+1,isLast)}</span>
+    </div>`;
     for(const item of cliItems){
       const orderId=String(item.orderNumber||item.id||'');
       const entregado=(item.entregado===true||item.entregado==='true'||item.entregado==='TRUE'||item.entregado==='VERDADERO');
