@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.11.4';
+var APP_VERSION='2.11.5';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2536,15 +2536,16 @@ function setSupplierOrderToday(order){
   // Solo guardamos el día actual — no acumular historial.
   LS.set(LOG_SUPPLIER_ORDER_KEY,{[today]:order});
 }
-function moveSupplier(currentOrder,supplier,dir){
-  const idx=currentOrder.indexOf(supplier);
+function moveSupplier(supplier,dir){
+  const order=getSupplierOrderToday().slice();
+  const idx=order.indexOf(supplier);
   if(idx<0)return;
   const target=idx+dir;
-  if(target<0||target>=currentOrder.length)return;
-  const tmp=currentOrder[target];
-  currentOrder[target]=supplier;
-  currentOrder[idx]=tmp;
-  setSupplierOrderToday(currentOrder);
+  if(target<0||target>=order.length)return;
+  const tmp=order[target];
+  order[target]=supplier;
+  order[idx]=tmp;
+  setSupplierOrderToday(order);
   render(page);
 }
 
@@ -2648,7 +2649,7 @@ function renderLogCompras(el){
     const isFirst=s===0;
     const isLast=s===suppliers.length-1;
     const supEsc=sup.replace(/'/g,"\\'");
-    const arrowBtn=(label,dir,disabled)=>`<button onclick="event.stopPropagation();moveSupplier(${JSON.stringify(suppliers)},'${supEsc}',${dir})" ${disabled?'disabled':''} style="padding:4px 9px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:14px;line-height:1;cursor:${disabled?'not-allowed':'pointer'};opacity:${disabled?0.35:1}" aria-label="${label}">${label}</button>`;
+    const arrowBtn=(label,dir,disabled)=>`<button onclick="event.stopPropagation();moveSupplier('${supEsc}',${dir})" ${disabled?'disabled':''} style="padding:4px 9px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:14px;line-height:1;cursor:${disabled?'not-allowed':'pointer'};opacity:${disabled?0.35:1}" aria-label="${label}">${label}</button>`;
     html+=`<details open style="margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2)">
       <summary style="padding:10px 14px;cursor:pointer;font-weight:600;color:var(--green);display:flex;justify-content:space-between;align-items:center;list-style:none;gap:10px">
         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🏪 ${sup}</span>
@@ -2882,15 +2883,16 @@ function getEntregasOrderToday(){
 function setEntregasOrderToday(order){
   LS.set(LOG_ENTREGAS_ORDER_KEY,{[todayKey()]:order});
 }
-function moveEntregaCliente(currentOrder,cliente,dir){
-  const idx=currentOrder.indexOf(cliente);
+function moveEntregaCliente(cliente,dir){
+  const order=getEntregasOrderToday().slice();
+  const idx=order.indexOf(cliente);
   if(idx<0)return;
   const target=idx+dir;
-  if(target<0||target>=currentOrder.length)return;
-  const tmp=currentOrder[target];
-  currentOrder[target]=cliente;
-  currentOrder[idx]=tmp;
-  setEntregasOrderToday(currentOrder);
+  if(target<0||target>=order.length)return;
+  const tmp=order[target];
+  order[target]=cliente;
+  order[idx]=tmp;
+  setEntregasOrderToday(order);
   render(page);
 }
 
@@ -2940,7 +2942,7 @@ function renderLogEntregas(el){
     const isFirst=i===0;
     const isLast=i===clientes.length-1;
     const cliEsc=cli.replace(/'/g,"\\'");
-    const arrowBtn=(label,dir,disabled)=>`<button onclick="event.stopPropagation();moveEntregaCliente(${JSON.stringify(clientes)},'${cliEsc}',${dir})" ${disabled?'disabled':''} style="padding:3px 8px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:13px;line-height:1;cursor:${disabled?'not-allowed':'pointer'};opacity:${disabled?0.35:1}" aria-label="${label}">${label}</button>`;
+    const arrowBtn=(label,dir,disabled)=>`<button onclick="event.stopPropagation();moveEntregaCliente('${cliEsc}',${dir})" ${disabled?'disabled':''} style="padding:3px 8px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:13px;line-height:1;cursor:${disabled?'not-allowed':'pointer'};opacity:${disabled?0.35:1}" aria-label="${label}">${label}</button>`;
     html+=`<div class="cat-header" style="display:flex;align-items:center;gap:8px">
       <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👤 ${cli}${totalOrders>1?` <span style="font-weight:400;color:var(--text2);font-size:11px">· ${totalOrders} órdenes</span>`:''}</span>
       <span style="display:flex;gap:4px;flex-shrink:0">${arrowBtn('↑',-1,isFirst)}${arrowBtn('↓',+1,isLast)}</span>
