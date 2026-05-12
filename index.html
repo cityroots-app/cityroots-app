@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.12.2';
+var APP_VERSION='2.13.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -858,8 +858,9 @@ function renderProduccion(el){
   el.innerHTML=`<div class="pad">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div class="sec" style="margin-bottom:0">Plan de producción</div>
-      <div style="display:flex;gap:6px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
         <button class="btn btn-secondary" style="flex:0;padding:7px 12px;font-size:12px" onclick="syncLotesFromSheet().then(()=>render('produccion'))">↓ Sincronizar</button>
+        <button class="btn btn-amber" style="flex:0;padding:7px 12px;font-size:12px" onclick="openPlanearSemana()">📋 Planear semana</button>
         <button class="btn btn-primary" style="flex:0;padding:7px 14px;font-size:12px" onclick="openNuevoLote()">+ Nuevo lote</button>
       </div>
     </div>
@@ -1104,6 +1105,239 @@ async function guardarNuevoLote(){
   _savingLote=false;
   closeModal();
   toast('Lote registrado ✓');
+  goTo('produccion');
+}
+
+// ══ PLANTILLA SEMANAL (siembra batch de las 8 variedades) ═══════════════════════
+// Spec: cityrootsfarm-produccion/spec-plantilla-semanal-pwa.md
+// Crea 8 lotes en batch a partir de una fecha de cosecha (lunes). Las cantidades de
+// charolas las captura el usuario; el resto (fechas, totales) se calcula automático
+// a partir de VARIEDAD_DEFAULTS.
+
+// Variedades en el orden que aparecen en el modal
+const PLAN_VARIEDADES=[
+  {key:'Chícharo',             tipo:'Fresco'},
+  {key:'Betabel',              tipo:'Fresco'},
+  {key:'Chícharo CT (fresco)', tipo:'Fresco'},
+  {key:'Chícharo CT (vivo)',   tipo:'Vivo'},
+  {key:'Spicy Mix',            tipo:'Fresco'},
+  {key:'Rábano',               tipo:'Fresco'},
+  {key:'Girasol',              tipo:'Fresco'},
+  {key:'Cilantro',             tipo:'Fresco'}
+];
+
+// Próximo lunes desde una fecha base (incluye hoy si hoy es lunes)
+function proximoLunes(base){
+  const d=base?new Date(base):new Date();
+  const dow=d.getDay(); // 0=dom, 1=lun
+  const offset=dow===1?0:((8-dow)%7||7);
+  const out=new Date(d.getFullYear(),d.getMonth(),d.getDate()+offset);
+  return out.toISOString().split('T')[0];
+}
+
+// Código de semana YYWW basado en fecha de cosecha (siempre lunes)
+function semanaCodeYYWW(isoDate){
+  const d=new Date(isoDate+'T00:00:00');
+  const y=d.getFullYear().toString().slice(2);
+  // Cálculo de semana ISO aproximado — week del año basado en jan 1
+  const start=new Date(d.getFullYear(),0,1);
+  const diff=Math.ceil(((d-start)/86400000+start.getDay()+1)/7);
+  return y+String(diff).padStart(2,'0');
+}
+
+function openPlanearSemana(){
+  const body=document.getElementById('modal-body');
+  const cosechaDefault=proximoLunes();
+  const semCode=semanaCodeYYWW(cosechaDefault);
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">📋 Planear semana</div>
+    <div class="modal-sub">Captura las charolas de cada variedad — los 8 lotes se crean de una vez</div>
+
+    <div class="field"><label>Fecha de cosecha (lunes)</label>
+      <input id="ps-cosecha" type="date" value="${cosechaDefault}" onchange="calcPlanSemana()">
+      <div class="field-hint" id="ps-semana-hint">Semana <b>${semCode}</b> — fecha de siembra se calcula por variedad</div></div>
+
+    <div style="background:var(--bg2);border-radius:var(--radius);padding:8px;margin:10px 0">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Variedades</div>
+      ${PLAN_VARIEDADES.map((p,i)=>{
+        const def=VARIEDAD_DEFAULTS[p.key]||{};
+        const cosEst=def.cosecha_est_charola===null?'vivo':def.cosecha_est_charola+'g';
+        return `<div style="display:grid;grid-template-columns:1fr 80px;gap:8px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--bg3)" id="ps-row-${i}">
+          <div>
+            <div style="font-weight:600;color:var(--text)">${p.key} <span style="font-size:10px;color:var(--text3)">(${p.tipo.toLowerCase()})</span></div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">${def.gr_semilla}g/charola · ${def.dias_cultivo}d · cosecha est ${cosEst}</div>
+            <div style="font-size:10px;color:var(--text3)" id="ps-siembra-${i}"></div>
+          </div>
+          <input id="ps-ch-${i}" type="number" inputmode="numeric" min="0" placeholder="0" style="text-align:right;font-size:16px" oninput="calcPlanSemana()">
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div style="background:var(--green-pale);border-radius:var(--radius);padding:10px;margin:10px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">
+        <div><div style="font-size:10px;color:var(--text3)">Charolas</div><div style="font-size:18px;font-weight:700;color:var(--green-deep)" id="ps-tot-ch">0</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Semilla total</div><div style="font-size:16px;font-weight:700;color:var(--green-deep)" id="ps-tot-sem">0 g</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Cosecha est</div><div style="font-size:16px;font-weight:700;color:var(--green-deep)" id="ps-tot-cos">0 g</div></div>
+      </div>
+    </div>
+
+    <div id="ps-warning" style="display:none;background:#fff3e0;border-left:3px solid var(--amber);border-radius:var(--radius);padding:10px;margin:10px 0;font-size:12px;color:#7a4a00"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="ps-save-btn" onclick="guardarPlanSemanal()">✓ Confirmar semana</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+  calcPlanSemana();
+}
+
+function calcPlanSemana(){
+  const cosechaISO=document.getElementById('ps-cosecha')?.value;
+  if(!cosechaISO)return;
+  // Actualizar código de semana visible
+  const semCode=semanaCodeYYWW(cosechaISO);
+  const hint=document.getElementById('ps-semana-hint');
+  if(hint)hint.innerHTML=`Semana <b>${semCode}</b> — fecha de siembra se calcula por variedad`;
+
+  let totCh=0,totSem=0,totCos=0;
+  const today=todayKey();
+  const siembrasPasadas=[];
+
+  PLAN_VARIEDADES.forEach((p,i)=>{
+    const def=VARIEDAD_DEFAULTS[p.key]||{};
+    const ch=parseFloat(document.getElementById('ps-ch-'+i)?.value)||0;
+    const gr=def.gr_semilla||0;
+    const dias=def.dias_cultivo||0;
+    const cosEst=def.cosecha_est_charola; // null para vivo
+    // Fecha de siembra de esta variedad
+    const cos=new Date(cosechaISO+'T00:00:00');
+    const sie=new Date(cos.getTime()-dias*86400000);
+    const sieISO=sie.toISOString().split('T')[0];
+    const sieLabel=document.getElementById('ps-siembra-'+i);
+    if(sieLabel){
+      const dias_es=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      const lbl=`Siembra: ${dias_es[sie.getDay()]} ${fmtDateShort(sieISO+'T00:00:00')}`;
+      const pasada=sieISO<today;
+      sieLabel.innerHTML=pasada?`<span style="color:var(--danger)">⚠️ ${lbl} (ya pasó)</span>`:lbl;
+      if(pasada && ch>0)siembrasPasadas.push(p.key);
+    }
+    totCh+=ch;
+    totSem+=ch*gr;
+    if(cosEst!==null)totCos+=ch*cosEst;
+  });
+
+  const tCh=document.getElementById('ps-tot-ch');if(tCh)tCh.textContent=totCh;
+  const tSe=document.getElementById('ps-tot-sem');if(tSe)tSe.textContent=totSem.toLocaleString('es-MX')+' g';
+  const tCo=document.getElementById('ps-tot-cos');if(tCo)tCo.textContent=totCos.toLocaleString('es-MX')+' g';
+
+  // Warning si hay siembras con fecha pasada
+  const warn=document.getElementById('ps-warning');
+  if(warn){
+    if(siembrasPasadas.length>0){
+      warn.style.display='block';
+      warn.innerHTML='⚠️ <b>'+siembrasPasadas.join(', ')+'</b>: la fecha de siembra calculada ya pasó. Puedes confirmar igual (se siembra hoy) o mover la cosecha a una fecha posterior.';
+    } else {
+      warn.style.display='none';
+    }
+  }
+}
+
+let _savingPlan=false;
+async function guardarPlanSemanal(){
+  if(_savingPlan)return;
+  const cosechaISO=document.getElementById('ps-cosecha')?.value;
+  if(!cosechaISO){toast('Falta fecha de cosecha');return;}
+  const items=[];
+  let totCh=0;
+  PLAN_VARIEDADES.forEach((p,i)=>{
+    const ch=parseFloat(document.getElementById('ps-ch-'+i)?.value)||0;
+    if(ch<=0)return;
+    const def=VARIEDAD_DEFAULTS[p.key]||{};
+    items.push({
+      variedad: p.key,
+      tipo: p.tipo,
+      charolas: ch,
+      grSemilla: def.gr_semilla,
+      dias: def.dias_cultivo,
+      cosechaEst: def.cosecha_est_charola
+    });
+    totCh+=ch;
+  });
+  if(items.length===0){toast('Captura al menos una variedad con charolas');return;}
+
+  const loteSemana=semanaCodeYYWW(cosechaISO);
+  // Aviso si ya hay lotes locales para esa semana
+  const existingForWeek=getLotes().filter(l=>String(l.lote_semana)===loteSemana);
+  if(existingForWeek.length>0){
+    if(!confirm('Ya hay '+existingForWeek.length+' lote(s) registrado(s) para la semana '+loteSemana+'. ¿Crear los nuevos lotes igual? (Pueden quedar duplicados)')){
+      return;
+    }
+  }
+
+  _savingPlan=true;
+  const btn=document.getElementById('ps-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+
+  const payload={
+    action:'confirmarSemana',
+    data:{
+      lote: loteSemana,
+      cosecha: cosechaISO,
+      creadoEn: new Date().toISOString(),
+      creadoPor: 'PWA',
+      items: items
+    }
+  };
+
+  const res=await postToEndpoint('prod',payload);
+  _savingPlan=false;
+  if(btn){btn.disabled=false;btn.textContent='✓ Confirmar semana';}
+
+  if(!res||!res.ok){
+    toast('Error al guardar: '+((res&&res.error)||'sin conexión'));
+    return;
+  }
+
+  // Crear lotes locales para que aparezcan de inmediato (luego se reemplazan al sincronizar)
+  const lotesActuales=getLotes();
+  const DIAS_ES=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  items.forEach((it,idx)=>{
+    const cos=new Date(cosechaISO+'T00:00:00');
+    const sie=new Date(cos.getTime()-it.dias*86400000);
+    const fechaSiembraISO=sie.toISOString().split('T')[0];
+    const varAbbr=(it.variedad||'GEN').substring(0,3).toUpperCase().replace(/[^A-Z]/g,'');
+    lotesActuales.unshift({
+      id: String(Date.now())+'-'+idx,
+      lote_semana: loteSemana,
+      lote: 'CRF-'+loteSemana+'-'+varAbbr,
+      variedad: it.variedad,
+      tipo_variedad: it.tipo,
+      charolas_planificadas: it.charolas,
+      dia_siembra: DIAS_ES[sie.getDay()],
+      fecha_siembra: fechaSiembraISO,
+      gr_semilla: it.grSemilla,
+      total_semilla: it.charolas*it.grSemilla,
+      dias_cultivo: it.dias,
+      dia_cosecha: 'Lunes',
+      fecha_cosecha: cosechaISO,
+      cosecha_est_charola: it.cosechaEst||null,
+      cosecha_estimada: it.cosechaEst===null?null:it.charolas*it.cosechaEst,
+      comentarios: 'Generado por Plantilla Semanal',
+      sembrado_confirmado: false,
+      charolas_confirmadas: null,
+      cosecha_real: null,
+      charolas_cosechadas: null,
+      fecha_registro: new Date().toISOString(),
+      origen: 'plantilla_semanal'
+    });
+  });
+  setLotes(lotesActuales);
+
+  closeModal();
+  toast(items.length+' lotes creados ✓ ('+totCh+' charolas)');
+  // Abrir el acordeón de la semana recién creada
+  _openWeeks.add(loteSemana);
   goTo('produccion');
 }
 
