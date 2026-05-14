@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.13.3';
+var APP_VERSION='2.13.4';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1060,13 +1060,13 @@ function calcFechaCosecha(){
 let _savingLote=false;
 async function guardarNuevoLote(){
   if(_savingLote)return;
-  _savingLote=true;
   const v=document.getElementById('nl-variedad')?.value;
   const lote=document.getElementById('nl-lote')?.value;
   const charolas=document.getElementById('nl-charolas')?.value;
   const fs=document.getElementById('nl-fecha-siembra')?.value;
   const grSemilla=document.getElementById('nl-gr-semilla')?.value;
   if(!v||!lote||!charolas||!fs||!grSemilla){toast('Completa los campos obligatorios');return;}
+  _savingLote=true;
 
   const ch=parseFloat(charolas),gr=parseFloat(grSemilla);
   const est=parseFloat(document.getElementById('nl-cos-est')?.value)||0;
@@ -1449,12 +1449,12 @@ function confirmarSiembra(id){
 let _savingSiembra=false;
 async function guardarSiembra(id){
   if(_savingSiembra)return;
-  _savingSiembra=true;
   const charolas=document.getElementById('cs-charolas')?.value;
   const resp=document.getElementById('cs-responsable')?.value;
   if(!charolas||!resp){toast('Completa todos los campos');return;}
   const lotes=getLotes();
   const idx=lotes.findIndex(l=>String(l.id)===String(id));if(idx<0)return;
+  _savingSiembra=true;
   lotes[idx].sembrado_confirmado=true;
   lotes[idx].charolas_confirmadas=parseFloat(charolas);
   lotes[idx].responsable_siembra=resp;
@@ -1522,13 +1522,13 @@ function calcPromedio(){
 let _savingCosecha=false;
 async function guardarCosecha(id){
   if(_savingCosecha)return;
-  _savingCosecha=true;
   const charolas=document.getElementById('rc-charolas')?.value;
   const gramos=document.getElementById('rc-gramos')?.value;
   const resp=document.getElementById('rc-responsable')?.value;
   if(!charolas||!gramos||!resp){toast('Completa todos los campos');return;}
   const lotes=getLotes();
   const idx=lotes.findIndex(l=>String(l.id)===String(id));if(idx<0)return;
+  _savingCosecha=true;
   const ch=parseFloat(charolas),gr=parseFloat(gramos);
   lotes[idx].cosecha_real=gr;
   lotes[idx].charolas_cosechadas=ch;
@@ -1843,7 +1843,6 @@ function openForm(id){
 let _savingForm=false;
 async function submitForm(id){
   if(_savingForm)return;
-  _savingForm=true;
   const reg=REGS.find(r=>r.id===id);
   const datos={};let missing=[];
   reg.fields.forEach(f=>{
@@ -1852,6 +1851,7 @@ async function submitForm(id){
     if(f.req&&el&&!el.value)missing.push(f.label);
   });
   if(missing.length){toast('Completa: '+missing[0]);return;}
+  _savingForm=true;
   const btn=document.getElementById('save-btn');
   if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span>';}
   const record={id:Date.now().toString(),tipo:id,fecha:new Date().toISOString(),datos};
