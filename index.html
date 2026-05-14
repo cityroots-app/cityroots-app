@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.13.2';
+var APP_VERSION='2.13.3';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -464,11 +464,11 @@ const REGS = [
 
 // ══ DATOS FIJOS POR VARIEDAD ══════════════════════════════════════════════════
 const VARIEDAD_DEFAULTS = {
-  'Chícharo':            {gr_semilla:120, dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:200, dias_cultivo:20},
-  'Chícharo CT (fresco)':{gr_semilla:170, dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:200, dias_cultivo:13},
-  'Chícharo CT (vivo)':  {gr_semilla:25,  dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:null,dias_cultivo:13},
+  'Chícharo':            {gr_semilla:120, dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:250, dias_cultivo:20},
+  'Chícharo CT (fresco)':{gr_semilla:170, dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:300, dias_cultivo:13},
+  'Chícharo CT (vivo)':  {gr_semilla:25,  dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:null,dias_cultivo:12},
   'Betabel':             {gr_semilla:25,  dia_siembra:'Martes',  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:13},
-  'Rábano':              {gr_semilla:25,  dia_siembra:'Jueves',  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:11},
+  'Rábano':              {gr_semilla:25,  dia_siembra:'Jueves',  dia_cosecha:'Lunes', cosecha_est_charola:150, dias_cultivo:11},
   'Girasol':             {gr_semilla:100, dia_siembra:'Viernes', dia_cosecha:'Lunes', cosecha_est_charola:300, dias_cultivo:10},
   'Cilantro':            {gr_semilla:25,  dia_siembra:'Viernes', dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:17},
   'Spicy Mix':           {gr_semilla:13,  dia_siembra:'Jueves',  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:18},
