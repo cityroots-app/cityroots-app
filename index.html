@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.13.1';
+var APP_VERSION='2.13.2';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -4085,20 +4085,35 @@ if(_urlLog){
 localStorage.removeItem(ROLE_KEY);
 initApp();
 
-// Auto-sync cada 30s: ambos endpoints en paralelo, solo los que estén configurados
+// Auto-sync cada 30s: ambos endpoints en paralelo, solo los que estén configurados.
+// Skipea cuando el usuario está activamente capturando o tecleando — el render() del
+// fetch reescribe el DOM y borra los inputs en progreso (qty, lote, fecha).
+function shouldSkipAutoSync(){
+  // Modal abierto — no interrumpir
+  if(document.getElementById('modal-ov')?.style.display==='flex')return true;
+  // Captura de inventario activa: la pantalla tiene inputs editables que se pierden
+  // si render() corre. El catálogo HADE no cambia frecuentemente; el usuario puede
+  // refrescar manualmente con el botón "↻ Cargar catálogo" si lo necesita.
+  if(page==='alm_inventario')return true;
+  // Cualquier input/textarea con foco — el usuario está escribiendo
+  var a=document.activeElement;
+  if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'))return true;
+  return false;
+}
 let _autoSyncInterval=null;
 function startAutoSync(){
   if(_autoSyncInterval)clearInterval(_autoSyncInterval);
   _autoSyncInterval=setInterval(()=>{
-    if(document.getElementById('modal-ov')?.style.display==='flex')return;
+    if(shouldSkipAutoSync())return;
     if(getURLProd()){syncLotesFromSheet();fetchPedidosProduccion();}
     if(getURLLog()){fetchLogistica();}
   },30000);
 }
 if(_urlProd||_urlLog)startAutoSync();
-// Re-sync al volver a la app
+// Re-sync al volver a la app — también respeta el guard de captura
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden)return;
+  if(shouldSkipAutoSync())return;
   if(getURLProd()){syncLotesFromSheet();fetchPedidosProduccion();}
   if(getURLLog()){fetchLogistica();}
   if(getURLProd()||getURLLog())startAutoSync();
