@@ -392,7 +392,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.13.4';
+var APP_VERSION='2.13.5';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -473,6 +473,27 @@ const VARIEDAD_DEFAULTS = {
   'Cilantro':            {gr_semilla:25,  dia_siembra:'Viernes', dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:17},
   'Spicy Mix':           {gr_semilla:13,  dia_siembra:'Jueves',  dia_cosecha:'Lunes', cosecha_est_charola:100, dias_cultivo:18},
 };
+
+// ══ INSUMOS INTERNOS CRF (no vienen del catálogo HADE/Bind) ════════════════════
+// Materias primas e insumos del cuarto de producción que NO se venden a B2B.
+// Existen en Bind como materias primas (MP*) pero no llegan al catálogo HADE
+// porque ese catálogo filtra solo producto terminado. Se mezclan en el dropdown
+// del Inventario Semanal usando códigos internos CRF-*.
+// Unidades en GRAMOS para semillas y sustratos (consistente con fórmulas Bind base 1gr).
+const INSUMOS_CRF = [
+  {code:'CRF-CONT-TS64', name:'CONTENEDOR TS64',        category:'EMPAQUE',  unit:'pz'},
+  {code:'CRF-CONT-TS20', name:'CONTENEDOR TS20',        category:'EMPAQUE',  unit:'pz'},
+  {code:'CRF-CONT-TS12', name:'CONTENEDOR TS12',        category:'EMPAQUE',  unit:'pz'},
+  {code:'CRF-SEM-RAB',   name:'SEMILLA DE RABANO',      category:'SEMILLA',  unit:'gr'},
+  {code:'CRF-SEM-CHI',   name:'SEMILLA DE CHICHARO',    category:'SEMILLA',  unit:'gr'},
+  {code:'CRF-SEM-BET',   name:'SEMILLA DE BETABEL',     category:'SEMILLA',  unit:'gr'},
+  {code:'CRF-SEM-GIR',   name:'SEMILLA DE GIRASOL',     category:'SEMILLA',  unit:'gr'},
+  {code:'CRF-SEM-SPI',   name:'SEMILLA DE SPICY MIX',   category:'SEMILLA',  unit:'gr'},
+  {code:'CRF-SEM-CIL',   name:'SEMILLA DE CILANTRO',    category:'SEMILLA',  unit:'gr'},
+  {code:'CRF-SUS-PEAT',  name:'SUSTRATO PEATMOSS',      category:'SUSTRATO', unit:'gr'},
+  {code:'CRF-SUS-MIX',   name:'SUSTRATO MIX',           category:'SUSTRATO', unit:'gr'},
+];
+
 // ══ STORAGE ═══════════════════════════════════════════════════════════════════
 // Dual-endpoint: la app habla con DOS Apps Script distintos (Producción + Logística).
 // Router decide cuál URL usar según la acción. Ver getURLFor() abajo.
@@ -2467,7 +2488,10 @@ function renderAlmInventario(el){
   const ts=LS.get('crf_log_timestamp')||'';
   const fecha=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin datos';
   const urlOk=!!getURLLog();
-  const catalogOk=Array.isArray(inv)&&inv.length>0;
+  const catalogHadeOk=Array.isArray(inv)&&inv.length>0;
+  // El dropdown siempre está habilitado porque INSUMOS_CRF (semillas, sustratos, contenedores)
+  // siempre están disponibles localmente, aunque el catálogo HADE no se haya cargado.
+  const catalogOk=catalogHadeOk||INSUMOS_CRF.length>0;
 
   // Borrador en memoria: lo que lleva capturado esta sesión
   // Migración legacy: items sin `code` se marcan como legacy=true
@@ -2495,7 +2519,7 @@ function renderAlmInventario(el){
     <div class="dateline">Último: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchPedidosProduccion().then(()=>{toast('Catálogo actualizado','ok');render(page)})">↻ Cargar catálogo</span></div>
     ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin para guardar la captura.</div>`:''}
     ${!getURLProd()?`<div class="banner banner-warn">⚠️ Falta URL de Producción (Sheet Principal). El catálogo HADE viene de ahí. Configúralo en Admin.</div>`:''}
-    ${!catalogOk?`<div class="banner banner-warn">⚠️ Catálogo HADE vacío. Presiona "↻ Cargar catálogo" arriba (trae el inventario del Sheet Principal).</div>`:''}
+    ${!catalogHadeOk?`<div class="banner banner-warn">⚠️ Catálogo HADE vacío. Presiona "↻ Cargar catálogo" arriba (trae el inventario del Sheet Principal). Los insumos CRF (semillas, sustratos, contenedores) ya están disponibles.</div>`:''}
     ${legacyCount>0?`<div class="banner banner-warn">⚠️ ${legacyCount} producto${legacyCount>1?'s':''} en la captura sin código Bind (capturados en versión anterior). Re-captúralos para que suban a Bind correctamente.</div>`:''}
     <div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;font-size:13px">📋 Capture el conteo semanal. Se guarda en Logística para subirlo a Bind.</div>
 
@@ -2504,7 +2528,7 @@ function renderAlmInventario(el){
 
     <div class="sec" style="margin-top:18px">Agregar producto</div>
     <div class="inv-combo">
-      <input id="inv-combo-input" class="inv-combo-input" type="text" placeholder="${catalogOk?'Busca: betabel, arugula, enoki…':'Carga el catálogo primero'}"
+      <input id="inv-combo-input" class="inv-combo-input" type="text" placeholder="${catalogHadeOk?'Busca: betabel, peatmoss, contenedor, semilla…':'Busca: peatmoss, contenedor, semilla… (HADE no cargado)'}"
         ${catalogOk?'':'disabled'}
         oninput="filterInvSuggestions(this.value)"
         onfocus="filterInvSuggestions(this.value)"
@@ -2529,7 +2553,10 @@ function renderAlmInventario(el){
 function normInv(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 
 function filterInvSuggestions(q){
-  const inv=getInventarioHade();
+  // Catálogo combinado: HADE (de Bind, dinámico) + INSUMOS_CRF (locales, fijos).
+  // Los CRF siempre están disponibles aunque el catálogo HADE esté vacío.
+  const invHade=getInventarioHade()||[];
+  const catalog=[...invHade, ...INSUMOS_CRF];
   const drop=document.getElementById('inv-combo-dropdown');
   if(!drop)return;
   const query=normInv(q||'').trim();
@@ -2537,9 +2564,9 @@ function filterInvSuggestions(q){
   if(window._invSelected && normInv(window._invSelected.name)===query){drop.style.display='none';return;}
   let matches;
   if(!query){
-    matches=inv.slice(0,30);  // sin query muestra primeros 30
+    matches=catalog.slice(0,30);  // sin query muestra primeros 30
   } else {
-    matches=inv.filter(p=>normInv(p.name).includes(query)||normInv(p.code).includes(query)).slice(0,30);
+    matches=catalog.filter(p=>normInv(p.name).includes(query)||normInv(p.code).includes(query)).slice(0,30);
   }
   if(matches.length===0){
     drop.innerHTML='<div class="inv-combo-empty">Sin resultados</div>';
@@ -2551,9 +2578,11 @@ function filterInvSuggestions(q){
     const cat=String(p.category||'').replace(/"/g,'&quot;');
     const unit=String(p.unit||'pz').replace(/"/g,'&quot;');
     const code=String(p.code||'').replace(/"/g,'&quot;');
-    const stock=p.stock!==undefined?` · ${p.stock} stock Bind`:'';
+    const isCrf=code.indexOf('CRF-')===0;
+    const stock=(p.stock!==undefined&&!isCrf)?` · ${p.stock} stock Bind`:'';
+    const badge=isCrf?'<span style="display:inline-block;background:var(--green-pale);color:var(--green-deep);font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:700;letter-spacing:.5px">CRF</span>':'';
     return `<div class="inv-combo-item" onclick="selectInvProduct('${code}','${name}','${cat}','${unit}')">
-      <div class="inv-combo-name">${p.name||''} <span class="inv-combo-code">(${p.code||'?'})</span></div>
+      <div class="inv-combo-name">${p.name||''} ${badge} <span class="inv-combo-code">(${p.code||'?'})</span></div>
       <div class="inv-combo-meta">${p.category||'—'} · ${p.unit||'pz'}${stock}</div>
     </div>`;
   }).join('');
