@@ -393,7 +393,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.14.1';
+var APP_VERSION='2.14.2';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -521,7 +521,7 @@ const setURL  = v  => setURLProd(v);
 // Router: qué endpoint usar para cada acción/tipo
 // prod: lotes, inocuidad, pedidos_produccion, inventario_hade (legacy)
 // log:  entregas, compras, preparado write-back, inventario_semanal
-const LOG_ACTIONS = new Set(['getEntregas','getCompras','updatePreparado','updateEntregado','saveInventarioSemanal','getInventarioSemanal','addVuelta','updateVuelta','toggleVueltaDone','deleteVuelta','getDiario','registrarKm','registrarGasolina','registrarCajaEntrada','registrarCajaSalida']);
+const LOG_ACTIONS = new Set(['getEntregas','getCompras','updatePreparado','updateEntregado','saveInventarioSemanal','getInventarioSemanal','addVuelta','updateVuelta','toggleVueltaDone','deleteVuelta','getDiario','registrarKm','registrarGasolina','registrarCajaEntrada','registrarCajaSalida','updateCompraQty']);
 function getURLFor(action){
   if(LOG_ACTIONS.has(action)) return getURLLog();
   return getURLProd();
@@ -3004,7 +3004,13 @@ function renderLogCompras(el){
       const codeEsc=itemCode.replace(/'/g,"\\'");
       const isBought=(item.comprado===true||item.comprado==='true')||isLogChecked('comp_'+comprasItemKey(item));
       const currentSup=effectiveSupplier(item);
-      const qty=item.qty||item.totalQty||'';
+      const qtyCalc=Number(item.qty)||Number(item.totalQty)||0;
+      const qtyOv=Number(item.qty_override)||0;
+      const hasOverride=qtyOv>0;
+      // effective_qty = MAX(override, calculado).
+      // Si llega un pedido nuevo que supera el override, el calculado gana.
+      const qtyEffective=Math.max(qtyOv,qtyCalc);
+      const calcSuperaOverride=hasOverride&&qtyCalc>qtyOv;
       const unit=item.unit||'';
       const name=item.name||item.producto||'';
       const nameEsc=String(name).replace(/'/g,"\\'");
@@ -3013,8 +3019,15 @@ function renderLogCompras(el){
       html+=`<div class="pedido-item ${isBought?'checked':''}" data-code="${itemCode.replace(/"/g,'&quot;')}" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px 14px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
           <div style="flex:1;min-width:0">
-            <div class="pedido-qty">${qty} ${unit}</div>
+            <div class="pedido-qty" ${!isBought?`onclick="openEditCompraQty('${codeEsc}',${qtyCalc},${qtyOv})" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px"`:'style="display:inline-flex;align-items:center;gap:6px"'}>
+              <span ${hasOverride?'style="color:var(--amber)"':''}>${qtyEffective} ${unit}</span>
+              ${!isBought?`<span style="font-size:11px;opacity:.6">✎</span>`:''}
+              ${hasOverride && !calcSuperaOverride?`<span style="font-size:9px;background:#fff3e0;color:#7a4a00;padding:1px 5px;border-radius:3px;font-weight:700">AJUSTADO</span>`:''}
+              ${calcSuperaOverride?`<span style="font-size:9px;background:var(--danger);color:#fff;padding:1px 5px;border-radius:3px;font-weight:700" title="Pedido nuevo superó tu ajuste de ${qtyOv}">PEDIDO ↑</span>`:''}
+            </div>
             <div class="pedido-name">${name}</div>
+            ${hasOverride && !calcSuperaOverride?`<div class="pedido-nota" style="color:var(--amber);font-size:11px">✎ Ajuste manual · calculado era ${qtyCalc}</div>`:''}
+            ${calcSuperaOverride?`<div class="pedido-nota" style="color:var(--danger);font-size:11px">⚠️ Tu ajuste era ${qtyOv}, pero llegó pedido nuevo. Comprar ${qtyCalc}.</div>`:''}
             ${cambiadoPorChofer?`<div class="pedido-nota" style="color:var(--amber)">✎ Cambiado: ${currentSup}</div>`:''}
             ${nota?`<div class="pedido-nota" style="color:var(--info);white-space:pre-wrap">📝 ${escAttr(nota)}</div>`:''}
           </div>
@@ -3033,6 +3046,85 @@ function renderLogCompras(el){
     html+=`</div></details>`;
   }
   document.getElementById('log-compras-list').innerHTML=html;
+}
+
+// ── Editar cantidad manual de una compra (v2.14.2) ─────────────────────────────
+// El chofer puede sobreescribir la qty calculada por el cron. El servidor guarda
+// qty_override y la PWA muestra MAX(override, qty_calc) — si llega pedido nuevo
+// que supera el override, el calc gana.
+function openEditCompraQty(code, qtyCalc, qtyOverride){
+  const items=getCompras();
+  const item=items.find(i=>String(i.code)===String(code));
+  if(!item){toast('Item no encontrado');return;}
+  const unit=item.unit||'';
+  const name=item.name||'';
+  const hasOverride=Number(qtyOverride)>0;
+  const valor=hasOverride?qtyOverride:'';
+  const body=document.getElementById('modal-body');
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">✎ Ajustar cantidad</div>
+    <div class="modal-sub">${name}</div>
+
+    <div style="background:var(--bg2);border-radius:var(--radius);padding:10px;margin:14px 0;font-size:13px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="color:var(--text2)">Calculado por pedidos:</span>
+        <span style="font-family:monospace;font-weight:700;color:var(--text)">${qtyCalc} ${unit}</span>
+      </div>
+    </div>
+
+    <div class="field"><label>Cantidad a comprar manual</label>
+      <input id="cq-input" type="number" inputmode="decimal" step="0.01" min="0" value="${valor}" placeholder="Ej. ${qtyCalc>0?Math.ceil(qtyCalc*2):'20'}" style="font-size:22px;text-align:center;font-family:monospace">
+      <div class="field-hint">Si dejas vacío o 0, vuelve a la cantidad calculada</div></div>
+
+    <div style="background:#fff3e0;border-left:3px solid var(--amber);border-radius:8px;padding:10px;margin:10px 0;font-size:11px;color:#7a4a00">
+      ℹ️ Si llega un pedido nuevo que supere tu ajuste, la lista se actualizará al pedido nuevo automáticamente.
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="cq-save-btn" onclick="guardarCompraQty('${String(code).replace(/'/g,"\\\\'")}')">✓ Guardar</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+  setTimeout(()=>{const i=document.getElementById('cq-input');if(i){i.focus();i.select();}},80);
+}
+
+let _savingCompraQty=false;
+async function guardarCompraQty(code){
+  if(_savingCompraQty)return;
+  const inp=document.getElementById('cq-input');
+  const raw=inp?inp.value:'';
+  const valor=(raw===''||raw===null)?0:Number(raw);
+  if(isNaN(valor)||valor<0){toast('Cantidad inválida');return;}
+  _savingCompraQty=true;
+  const btn=document.getElementById('cq-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+  const payload={
+    action:'updateCompraQty',
+    data:{
+      code:String(code),
+      qty_override:valor,
+      chofer:'',
+      timestamp:new Date().toISOString()
+    }
+  };
+  const res=await postToEndpoint('log',payload);
+  _savingCompraQty=false;
+  if(btn){btn.disabled=false;btn.textContent='✓ Guardar';}
+  if(!res||!res.ok){toast('Error: '+((res&&res.error)||'sin conexión'));return;}
+  // Actualizar localStorage optimistamente para feedback inmediato
+  const items=getCompras();
+  const idx=items.findIndex(i=>String(i.code)===String(code));
+  if(idx>=0){
+    items[idx].qty_override=valor>0?valor:'';
+    items[idx].qty_override_at=valor>0?new Date().toISOString():'';
+    setCompras(items);
+  }
+  closeModal();
+  toast(valor>0?`Ajustado a ${valor}`:'Override eliminado','ok');
+  render(page);
+  // Refresh real del servidor en background
+  fetchLogistica().catch(()=>{});
 }
 
 // ══ BOTTOM SHEET HELPERS ═══════════════════════════════════════════════════════
