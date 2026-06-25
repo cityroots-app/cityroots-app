@@ -393,7 +393,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.14.0';
+var APP_VERSION='2.14.1';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -4188,9 +4188,14 @@ function renderLogDiario(el){
     </div>
   </div>`;
 
-  // Refresca en background si la PWA está montada
+  // Refresca en background si la PWA está montada.
+  // CRÍTICO: solo re-renderear si seguimos en log_diario al regresar el fetch.
+  // Sin este guard, si el usuario navega a otro tab mientras la red responde,
+  // el render() lo arrastra de vuelta al Diario.
   if(urlOk){
-    fetchDiario().then(d=>{if(d)render('log_diario');}).catch(()=>{});
+    fetchDiario().then(d=>{
+      if(d && page==='log_diario') render('log_diario');
+    }).catch(()=>{});
   }
 }
 
