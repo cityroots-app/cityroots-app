@@ -349,6 +349,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
     <button class="nav-btn" id="nb-log-compras" onclick="goTo('log_compras')"><span class="ni">🛒</span>Compras</button>
     <button class="nav-btn" id="nb-log-entregas" onclick="goTo('log_entregas')"><span class="ni">🚚</span>Entregas</button>
     <button class="nav-btn" id="nb-log-vueltas" onclick="goTo('log_vueltas')"><span class="ni">📍</span>Vueltas</button>
+    <button class="nav-btn" id="nb-log-diario" onclick="goTo('log_diario')"><span class="ni">📋</span>Diario</button>
     <button class="nav-btn" id="nb-log-admin" onclick="goTo('log_admin')"><span class="ni">⚙️</span>Admin</button>
   </nav>
 </div>
@@ -392,7 +393,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.13.5';
+var APP_VERSION='2.14.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -520,7 +521,7 @@ const setURL  = v  => setURLProd(v);
 // Router: qué endpoint usar para cada acción/tipo
 // prod: lotes, inocuidad, pedidos_produccion, inventario_hade (legacy)
 // log:  entregas, compras, preparado write-back, inventario_semanal
-const LOG_ACTIONS = new Set(['getEntregas','getCompras','updatePreparado','updateEntregado','saveInventarioSemanal','getInventarioSemanal','addVuelta','updateVuelta','toggleVueltaDone','deleteVuelta']);
+const LOG_ACTIONS = new Set(['getEntregas','getCompras','updatePreparado','updateEntregado','saveInventarioSemanal','getInventarioSemanal','addVuelta','updateVuelta','toggleVueltaDone','deleteVuelta','getDiario','registrarKm','registrarGasolina','registrarCajaEntrada','registrarCajaSalida']);
 function getURLFor(action){
   if(LOG_ACTIONS.has(action)) return getURLLog();
   return getURLProd();
@@ -785,6 +786,7 @@ function render(p){
   else if(p==='log_compras')renderLogCompras(el);
   else if(p==='log_entregas')renderLogEntregas(el);
   else if(p==='log_vueltas')renderLogVueltas(el);
+  else if(p==='log_diario')renderLogDiario(el);
   else if(p==='log_admin')renderLogAdmin(el);
   else if(p==='notas')renderNotas(el);
   updatePendBadge();
@@ -4047,6 +4049,455 @@ function deleteNota(id){
   }
   render(page);
   toast('Nota borrada (solo local)','ok');
+}
+
+// ══ DIARIO DEL CHOFER (v2.14.0) ════════════════════════════════════════════════
+// Kilometraje al iniciar el día, cargas de gasolina, caja chica entradas/salidas.
+// Todos los registros van al Sheet de Logística (sheets _logistica_km_diario,
+// _logistica_gasolina, _logistica_caja_entradas, _logistica_caja_salidas).
+//
+// Estrategia de cache: localStorage 'crf_log_diario' guarda el último snapshot de
+// getDiario para mostrar saldo + último km sin esperar la red. Se refresca al abrir
+// el tab y después de cada registro.
+
+const _SK_DIARIO='crf_log_diario';
+const _SK_DIARIO_TS='crf_log_diario_ts';
+
+async function fetchDiario(){
+  const url=getURLLog();if(!url)return null;
+  try{
+    const res=await fetch(url+'?action=getDiario',{redirect:'follow'});
+    const json=await res.json();
+    if(json&&json.ok){
+      LS.set(_SK_DIARIO,json);
+      LS.set(_SK_DIARIO_TS,new Date().toISOString());
+      return json;
+    }
+  }catch(e){}
+  return LS.get(_SK_DIARIO);
+}
+
+function renderLogDiario(el){
+  const cached=LS.get(_SK_DIARIO)||{ultimoKm:null,ultimaGasolina:null,caja:{saldo:0,totalEntradas:0,totalSalidas:0,countEntradas:0,countSalidas:0},ultimosMovs:[]};
+  const ts=LS.get(_SK_DIARIO_TS)||'';
+  const fechaSync=ts?new Date(ts).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'sin sincronizar';
+  const urlOk=!!getURLLog();
+  const todayISO=new Date().toISOString().split('T')[0];
+  const now=new Date();
+  const horaHHMM=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+
+  // Estado del kilometraje de hoy
+  const km=cached.ultimoKm;
+  const kmHoy=km && String(km.fecha).split('T')[0]===todayISO;
+  const horaCutoff=9; // objetivo: registrar antes de las 9am
+  const esTarde=!kmHoy && now.getHours()>=horaCutoff;
+  let kmCardStatus='';
+  let kmCardBg='var(--bg2)';
+  if(kmHoy){
+    kmCardStatus=`<div style="color:var(--green);font-weight:600">✓ Registrado hoy ${km.hora||''} · <span style="font-family:monospace">${(km.km||0).toLocaleString('es-MX')}</span> km</div>`;
+    kmCardBg='var(--green-pale)';
+  } else if(esTarde){
+    kmCardStatus=`<div style="color:#a04500;font-weight:600">⚠️ Pendiente (objetivo: antes de las 9:00)</div>`;
+    kmCardBg='#fff3e0';
+  } else {
+    kmCardStatus=`<div style="color:var(--text2)">Pendiente — registra al iniciar el día</div>`;
+  }
+  const ultimoKmTxt=km?`Último: ${km.fecha||'?'} ${km.hora||''} · ${(km.km||0).toLocaleString('es-MX')} km`:'Sin registros previos';
+
+  // Estado de gasolina
+  const gas=cached.ultimaGasolina;
+  let gasCardStatus='';
+  if(gas){
+    const rend=gas.rendimiento_km_l?` · ${gas.rendimiento_km_l} km/L`:'';
+    gasCardStatus=`<div style="color:var(--text)">Última: ${gas.fecha||'?'} · ${gas.litros}L @ $${(gas.precio_litro||0).toFixed(2)} = <b>$${(gas.total||0).toFixed(2)}</b>${rend}</div>`;
+  } else {
+    gasCardStatus=`<div style="color:var(--text2)">Sin cargas registradas</div>`;
+  }
+
+  // Caja
+  const caja=cached.caja||{saldo:0,totalEntradas:0,totalSalidas:0,countEntradas:0,countSalidas:0};
+  const saldoColor=caja.saldo>=0?'var(--green-bright)':'var(--danger)';
+
+  el.innerHTML=`<div class="pad">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="sec" style="margin-bottom:0">📋 Diario del chofer</div>
+      <button class="btn btn-secondary" style="flex:0;padding:6px 10px;font-size:11px" onclick="fetchDiario().then(()=>render('log_diario')).then(()=>toast('Actualizado ✓','ok'))">↻ Sync</button>
+    </div>
+    <div class="dateline" style="font-size:11px;color:var(--text2);margin-bottom:14px">Último sync: ${fechaSync} · Hora ahora: ${horaHHMM}</div>
+    ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin.</div>`:''}
+
+    <!-- Card 1: KILOMETRAJE -->
+    <div style="background:${kmCardBg};border-radius:var(--radius);padding:14px;margin-bottom:12px;border:1px solid var(--bg3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-weight:700;font-size:15px;color:var(--text)">🚗 Kilometraje</div>
+      </div>
+      ${kmCardStatus}
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">${ultimoKmTxt}</div>
+      ${!kmHoy?`<button class="btn btn-primary" style="margin-top:10px;width:100%" onclick="openRegistrarKm()" ${urlOk?'':'disabled'}>+ Registrar kilómetros de hoy</button>`:''}
+    </div>
+
+    <!-- Card 2: GASOLINA -->
+    <div style="background:var(--bg2);border-radius:var(--radius);padding:14px;margin-bottom:12px;border:1px solid var(--bg3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-weight:700;font-size:15px;color:var(--text)">⛽ Gasolina</div>
+      </div>
+      ${gasCardStatus}
+      <button class="btn btn-primary" style="margin-top:10px;width:100%" onclick="openRegistrarGasolina()" ${urlOk?'':'disabled'}>+ Registrar carga</button>
+    </div>
+
+    <!-- Card 3: CAJA -->
+    <div style="background:var(--bg2);border-radius:var(--radius);padding:14px;margin-bottom:12px;border:1px solid var(--bg3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-weight:700;font-size:15px;color:var(--text)">💵 Caja chica</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;text-align:center">
+        <div style="background:var(--bg1);border-radius:8px;padding:8px">
+          <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">SALDO</div>
+          <div style="font-size:20px;font-weight:800;color:${saldoColor};font-family:monospace">$${caja.saldo.toLocaleString('es-MX')}</div>
+        </div>
+        <div style="background:var(--bg1);border-radius:8px;padding:8px">
+          <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Entradas</div>
+          <div style="font-size:14px;font-weight:700;color:var(--green-deep);font-family:monospace">$${caja.totalEntradas.toLocaleString('es-MX')}</div>
+          <div style="font-size:9px;color:var(--text3)">${caja.countEntradas} mov.</div>
+        </div>
+        <div style="background:var(--bg1);border-radius:8px;padding:8px">
+          <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Salidas</div>
+          <div style="font-size:14px;font-weight:700;color:var(--danger);font-family:monospace">$${caja.totalSalidas.toLocaleString('es-MX')}</div>
+          <div style="font-size:9px;color:var(--text3)">${caja.countSalidas} mov.</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+        <button class="btn btn-secondary" style="padding:9px 8px;font-size:13px" onclick="openRegistrarCajaEntrada()" ${urlOk?'':'disabled'}>+ Entrada</button>
+        <button class="btn btn-amber" style="padding:9px 8px;font-size:13px" onclick="openRegistrarCajaSalida()" ${urlOk?'':'disabled'}>+ Salida</button>
+      </div>
+      <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Últimos movimientos</div>
+      ${cached.ultimosMovs && cached.ultimosMovs.length>0?cached.ultimosMovs.map(m=>{
+        const signo=m.tipo==='entrada'?'+':'−';
+        const color=m.tipo==='entrada'?'var(--green-deep)':'var(--danger)';
+        const isSinComp=String(m.tipo_comprobante||'').toLowerCase()==='sin_comprobante';
+        const badgeSinComp=isSinComp?`<span style="display:inline-block;background:#fff3e0;color:#a04500;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:700">SIN COMP</span>`:'';
+        return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 4px;border-bottom:1px solid var(--bg3);font-size:12px">
+          <div style="flex:1;min-width:0;margin-right:8px">
+            <div style="color:var(--text);font-weight:600">${m.detalle||''}${badgeSinComp}</div>
+            <div style="font-size:10px;color:var(--text3)">${m.fecha||''} ${m.hora||''}</div>
+            ${isSinComp&&m.motivo_sin_comprobante?`<div style="font-size:10px;color:#a04500;font-style:italic">Motivo: ${m.motivo_sin_comprobante}</div>`:''}
+          </div>
+          <div style="font-family:monospace;font-weight:700;color:${color};white-space:nowrap">${signo}$${Math.abs(m.monto||0).toLocaleString('es-MX')}</div>
+        </div>`;
+      }).join(''):'<div style="color:var(--text3);font-size:12px;padding:8px 0;text-align:center">Sin movimientos aún</div>'}
+    </div>
+  </div>`;
+
+  // Refresca en background si la PWA está montada
+  if(urlOk){
+    fetchDiario().then(d=>{if(d)render('log_diario');}).catch(()=>{});
+  }
+}
+
+// ── Modal: Registrar kilometraje ───────────────────────────────────────────────
+function openRegistrarKm(){
+  const cached=LS.get(_SK_DIARIO)||{};
+  const ultimoKm=cached.ultimoKm?.km||0;
+  const body=document.getElementById('modal-body');
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">🚗 Kilometraje al iniciar</div>
+    <div class="modal-sub">Lectura del odómetro al arrancar el día (objetivo: antes de las 9am)</div>
+    ${ultimoKm>0?`<div style="background:var(--bg2);border-radius:var(--radius);padding:10px;margin-bottom:14px;font-size:13px">
+      <div style="color:var(--text2);font-size:11px">Último registro</div>
+      <div style="font-family:monospace;font-weight:700;font-size:16px;color:var(--text)">${ultimoKm.toLocaleString('es-MX')} km</div>
+    </div>`:''}
+    <div class="field"><label>Kilómetros actuales <span style="color:var(--danger)">*</span></label>
+      <input id="km-input" type="number" inputmode="numeric" min="${ultimoKm}" placeholder="Ej. ${(ultimoKm+50).toLocaleString('es-MX')}" style="font-size:18px;text-align:center">
+      <div class="field-hint">Debe ser mayor o igual al último registrado</div></div>
+    <div id="km-warning" style="display:none;background:#fff3e0;border-left:3px solid var(--amber);border-radius:var(--radius);padding:10px;margin:10px 0;font-size:12px;color:#7a4a00"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="km-save-btn" onclick="guardarKm()">✓ Guardar</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+  setTimeout(()=>{document.getElementById('km-input')?.focus();},80);
+  // Live validation
+  const inp=document.getElementById('km-input');
+  if(inp){
+    inp.addEventListener('input',()=>{
+      const v=Number(inp.value);
+      const warn=document.getElementById('km-warning');
+      if(!warn)return;
+      if(v && ultimoKm && v<ultimoKm){
+        warn.style.display='block';
+        warn.innerHTML='⚠️ <b>'+v.toLocaleString('es-MX')+'</b> es menor que el último registrado ('+ultimoKm.toLocaleString('es-MX')+' km). El odómetro no retrocede.';
+      } else if(v && ultimoKm && (v-ultimoKm)>300){
+        warn.style.display='block';
+        warn.innerHTML='ℹ️ Diste <b>'+(v-ultimoKm).toLocaleString('es-MX')+' km</b> desde el último registro. Verifica el número.';
+      } else {
+        warn.style.display='none';
+      }
+    });
+  }
+}
+
+let _savingKm=false;
+async function guardarKm(){
+  if(_savingKm)return;
+  const km=Number(document.getElementById('km-input')?.value);
+  if(!km||km<=0){toast('Captura los kilómetros');return;}
+  const cached=LS.get(_SK_DIARIO)||{};
+  const ultimoKm=cached.ultimoKm?.km||0;
+  if(ultimoKm && km<ultimoKm){
+    toast('KM '+km+' es menor al último ('+ultimoKm+'). Odómetro no retrocede.');
+    return;
+  }
+  _savingKm=true;
+  const btn=document.getElementById('km-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+  const now=new Date();
+  const payload={
+    action:'registrarKm',
+    data:{
+      fecha:now.toISOString().split('T')[0],
+      hora:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
+      km_odometro:km,
+      chofer:'',
+      timestamp:now.toISOString()
+    }
+  };
+  const res=await postToEndpoint('log',payload);
+  _savingKm=false;
+  if(btn){btn.disabled=false;btn.textContent='✓ Guardar';}
+  if(!res||!res.ok){toast('Error: '+((res&&res.error)||'sin conexión'));return;}
+  closeModal();
+  if(res.warning){toast(res.warning,'warn');} else {toast('Kilometraje guardado ✓','ok');}
+  await fetchDiario();
+  render('log_diario');
+}
+
+// ── Modal: Registrar carga de gasolina ─────────────────────────────────────────
+function openRegistrarGasolina(){
+  const cached=LS.get(_SK_DIARIO)||{};
+  const ultimoKm=cached.ultimoKm?.km||0;
+  const body=document.getElementById('modal-body');
+  const today=new Date().toISOString().split('T')[0];
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">⛽ Carga de gasolina</div>
+    <div class="modal-sub">Captura litros y precio por litro — el total se calcula automático</div>
+    <div class="field"><label>Fecha</label>
+      <input id="gas-fecha" type="date" value="${today}" max="${today}"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="field"><label>Litros <span style="color:var(--danger)">*</span></label>
+        <input id="gas-litros" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Ej. 40.5" oninput="calcGasTotal()"></div>
+      <div class="field"><label>$ por litro <span style="color:var(--danger)">*</span></label>
+        <input id="gas-precio" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Ej. 24.50" oninput="calcGasTotal()"></div>
+    </div>
+    <div style="background:var(--green-pale);border-radius:var(--radius);padding:10px;margin:10px 0;text-align:center">
+      <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Total</div>
+      <div style="font-size:22px;font-weight:800;color:var(--green-deep);font-family:monospace" id="gas-total">$0.00</div>
+    </div>
+    <div class="field"><label>Kilómetros del odómetro</label>
+      <input id="gas-km" type="number" inputmode="numeric" min="${ultimoKm||0}" placeholder="${ultimoKm?ultimoKm.toLocaleString('es-MX'):'Lectura actual'}">
+      <div class="field-hint">Para calcular rendimiento km/L</div></div>
+    <div class="field"><label>Estación / Lugar</label>
+      <input id="gas-estacion" type="text" placeholder="Ej. BP López Mateos"></div>
+    <div class="field"><label>Notas</label>
+      <textarea id="gas-notas" placeholder="Opcional..."></textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="gas-save-btn" onclick="guardarGasolina()">✓ Guardar</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+  setTimeout(()=>{document.getElementById('gas-litros')?.focus();},80);
+}
+
+function calcGasTotal(){
+  const litros=Number(document.getElementById('gas-litros')?.value)||0;
+  const precio=Number(document.getElementById('gas-precio')?.value)||0;
+  const tot=document.getElementById('gas-total');
+  if(tot)tot.textContent='$'+(litros*precio).toFixed(2);
+}
+
+let _savingGas=false;
+async function guardarGasolina(){
+  if(_savingGas)return;
+  const litros=Number(document.getElementById('gas-litros')?.value);
+  const precio=Number(document.getElementById('gas-precio')?.value);
+  const fecha=document.getElementById('gas-fecha')?.value;
+  if(!litros||litros<=0||!precio||precio<=0){toast('Captura litros y precio');return;}
+  if(!fecha){toast('Captura fecha');return;}
+  _savingGas=true;
+  const btn=document.getElementById('gas-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+  const now=new Date();
+  const payload={
+    action:'registrarGasolina',
+    data:{
+      fecha:fecha,
+      hora:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
+      litros:litros,
+      precio_litro:precio,
+      total_calc:Math.round(litros*precio*100)/100,
+      km_odometro:Number(document.getElementById('gas-km')?.value)||0,
+      estacion:document.getElementById('gas-estacion')?.value||'',
+      notas:document.getElementById('gas-notas')?.value||'',
+      chofer:'',
+      timestamp:now.toISOString()
+    }
+  };
+  const res=await postToEndpoint('log',payload);
+  _savingGas=false;
+  if(btn){btn.disabled=false;btn.textContent='✓ Guardar';}
+  if(!res||!res.ok){toast('Error: '+((res&&res.error)||'sin conexión'));return;}
+  closeModal();
+  toast('Carga guardada ✓','ok');
+  await fetchDiario();
+  render('log_diario');
+}
+
+// ── Modal: Registrar entrada de caja chica ─────────────────────────────────────
+function openRegistrarCajaEntrada(){
+  const body=document.getElementById('modal-body');
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">💵 Entrada de caja chica</div>
+    <div class="modal-sub">Dinero recibido para gastos imprevistos</div>
+    <div class="field"><label>Monto recibido <span style="color:var(--danger)">*</span></label>
+      <input id="cje-monto" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Ej. 1000" style="font-size:20px;text-align:center"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px">
+      <button type="button" class="btn btn-secondary" style="padding:8px;font-size:12px" onclick="document.getElementById('cje-monto').value=500;">$500</button>
+      <button type="button" class="btn btn-secondary" style="padding:8px;font-size:12px" onclick="document.getElementById('cje-monto').value=1000;">$1,000</button>
+      <button type="button" class="btn btn-secondary" style="padding:8px;font-size:12px" onclick="document.getElementById('cje-monto').value=2000;">$2,000</button>
+    </div>
+    <div class="field"><label>Entregado por <span style="color:var(--danger)">*</span></label>
+      <select id="cje-entregado">
+        <option value="">Seleccionar...</option>
+        <option>José Carlos</option>
+        <option>Admin</option>
+        <option>Otro</option>
+      </select></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="cje-save-btn" onclick="guardarCajaEntrada()">✓ Guardar</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+  setTimeout(()=>{document.getElementById('cje-monto')?.focus();},80);
+}
+
+let _savingCajaEnt=false;
+async function guardarCajaEntrada(){
+  if(_savingCajaEnt)return;
+  const monto=Number(document.getElementById('cje-monto')?.value);
+  const entregado=document.getElementById('cje-entregado')?.value;
+  if(!monto||monto<=0){toast('Captura el monto');return;}
+  if(!entregado){toast('Selecciona quién lo entregó');return;}
+  _savingCajaEnt=true;
+  const btn=document.getElementById('cje-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+  const now=new Date();
+  const payload={
+    action:'registrarCajaEntrada',
+    data:{
+      fecha:now.toISOString().split('T')[0],
+      hora:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
+      monto:monto,
+      entregado_por:entregado,
+      chofer:'',
+      timestamp:now.toISOString()
+    }
+  };
+  const res=await postToEndpoint('log',payload);
+  _savingCajaEnt=false;
+  if(btn){btn.disabled=false;btn.textContent='✓ Guardar';}
+  if(!res||!res.ok){toast('Error: '+((res&&res.error)||'sin conexión'));return;}
+  closeModal();
+  toast('Entrada guardada ✓','ok');
+  await fetchDiario();
+  render('log_diario');
+}
+
+// ── Modal: Registrar salida de caja ────────────────────────────────────────────
+function openRegistrarCajaSalida(){
+  const body=document.getElementById('modal-body');
+  const today=new Date().toISOString().split('T')[0];
+  body.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">💸 Salida de caja</div>
+    <div class="modal-sub">Pago hecho con efectivo</div>
+    <div class="field"><label>Total $ <span style="color:var(--danger)">*</span></label>
+      <input id="cjs-total" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Ej. 80" style="font-size:20px;text-align:center"></div>
+    <div class="field"><label>Fecha del gasto</label>
+      <input id="cjs-fecha" type="date" value="${today}" max="${today}"></div>
+    <div class="field"><label>Proveedor <span style="color:var(--danger)">*</span></label>
+      <input id="cjs-proveedor" type="text" placeholder="Ej. Estacionamiento Centro"></div>
+    <div class="field"><label>Concepto / descripción <span style="color:var(--danger)">*</span></label>
+      <textarea id="cjs-concepto" placeholder="Ej. Estacionamiento para entrega cliente Y" rows="2"></textarea>
+      <div class="field-hint">Sé claro: qué pagaste y para qué</div></div>
+    <div class="field"><label>Tipo de comprobante <span style="color:var(--danger)">*</span></label>
+      <select id="cjs-tipo" onchange="toggleMotivoSinComp()">
+        <option value="">Seleccionar...</option>
+        <option value="factura">Factura</option>
+        <option value="remision">Remisión</option>
+        <option value="ticket">Ticket</option>
+        <option value="sin_comprobante">SIN comprobante</option>
+      </select></div>
+    <div class="field" id="cjs-motivo-wrap" style="display:none">
+      <label>Motivo de no tener comprobante <span style="color:var(--danger)">*</span></label>
+      <textarea id="cjs-motivo" placeholder="Ej. No había recibos en el lugar..." rows="2"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-amber" id="cjs-save-btn" onclick="guardarCajaSalida()">✓ Guardar</button>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+  setTimeout(()=>{document.getElementById('cjs-total')?.focus();},80);
+}
+
+function toggleMotivoSinComp(){
+  const tipo=document.getElementById('cjs-tipo')?.value;
+  const wrap=document.getElementById('cjs-motivo-wrap');
+  if(wrap)wrap.style.display=(tipo==='sin_comprobante')?'block':'none';
+}
+
+let _savingCajaSal=false;
+async function guardarCajaSalida(){
+  if(_savingCajaSal)return;
+  const total=Number(document.getElementById('cjs-total')?.value);
+  const fecha=document.getElementById('cjs-fecha')?.value;
+  const proveedor=(document.getElementById('cjs-proveedor')?.value||'').trim();
+  const concepto=(document.getElementById('cjs-concepto')?.value||'').trim();
+  const tipo=document.getElementById('cjs-tipo')?.value;
+  const motivo=(document.getElementById('cjs-motivo')?.value||'').trim();
+  if(!total||total<=0){toast('Captura el total');return;}
+  if(!fecha){toast('Captura la fecha');return;}
+  if(!proveedor){toast('Captura el proveedor');return;}
+  if(!concepto){toast('Captura el concepto del gasto');return;}
+  if(!tipo){toast('Selecciona el tipo de comprobante');return;}
+  if(tipo==='sin_comprobante' && !motivo){toast('Escribe el motivo de no tener comprobante');return;}
+  _savingCajaSal=true;
+  const btn=document.getElementById('cjs-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+  const now=new Date();
+  const payload={
+    action:'registrarCajaSalida',
+    data:{
+      fecha:fecha,
+      hora:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
+      total:total,
+      proveedor:proveedor,
+      concepto:concepto,
+      tipo_comprobante:tipo,
+      motivo_sin_comprobante:motivo,
+      chofer:'',
+      timestamp:now.toISOString()
+    }
+  };
+  const res=await postToEndpoint('log',payload);
+  _savingCajaSal=false;
+  if(btn){btn.disabled=false;btn.textContent='✓ Guardar';}
+  if(!res||!res.ok){toast('Error: '+((res&&res.error)||'sin conexión'));return;}
+  closeModal();
+  toast('Salida guardada ✓','ok');
+  await fetchDiario();
+  render('log_diario');
 }
 
 function renderLogAdmin(el){
