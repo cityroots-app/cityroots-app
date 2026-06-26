@@ -479,6 +479,27 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .btn-ver{background:#0f0
 body:is(.role-logistica,.role-almacen,.role-produccion) .sc-accion svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 body:is(.role-logistica,.role-almacen,.role-produccion) .lote-badge{font-family:'Outfit',sans-serif!important;background:rgba(168,213,106,.15)!important;color:var(--hade-green)!important;border:1px solid rgba(168,213,106,.3)!important}
 
+/* Modal de detalle del lote */
+.lote-detalle-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.lote-detalle-card{background:var(--bg2);border-radius:8px;padding:8px 10px}
+.lote-detalle-label{font-size:10px;color:var(--text3);margin-bottom:2px}
+.lote-detalle-val{font-size:13px;font-weight:600;color:var(--text)}
+.lote-detalle-card.hl .lote-detalle-val{color:var(--ok)}
+.lote-detalle-coment{background:var(--bg2);border-radius:8px;padding:10px;font-size:12px;color:var(--text2);margin-bottom:12px}
+.lote-modal-title{display:flex;align-items:center;gap:8px}
+.lote-modal-title svg{width:22px;height:22px;stroke:var(--hade-green);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.lote-detalle-btns .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.lote-detalle-btns .btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-detalle-card{background:#161616!important;border:1px solid rgba(168,213,106,.18)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-detalle-card.hl{background:rgba(168,213,106,.10)!important;border:1px solid var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-detalle-label{color:rgba(255,255,255,.5)!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-detalle-val{color:#fff!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-detalle-card.hl .lote-detalle-val{color:var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-detalle-coment{background:#161616!important;border:1px solid rgba(168,213,106,.18)!important;color:rgba(255,255,255,.75)!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-detalle-coment b{color:#fff!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .modal-ov{background:rgba(0,0,0,.7)!important}
+
 /* Esferas de pendientes en bottom nav (badge) */
 body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:var(--hade-green)!important;border-color:#0a0a0a!important;box-shadow:0 0 4px rgba(168,213,106,.55)!important}
 
@@ -628,7 +649,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.20.2';
+var APP_VERSION='2.20.3';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1907,13 +1928,17 @@ function verDetalle(id){
   const sid=String(id);
   const l=getLotes().find(x=>String(x.id)===sid);if(!l)return;
   const body=document.getElementById('modal-body');
-  const varIcon={'Chícharo':'🫛','Chícharo CT (fresco)':'🫛','Chícharo CT (vivo)':'🫛','Betabel':'🟣','Rábano':'🔴','Cilantro':'🌿','Girasol':'🌻','Spicy Mix':'🌶️'}[l.variedad]||'🌱';
+  const SVG_SPROUT='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>';
+  const SVG_WHEAT='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z"/><path d="M11.47 17.47 13 19l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L5 19l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/><path d="M15.47 13.47 17 15l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L9 15l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/><path d="M19.47 9.47 21 11l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L13 11l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/></svg>';
+  const SVG_SCISSORS='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>';
+  const SVG_PEN='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+  const SVG_TRASH='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>';
   const rendimiento=l.cosecha_real&&l.cosecha_estimada?Math.round((l.cosecha_real/l.cosecha_estimada)*100):null;
   body.innerHTML=`
     <div class="modal-handle"></div>
-    <div class="modal-title">${varIcon} ${l.variedad}</div>
+    <div class="modal-title lote-modal-title">${SVG_SPROUT} ${l.variedad}</div>
     <div class="modal-sub" style="font-family:monospace">${l.lote} · ${l.tipo_variedad||l.tipo||'Fresco'}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <div class="lote-detalle-grid">
       ${[
         ['Charolas planificadas',l.charolas_planificadas],
         ['Charolas confirmadas',l.charolas_confirmadas||'—'],
@@ -1929,18 +1954,17 @@ function verDetalle(id){
         l.promedio_cosecha?['Promedio/charola',`${l.promedio_cosecha} g`]:null,
         l.contenedores_50g?['Contenedores 50g',l.contenedores_50g]:null,
         rendimiento?['Rendimiento',`${rendimiento}%`]:null,
-      ].filter(Boolean).map(([label,val],i)=>`
-        <div style="background:${i%2===0?'var(--bg2)':'var(--bg3)'};border-radius:8px;padding:8px 10px">
-          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">${label}</div>
-          <div style="font-size:13px;font-weight:600;color:${label.includes('REAL')||label.includes('Rendimiento')?'var(--ok)':'var(--text)'}">${val}</div>
-        </div>`).join('')}
+      ].filter(Boolean).map(([label,val])=>{
+        const hl=label.includes('REAL')||label.includes('Rendimiento')?' hl':'';
+        return `<div class="lote-detalle-card${hl}"><div class="lote-detalle-label">${label}</div><div class="lote-detalle-val">${val}</div></div>`;
+      }).join('')}
     </div>
-    ${l.comentarios?`<div style="background:var(--bg2);border-radius:8px;padding:10px;font-size:12px;color:var(--text2);margin-bottom:12px"><b>Comentarios:</b> ${l.comentarios}</div>`:''}
-    <div class="btn-row">
-      ${!l.sembrado_confirmado?`<button class="btn btn-amber" onclick="closeModal();confirmarSiembra('${l.id}')">🌾 Confirmar siembra</button>`:''}
-      ${l.sembrado_confirmado&&!l.cosecha_real?`<button class="btn btn-primary" style="background:var(--info)" onclick="closeModal();registrarCosecha('${l.id}')">✂️ Registrar cosecha</button>`:''}
-      <button class="btn btn-secondary" onclick="closeModal();editarLote('${l.id}')">✏️ Editar</button>
-      <button class="btn btn-danger" onclick="eliminarLote('${l.id}')">🗑️ Eliminar lote</button>
+    ${l.comentarios?`<div class="lote-detalle-coment"><b>Comentarios:</b> ${l.comentarios}</div>`:''}
+    <div class="btn-row lote-detalle-btns">
+      ${!l.sembrado_confirmado?`<button class="btn btn-sembrar" onclick="closeModal();confirmarSiembra('${l.id}')">${SVG_WHEAT} Confirmar siembra</button>`:''}
+      ${l.sembrado_confirmado&&!l.cosecha_real?`<button class="btn btn-cosechar" onclick="closeModal();registrarCosecha('${l.id}')">${SVG_SCISSORS} Registrar cosecha</button>`:''}
+      <button class="btn btn-secondary" onclick="closeModal();editarLote('${l.id}')">${SVG_PEN} Editar</button>
+      <button class="btn btn-danger" onclick="eliminarLote('${l.id}')">${SVG_TRASH} Eliminar lote</button>
       <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
     </div>`;
   document.getElementById('modal-ov').style.display='flex';
