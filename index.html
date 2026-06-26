@@ -338,9 +338,10 @@ body.role-logistica html,body.role-logistica{color:#fff}
 body.role-logistica .content{background:#000!important;font-family:'Outfit',sans-serif}
 
 /* Topbar — dark con acento verde lima */
-body.role-logistica .topbar{background:#0a0a0a!important;border-bottom:1px solid rgba(168,213,106,.18)!important;padding:10px 16px!important;align-items:center}
-body.role-logistica .topbar-hade-logo{height:38px;width:auto;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 1px 4px rgba(0,0,0,.5))}
-body.role-logistica .topbar-sub{color:var(--hade-green)!important;font-family:'Outfit',sans-serif!important;letter-spacing:.12em!important;font-size:10px;font-weight:400;text-transform:uppercase;flex:1;text-align:left;margin-left:4px}
+body.role-logistica .topbar{background:#0a0a0a!important;border-bottom:1px solid rgba(168,213,106,.18)!important;padding:12px 16px!important;align-items:center}
+body.role-logistica .topbar-brand{display:flex;flex-direction:column;align-items:flex-start;flex:1;gap:2px}
+body.role-logistica .topbar-wordmark{font-family:'Outfit',sans-serif!important;color:#fff!important;font-size:14px;font-weight:600;letter-spacing:.24em;line-height:1;text-transform:uppercase}
+body.role-logistica .topbar-sub{color:var(--hade-green)!important;font-family:'Outfit',sans-serif!important;letter-spacing:.12em!important;font-size:10px;font-weight:400;text-transform:uppercase;line-height:1}
 body.role-logistica .sync-dot{background:#333}
 body.role-logistica .sync-dot.sync-ok{background:var(--hade-green)}
 body.role-logistica .sync-lbl{color:rgba(168,213,106,.7)!important;font-family:'Outfit',sans-serif!important;font-size:10px}
@@ -433,8 +434,10 @@ body.role-logistica .nav-badge{background:var(--hade-green)!important;border-col
 <body>
 <div id="app">
   <div class="topbar">
-    <img src="img/hade-topbar.png" class="topbar-hade-logo" alt="HADE">
-    <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.18.x</div>
+    <div class="topbar-brand">
+      <div class="topbar-wordmark">THE HARVEST DEALERS</div>
+      <div class="topbar-sub" id="topbar-version">Sistema de Registros</div>
+    </div>
     <div class="sync-row" id="role-switch" onclick="changeRole()" style="cursor:pointer;margin-right:4px;display:none">
       <span style="font-size:11px;color:rgba(168,213,162,0.8)">🔄</span>
       <span class="sync-lbl" id="role-lbl" style="color:rgba(168,213,162,0.8)">Cambiar</span>
@@ -545,7 +548,7 @@ body.role-logistica .nav-badge{background:var(--hade-green)!important;border-col
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.18.2';
+var APP_VERSION='2.18.3';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
