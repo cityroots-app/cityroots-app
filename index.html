@@ -81,17 +81,13 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .role-screen p{font-family:'Outfit',sans-serif;font-size:11px;font-weight:300;color:rgba(168,213,162,.6);text-align:center;margin:2px 0 16px;letter-spacing:.14em;text-transform:lowercase}
 /* Color de marca del logo HADE (verde lima) */
 :root{--hade-green:#a8d56a}
-.role-card{width:100%;max-width:330px;padding:14px 16px;border-radius:14px;border:1px solid rgba(168,213,106,.45);background:#1a1a1a;cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:13px}
-.role-card:hover,.role-card:active{border-color:var(--hade-green);background:#222;transform:translateY(-1px);box-shadow:0 6px 18px rgba(168,213,106,.12)}
-.role-card .role-icon{width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--hade-green);background:rgba(168,213,106,.08);border-radius:10px;border:1px solid rgba(168,213,106,.18)}
-.role-card .role-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.role-card .role-info h3{font-family:'Outfit',sans-serif;font-size:15px;font-weight:500;color:#fff;margin-bottom:1px;letter-spacing:.01em}
-.role-card .role-info span{font-family:'Outfit',sans-serif;font-size:10.5px;font-weight:300;color:rgba(255,255,255,.55);line-height:1.4;letter-spacing:.01em}
-.role-card{width:100%;max-width:320px;padding:24px 20px;border-radius:var(--radius-lg);border:2px solid var(--border);background:var(--bg2);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px}
-.role-card:hover,.role-card:active{border-color:var(--green-bright);background:var(--ok-bg);transform:scale(1.02)}
-.role-card .role-icon{font-size:36px;flex-shrink:0}
-.role-card .role-info h3{font-size:16px;font-weight:600;color:var(--text);margin-bottom:3px}
-.role-card .role-info span{font-size:12px;color:var(--text2)}
+/* Cards definidas con !important para evitar overrides por dark mode media queries */
+.role-card{width:100%!important;max-width:290px!important;padding:11px 14px!important;border-radius:12px!important;border:1px solid rgba(168,213,106,.55)!important;background:#111!important;cursor:pointer!important;transition:all .22s cubic-bezier(.4,0,.2,1)!important;display:flex!important;align-items:center!important;gap:11px!important;transform:none}
+.role-card:hover,.role-card:active{border-color:var(--hade-green)!important;background:#191919!important;transform:translateY(-1px)!important;box-shadow:0 6px 18px rgba(168,213,106,.15)!important}
+.role-card .role-icon{width:30px!important;height:30px!important;flex-shrink:0!important;display:flex!important;align-items:center!important;justify-content:center!important;color:var(--hade-green)!important;background:rgba(168,213,106,.08)!important;border-radius:8px!important;border:1px solid rgba(168,213,106,.22)!important;font-size:inherit!important}
+.role-card .role-icon svg{width:16px!important;height:16px!important;stroke:currentColor!important;stroke-width:1.7!important;fill:none!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+.role-card .role-info h3{font-family:'Outfit',sans-serif!important;font-size:13.5px!important;font-weight:500!important;color:#fff!important;margin-bottom:1px!important;letter-spacing:.01em!important}
+.role-card .role-info span{font-family:'Outfit',sans-serif!important;font-size:10px!important;font-weight:300!important;color:rgba(255,255,255,.52)!important;line-height:1.4!important;letter-spacing:.01em!important}
 /* Esferas de pendientes en el role-card (v2.16.6 — tamaño reducido) */
 .role-card{position:relative}
 .role-dots{position:absolute;bottom:8px;right:12px;display:flex;align-items:center;gap:4px}
@@ -432,7 +428,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.16.9';
+var APP_VERSION='2.17.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
