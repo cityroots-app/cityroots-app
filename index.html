@@ -333,101 +333,101 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
    Solo aplica cuando body tiene la clase role-logistica.
    Producción y Almacén conservan su look original hasta que se rediseñen.
    ════════════════════════════════════════════════════════════════════════════ */
-body.role-logistica{background:#000!important}
-body.role-logistica html,body.role-logistica{color:#fff}
-body.role-logistica .content{background:#000!important;font-family:'Outfit',sans-serif}
+body:is(.role-logistica,.role-almacen){background:#000!important}
+body:is(.role-logistica,.role-almacen) html,body:is(.role-logistica,.role-almacen){color:#fff}
+body:is(.role-logistica,.role-almacen) .content{background:#000!important;font-family:'Outfit',sans-serif}
 
 /* Topbar — dark con acento verde lima */
-body.role-logistica .topbar{background:#0a0a0a!important;border-bottom:1px solid rgba(168,213,106,.18)!important;padding:12px 16px!important;align-items:center}
-body.role-logistica .topbar-brand{display:flex;flex-direction:column;align-items:flex-start;flex:1;min-width:0;gap:3px;overflow:hidden}
-body.role-logistica .topbar-wordmark{font-family:'Outfit',sans-serif!important;color:#fff!important;font-size:12px;font-weight:600;letter-spacing:.18em;line-height:1;text-transform:uppercase;white-space:nowrap}
-body.role-logistica .topbar-sub{color:var(--hade-green)!important;font-family:'Outfit',sans-serif!important;letter-spacing:.1em!important;font-size:10px;font-weight:400;text-transform:uppercase;line-height:1;white-space:nowrap}
-body.role-logistica .sync-dot{background:#333}
-body.role-logistica .sync-dot.sync-ok{background:var(--hade-green)}
-body.role-logistica .sync-lbl{color:rgba(168,213,106,.7)!important;font-family:'Outfit',sans-serif!important;font-size:10px}
+body:is(.role-logistica,.role-almacen) .topbar{background:#0a0a0a!important;border-bottom:1px solid rgba(168,213,106,.18)!important;padding:12px 16px!important;align-items:center}
+body:is(.role-logistica,.role-almacen) .topbar-brand{display:flex;flex-direction:column;align-items:flex-start;flex:1;min-width:0;gap:3px;overflow:hidden}
+body:is(.role-logistica,.role-almacen) .topbar-wordmark{font-family:'Outfit',sans-serif!important;color:#fff!important;font-size:12px;font-weight:600;letter-spacing:.18em;line-height:1;text-transform:uppercase;white-space:nowrap}
+body:is(.role-logistica,.role-almacen) .topbar-sub{color:var(--hade-green)!important;font-family:'Outfit',sans-serif!important;letter-spacing:.1em!important;font-size:10px;font-weight:400;text-transform:uppercase;line-height:1;white-space:nowrap}
+body:is(.role-logistica,.role-almacen) .sync-dot{background:#333}
+body:is(.role-logistica,.role-almacen) .sync-dot.sync-ok{background:var(--hade-green)}
+body:is(.role-logistica,.role-almacen) .sync-lbl{color:rgba(168,213,106,.7)!important;font-family:'Outfit',sans-serif!important;font-size:10px}
 
 /* Bottom nav — dark con active verde lima */
-body.role-logistica .nav{background:rgba(10,10,10,.96)!important;border-top:1px solid rgba(168,213,106,.18)!important;backdrop-filter:blur(16px)}
-body.role-logistica .nav-btn{color:rgba(255,255,255,.35)!important;font-family:'Outfit',sans-serif!important;font-weight:400!important;letter-spacing:.04em}
-body.role-logistica .nav-btn.active{color:var(--hade-green)!important;font-weight:500!important}
-body.role-logistica .nav-btn.active::before{background:var(--hade-green)!important;height:2px!important;border-radius:0 0 2px 2px}
-body.role-logistica .nav-btn .ni{display:flex;align-items:center;justify-content:center;height:20px;margin-bottom:1px}
-body.role-logistica .nav-btn .ni svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
-body.role-logistica .nav-btn.active .ni svg{stroke:var(--hade-green)}
+body:is(.role-logistica,.role-almacen) .nav{background:rgba(10,10,10,.96)!important;border-top:1px solid rgba(168,213,106,.18)!important;backdrop-filter:blur(16px)}
+body:is(.role-logistica,.role-almacen) .nav-btn{color:rgba(255,255,255,.35)!important;font-family:'Outfit',sans-serif!important;font-weight:400!important;letter-spacing:.04em}
+body:is(.role-logistica,.role-almacen) .nav-btn.active{color:var(--hade-green)!important;font-weight:500!important}
+body:is(.role-logistica,.role-almacen) .nav-btn.active::before{background:var(--hade-green)!important;height:2px!important;border-radius:0 0 2px 2px}
+body:is(.role-logistica,.role-almacen) .nav-btn .ni{display:flex;align-items:center;justify-content:center;height:20px;margin-bottom:1px}
+body:is(.role-logistica,.role-almacen) .nav-btn .ni svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+body:is(.role-logistica,.role-almacen) .nav-btn.active .ni svg{stroke:var(--hade-green)}
 
 /* Greetings, dateline, secciones */
-body.role-logistica .greeting{font-family:'Outfit',sans-serif!important;color:#fff!important;font-size:24px!important;font-weight:500!important;letter-spacing:.01em!important}
-body.role-logistica .dateline{color:rgba(168,213,106,.65)!important;font-family:'Outfit',sans-serif!important;font-size:11px!important;letter-spacing:.06em;text-transform:none}
-body.role-logistica .dateline span{color:var(--hade-green)!important}
-body.role-logistica .sec{color:rgba(255,255,255,.5)!important;font-family:'Outfit',sans-serif!important;letter-spacing:.16em!important}
-body.role-logistica .sec::before{background:var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen) .greeting{font-family:'Outfit',sans-serif!important;color:#fff!important;font-size:24px!important;font-weight:500!important;letter-spacing:.01em!important}
+body:is(.role-logistica,.role-almacen) .dateline{color:rgba(168,213,106,.65)!important;font-family:'Outfit',sans-serif!important;font-size:11px!important;letter-spacing:.06em;text-transform:none}
+body:is(.role-logistica,.role-almacen) .dateline span{color:var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen) .sec{color:rgba(255,255,255,.5)!important;font-family:'Outfit',sans-serif!important;letter-spacing:.16em!important}
+body:is(.role-logistica,.role-almacen) .sec::before{background:var(--hade-green)!important}
 
 /* Cards de pedido/compra/entrega — dark con borde verde lima sutil */
-body.role-logistica .pedido-item{background:#111!important;border:1px solid rgba(168,213,106,.18)!important;border-radius:12px!important;transition:border-color .2s,background .2s}
-body.role-logistica .pedido-item:not(.checked):not(.entrega-done):hover{border-color:rgba(168,213,106,.45)!important;background:#161616!important}
-body.role-logistica .pedido-item.checked{opacity:.5;background:#0d0d0d!important}
-body.role-logistica .pedido-item.entrega-done{background:rgba(168,213,106,.06)!important;border-color:rgba(168,213,106,.25)!important;opacity:.78}
-body.role-logistica .pedido-qty{color:#fff!important;font-family:'Outfit',sans-serif!important;font-weight:600!important}
-body.role-logistica .pedido-name{color:rgba(255,255,255,.6)!important;font-family:'Outfit',sans-serif!important}
-body.role-logistica .pedido-nota{color:rgba(255,255,255,.5)!important;font-family:'Outfit',sans-serif!important;font-size:11px}
+body:is(.role-logistica,.role-almacen) .pedido-item{background:#111!important;border:1px solid rgba(168,213,106,.18)!important;border-radius:12px!important;transition:border-color .2s,background .2s}
+body:is(.role-logistica,.role-almacen) .pedido-item:not(.checked):not(.entrega-done):hover{border-color:rgba(168,213,106,.45)!important;background:#161616!important}
+body:is(.role-logistica,.role-almacen) .pedido-item.checked{opacity:.5;background:#0d0d0d!important}
+body:is(.role-logistica,.role-almacen) .pedido-item.entrega-done{background:rgba(168,213,106,.06)!important;border-color:rgba(168,213,106,.25)!important;opacity:.78}
+body:is(.role-logistica,.role-almacen) .pedido-qty{color:#fff!important;font-family:'Outfit',sans-serif!important;font-weight:600!important}
+body:is(.role-logistica,.role-almacen) .pedido-name{color:rgba(255,255,255,.6)!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen) .pedido-nota{color:rgba(255,255,255,.5)!important;font-family:'Outfit',sans-serif!important;font-size:11px}
 
 /* Detalle de proveedor (acordeón) */
-body.role-logistica details{background:#0c0c0c!important;border-color:rgba(168,213,106,.16)!important;border-radius:12px!important}
-body.role-logistica details summary{color:var(--hade-green)!important;font-family:'Outfit',sans-serif!important;font-weight:500!important}
+body:is(.role-logistica,.role-almacen) details{background:#0c0c0c!important;border-color:rgba(168,213,106,.16)!important;border-radius:12px!important}
+body:is(.role-logistica,.role-almacen) details summary{color:var(--hade-green)!important;font-family:'Outfit',sans-serif!important;font-weight:500!important}
 
 /* Banners de aviso */
-body.role-logistica .banner{font-family:'Outfit',sans-serif!important;border-radius:10px!important}
-body.role-logistica .banner-warn{background:rgba(212,133,10,.1)!important;border:1px solid rgba(212,133,10,.35)!important;color:#f0c168!important}
+body:is(.role-logistica,.role-almacen) .banner{font-family:'Outfit',sans-serif!important;border-radius:10px!important}
+body:is(.role-logistica,.role-almacen) .banner-warn{background:rgba(212,133,10,.1)!important;border:1px solid rgba(212,133,10,.35)!important;color:#f0c168!important}
 
 /* Banners de pendientes en Inicio (compra/entrega/vuelta) — dark + verde lima */
-body.role-logistica .banner-pend{background:#111!important;border:1px solid rgba(168,213,106,.4)!important;color:#fff!important;cursor:pointer;padding:14px 16px!important;border-radius:12px!important;font-family:'Outfit',sans-serif!important;font-size:13.5px!important;font-weight:400!important;margin-bottom:10px!important;transition:border-color .2s,background .2s,transform .15s;letter-spacing:.01em}
-body.role-logistica .banner-pend:hover,body.role-logistica .banner-pend:active{border-color:var(--hade-green)!important;background:#161616!important;transform:translateY(-1px)}
+body:is(.role-logistica,.role-almacen) .banner-pend{background:#111!important;border:1px solid rgba(168,213,106,.4)!important;color:#fff!important;cursor:pointer;padding:14px 16px!important;border-radius:12px!important;font-family:'Outfit',sans-serif!important;font-size:13.5px!important;font-weight:400!important;margin-bottom:10px!important;transition:border-color .2s,background .2s,transform .15s;letter-spacing:.01em}
+body:is(.role-logistica,.role-almacen) .banner-pend:hover,body:is(.role-logistica,.role-almacen) .banner-pend:active{border-color:var(--hade-green)!important;background:#161616!important;transform:translateY(-1px)}
 
 /* Empty states */
-body.role-logistica .empty-ed,body.role-logistica .empty{color:rgba(255,255,255,.4)!important;font-family:'Outfit',sans-serif!important}
-body.role-logistica .empty-title{color:rgba(255,255,255,.7)!important;font-family:'Outfit',sans-serif!important;font-weight:500}
-body.role-logistica .empty-sub{color:rgba(255,255,255,.4)!important}
-body.role-logistica .empty-cta{color:var(--hade-green)!important}
-body.role-logistica .empty-art{filter:grayscale(.4) brightness(.85)}
+body:is(.role-logistica,.role-almacen) .empty-ed,body:is(.role-logistica,.role-almacen) .empty{color:rgba(255,255,255,.4)!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen) .empty-title{color:rgba(255,255,255,.7)!important;font-family:'Outfit',sans-serif!important;font-weight:500}
+body:is(.role-logistica,.role-almacen) .empty-sub{color:rgba(255,255,255,.4)!important}
+body:is(.role-logistica,.role-almacen) .empty-cta{color:var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen) .empty-art{filter:grayscale(.4) brightness(.85)}
 
 /* Inputs, selects, textareas (modales) */
-body.role-logistica input,body.role-logistica select,body.role-logistica textarea{background:#0a0a0a!important;color:#fff!important;border:1px solid rgba(168,213,106,.18)!important;font-family:'Outfit',sans-serif!important}
-body.role-logistica input:focus,body.role-logistica select:focus,body.role-logistica textarea:focus{border-color:var(--hade-green)!important;outline:none!important;box-shadow:0 0 0 2px rgba(168,213,106,.12)!important}
-body.role-logistica .field label{color:rgba(255,255,255,.6)!important;font-family:'Outfit',sans-serif!important;font-weight:500;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
-body.role-logistica .field-hint{color:rgba(255,255,255,.35)!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen) input,body:is(.role-logistica,.role-almacen) select,body:is(.role-logistica,.role-almacen) textarea{background:#0a0a0a!important;color:#fff!important;border:1px solid rgba(168,213,106,.18)!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen) input:focus,body:is(.role-logistica,.role-almacen) select:focus,body:is(.role-logistica,.role-almacen) textarea:focus{border-color:var(--hade-green)!important;outline:none!important;box-shadow:0 0 0 2px rgba(168,213,106,.12)!important}
+body:is(.role-logistica,.role-almacen) .field label{color:rgba(255,255,255,.6)!important;font-family:'Outfit',sans-serif!important;font-weight:500;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+body:is(.role-logistica,.role-almacen) .field-hint{color:rgba(255,255,255,.35)!important;font-family:'Outfit',sans-serif!important}
 
 /* Botones primarios y secundarios (dentro de Logística) */
-body.role-logistica .btn{font-family:'Outfit',sans-serif!important;font-weight:500!important;border-radius:10px!important}
-body.role-logistica .btn-primary{background:var(--hade-green)!important;color:#0a0a0a!important;border:none!important;box-shadow:0 4px 12px rgba(168,213,106,.18)!important}
-body.role-logistica .btn-primary:hover,body.role-logistica .btn-primary:active{background:#bce67a!important;transform:translateY(-1px)}
-body.role-logistica .btn-primary:disabled{opacity:.4;background:#333!important;color:rgba(255,255,255,.4)!important;box-shadow:none!important}
-body.role-logistica .btn-secondary{background:#0d0d0d!important;color:rgba(255,255,255,.7)!important;border:1px solid rgba(168,213,106,.22)!important}
-body.role-logistica .btn-amber{background:#d4850a!important;color:#fff!important;border:none!important}
+body:is(.role-logistica,.role-almacen) .btn{font-family:'Outfit',sans-serif!important;font-weight:500!important;border-radius:10px!important}
+body:is(.role-logistica,.role-almacen) .btn-primary{background:var(--hade-green)!important;color:#0a0a0a!important;border:none!important;box-shadow:0 4px 12px rgba(168,213,106,.18)!important}
+body:is(.role-logistica,.role-almacen) .btn-primary:hover,body:is(.role-logistica,.role-almacen) .btn-primary:active{background:#bce67a!important;transform:translateY(-1px)}
+body:is(.role-logistica,.role-almacen) .btn-primary:disabled{opacity:.4;background:#333!important;color:rgba(255,255,255,.4)!important;box-shadow:none!important}
+body:is(.role-logistica,.role-almacen) .btn-secondary{background:#0d0d0d!important;color:rgba(255,255,255,.7)!important;border:1px solid rgba(168,213,106,.22)!important}
+body:is(.role-logistica,.role-almacen) .btn-amber{background:#d4850a!important;color:#fff!important;border:none!important}
 
 /* Modal */
-body.role-logistica .modal{background:#0c0c0c!important;border:1px solid rgba(168,213,106,.22)!important}
-body.role-logistica .modal-title{font-family:'Outfit',sans-serif!important;color:#fff!important;font-weight:500!important}
-body.role-logistica .modal-sub{font-family:'Outfit',sans-serif!important;color:rgba(168,213,106,.7)!important}
-body.role-logistica .modal-handle{background:rgba(168,213,106,.3)!important}
+body:is(.role-logistica,.role-almacen) .modal{background:#0c0c0c!important;border:1px solid rgba(168,213,106,.22)!important}
+body:is(.role-logistica,.role-almacen) .modal-title{font-family:'Outfit',sans-serif!important;color:#fff!important;font-weight:500!important}
+body:is(.role-logistica,.role-almacen) .modal-sub{font-family:'Outfit',sans-serif!important;color:rgba(168,213,106,.7)!important}
+body:is(.role-logistica,.role-almacen) .modal-handle{background:rgba(168,213,106,.3)!important}
 
 /* Toast */
-body.role-logistica .toast{background:#1a1a1a!important;color:#fff!important;border:1px solid rgba(168,213,106,.25)!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen) .toast{background:#1a1a1a!important;color:#fff!important;border:1px solid rgba(168,213,106,.25)!important;font-family:'Outfit',sans-serif!important}
 
 /* Bottom sheet (cambiar proveedor, etc.) */
-body.role-logistica .sheet{background:#0c0c0c!important;border-top:1px solid rgba(168,213,106,.22)!important}
-body.role-logistica .sheet-handle{background:rgba(168,213,106,.3)!important}
-body.role-logistica .sheet-title{color:#fff!important;font-family:'Outfit',sans-serif!important}
-body.role-logistica .sheet-cancel{background:#0d0d0d!important;color:rgba(255,255,255,.6)!important;border:1px solid rgba(168,213,106,.18)!important}
-body.role-logistica .sheet-save{background:var(--hade-green)!important;color:#0a0a0a!important;font-weight:600}
-body.role-logistica .sheet-cancel,body.role-logistica .sheet-save{font-family:'Outfit',sans-serif!important}
-body.role-logistica .sheet-list-item{background:#0d0d0d!important;color:#fff!important;border:1px solid rgba(168,213,106,.12)!important;font-family:'Outfit',sans-serif!important}
-body.role-logistica .sheet-list-item:hover,body.role-logistica .sheet-list-item.selected{border-color:var(--hade-green)!important;background:#161616!important}
+body:is(.role-logistica,.role-almacen) .sheet{background:#0c0c0c!important;border-top:1px solid rgba(168,213,106,.22)!important}
+body:is(.role-logistica,.role-almacen) .sheet-handle{background:rgba(168,213,106,.3)!important}
+body:is(.role-logistica,.role-almacen) .sheet-title{color:#fff!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen) .sheet-cancel{background:#0d0d0d!important;color:rgba(255,255,255,.6)!important;border:1px solid rgba(168,213,106,.18)!important}
+body:is(.role-logistica,.role-almacen) .sheet-save{background:var(--hade-green)!important;color:#0a0a0a!important;font-weight:600}
+body:is(.role-logistica,.role-almacen) .sheet-cancel,body:is(.role-logistica,.role-almacen) .sheet-save{font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen) .sheet-list-item{background:#0d0d0d!important;color:#fff!important;border:1px solid rgba(168,213,106,.12)!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen) .sheet-list-item:hover,body:is(.role-logistica,.role-almacen) .sheet-list-item.selected{border-color:var(--hade-green)!important;background:#161616!important}
 
 /* Divisores */
-body.role-logistica .divider{background:rgba(168,213,106,.12)!important}
+body:is(.role-logistica,.role-almacen) .divider{background:rgba(168,213,106,.12)!important}
 
 /* Esferas de pendientes en bottom nav (badge) */
-body.role-logistica .nav-badge{background:var(--hade-green)!important;border-color:#0a0a0a!important;box-shadow:0 0 4px rgba(168,213,106,.55)!important}
+body:is(.role-logistica,.role-almacen) .nav-badge{background:var(--hade-green)!important;border-color:#0a0a0a!important;box-shadow:0 0 4px rgba(168,213,106,.55)!important}
 
 </style>
 </head>
@@ -458,10 +458,22 @@ body.role-logistica .nav-badge{background:var(--hade-green)!important;border-col
   </nav>
   <!-- Nav para ALMACÉN -->
   <nav class="nav" id="nav-almacen" style="display:none">
-    <button class="nav-btn active" id="nb-alm-inicio" onclick="goTo('alm_inicio')"><span class="ni">🏠</span>Inicio</button>
-    <button class="nav-btn" id="nb-alm-pedidos" onclick="goTo('alm_pedidos')"><span class="ni">📦</span>Pedidos</button>
-    <button class="nav-btn" id="nb-alm-inventario" onclick="goTo('alm_inventario')"><span class="ni">📊</span>Inventario</button>
-    <button class="nav-btn" id="nb-alm-admin" onclick="goTo('alm_admin')"><span class="ni">⚙️</span>Admin</button>
+    <button class="nav-btn active" id="nb-alm-inicio" onclick="goTo('alm_inicio')">
+      <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      Inicio
+    </button>
+    <button class="nav-btn" id="nb-alm-pedidos" onclick="goTo('alm_pedidos')">
+      <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>
+      Pedidos
+    </button>
+    <button class="nav-btn" id="nb-alm-inventario" onclick="goTo('alm_inventario')">
+      <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+      Inventario
+    </button>
+    <button class="nav-btn" id="nb-alm-admin" onclick="goTo('alm_admin')">
+      <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>
+      Admin
+    </button>
   </nav>
   <!-- Nav para LOGÍSTICA (chofer) -->
   <nav class="nav" id="nav-logistica" style="display:none">
@@ -548,7 +560,7 @@ body.role-logistica .nav-badge{background:var(--hade-green)!important;border-col
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.18.4';
+var APP_VERSION='2.19.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
