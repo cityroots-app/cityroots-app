@@ -327,6 +327,103 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .sheet-cancel{background:var(--bg2);color:var(--text2);border:1px solid var(--border)!important}
 .sheet-save{background:linear-gradient(135deg,var(--green-mid),var(--green-bright));color:#fff}
 .divider{height:1px;background:var(--border);margin:16px 0}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TEMA DARK + GREEN-LIME PARA ROL LOGÍSTICA (v2.18.0)
+   Solo aplica cuando body tiene la clase role-logistica.
+   Producción y Almacén conservan su look original hasta que se rediseñen.
+   ════════════════════════════════════════════════════════════════════════════ */
+body.role-logistica{background:#000!important}
+body.role-logistica html,body.role-logistica{color:#fff}
+body.role-logistica .content{background:#000!important;font-family:'Outfit',sans-serif}
+
+/* Topbar — dark con acento verde lima */
+body.role-logistica .topbar{background:#0a0a0a!important;border-bottom:1px solid rgba(168,213,106,.18)!important;padding:12px 16px!important}
+body.role-logistica .topbar-logo{width:32px;height:32px}
+body.role-logistica .topbar-title{font-family:'Outfit',sans-serif!important;color:#fff!important;letter-spacing:.22em!important;font-weight:600!important;font-size:13px}
+body.role-logistica .topbar-sub{color:var(--hade-green)!important;font-family:'Outfit',sans-serif!important;letter-spacing:.1em!important;font-size:9.5px;font-weight:400}
+body.role-logistica .sync-dot{background:#333}
+body.role-logistica .sync-dot.sync-ok{background:var(--hade-green)}
+body.role-logistica .sync-lbl{color:rgba(168,213,106,.7)!important;font-family:'Outfit',sans-serif!important;font-size:10px}
+
+/* Bottom nav — dark con active verde lima */
+body.role-logistica .nav{background:rgba(10,10,10,.96)!important;border-top:1px solid rgba(168,213,106,.18)!important;backdrop-filter:blur(16px)}
+body.role-logistica .nav-btn{color:rgba(255,255,255,.35)!important;font-family:'Outfit',sans-serif!important;font-weight:400!important;letter-spacing:.04em}
+body.role-logistica .nav-btn.active{color:var(--hade-green)!important;font-weight:500!important}
+body.role-logistica .nav-btn.active::before{background:var(--hade-green)!important;height:2px!important;border-radius:0 0 2px 2px}
+body.role-logistica .nav-btn .ni{font-size:18px;filter:grayscale(.5) brightness(.85)}
+body.role-logistica .nav-btn.active .ni{filter:none}
+
+/* Greetings, dateline, secciones */
+body.role-logistica .greeting{font-family:'Outfit',sans-serif!important;color:#fff!important;font-size:24px!important;font-weight:500!important;letter-spacing:.01em!important}
+body.role-logistica .dateline{color:rgba(168,213,106,.65)!important;font-family:'Outfit',sans-serif!important;font-size:11px!important;letter-spacing:.06em;text-transform:none}
+body.role-logistica .dateline span{color:var(--hade-green)!important}
+body.role-logistica .sec{color:rgba(255,255,255,.5)!important;font-family:'Outfit',sans-serif!important;letter-spacing:.16em!important}
+body.role-logistica .sec::before{background:var(--hade-green)!important}
+
+/* Cards de pedido/compra/entrega — dark con borde verde lima sutil */
+body.role-logistica .pedido-item{background:#111!important;border:1px solid rgba(168,213,106,.18)!important;border-radius:12px!important;transition:border-color .2s,background .2s}
+body.role-logistica .pedido-item:not(.checked):not(.entrega-done):hover{border-color:rgba(168,213,106,.45)!important;background:#161616!important}
+body.role-logistica .pedido-item.checked{opacity:.5;background:#0d0d0d!important}
+body.role-logistica .pedido-item.entrega-done{background:rgba(168,213,106,.06)!important;border-color:rgba(168,213,106,.25)!important;opacity:.78}
+body.role-logistica .pedido-qty{color:#fff!important;font-family:'Outfit',sans-serif!important;font-weight:600!important}
+body.role-logistica .pedido-name{color:rgba(255,255,255,.6)!important;font-family:'Outfit',sans-serif!important}
+body.role-logistica .pedido-nota{color:rgba(255,255,255,.5)!important;font-family:'Outfit',sans-serif!important;font-size:11px}
+
+/* Detalle de proveedor (acordeón) */
+body.role-logistica details{background:#0c0c0c!important;border-color:rgba(168,213,106,.16)!important;border-radius:12px!important}
+body.role-logistica details summary{color:var(--hade-green)!important;font-family:'Outfit',sans-serif!important;font-weight:500!important}
+
+/* Banners de aviso */
+body.role-logistica .banner{font-family:'Outfit',sans-serif!important;border-radius:10px!important}
+body.role-logistica .banner-warn{background:rgba(212,133,10,.1)!important;border:1px solid rgba(212,133,10,.35)!important;color:#f0c168!important}
+
+/* Empty states */
+body.role-logistica .empty-ed,body.role-logistica .empty{color:rgba(255,255,255,.4)!important;font-family:'Outfit',sans-serif!important}
+body.role-logistica .empty-title{color:rgba(255,255,255,.7)!important;font-family:'Outfit',sans-serif!important;font-weight:500}
+body.role-logistica .empty-sub{color:rgba(255,255,255,.4)!important}
+body.role-logistica .empty-cta{color:var(--hade-green)!important}
+body.role-logistica .empty-art{filter:grayscale(.4) brightness(.85)}
+
+/* Inputs, selects, textareas (modales) */
+body.role-logistica input,body.role-logistica select,body.role-logistica textarea{background:#0a0a0a!important;color:#fff!important;border:1px solid rgba(168,213,106,.18)!important;font-family:'Outfit',sans-serif!important}
+body.role-logistica input:focus,body.role-logistica select:focus,body.role-logistica textarea:focus{border-color:var(--hade-green)!important;outline:none!important;box-shadow:0 0 0 2px rgba(168,213,106,.12)!important}
+body.role-logistica .field label{color:rgba(255,255,255,.6)!important;font-family:'Outfit',sans-serif!important;font-weight:500;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+body.role-logistica .field-hint{color:rgba(255,255,255,.35)!important;font-family:'Outfit',sans-serif!important}
+
+/* Botones primarios y secundarios (dentro de Logística) */
+body.role-logistica .btn{font-family:'Outfit',sans-serif!important;font-weight:500!important;border-radius:10px!important}
+body.role-logistica .btn-primary{background:var(--hade-green)!important;color:#0a0a0a!important;border:none!important;box-shadow:0 4px 12px rgba(168,213,106,.18)!important}
+body.role-logistica .btn-primary:hover,body.role-logistica .btn-primary:active{background:#bce67a!important;transform:translateY(-1px)}
+body.role-logistica .btn-primary:disabled{opacity:.4;background:#333!important;color:rgba(255,255,255,.4)!important;box-shadow:none!important}
+body.role-logistica .btn-secondary{background:#0d0d0d!important;color:rgba(255,255,255,.7)!important;border:1px solid rgba(168,213,106,.22)!important}
+body.role-logistica .btn-amber{background:#d4850a!important;color:#fff!important;border:none!important}
+
+/* Modal */
+body.role-logistica .modal{background:#0c0c0c!important;border:1px solid rgba(168,213,106,.22)!important}
+body.role-logistica .modal-title{font-family:'Outfit',sans-serif!important;color:#fff!important;font-weight:500!important}
+body.role-logistica .modal-sub{font-family:'Outfit',sans-serif!important;color:rgba(168,213,106,.7)!important}
+body.role-logistica .modal-handle{background:rgba(168,213,106,.3)!important}
+
+/* Toast */
+body.role-logistica .toast{background:#1a1a1a!important;color:#fff!important;border:1px solid rgba(168,213,106,.25)!important;font-family:'Outfit',sans-serif!important}
+
+/* Bottom sheet (cambiar proveedor, etc.) */
+body.role-logistica .sheet{background:#0c0c0c!important;border-top:1px solid rgba(168,213,106,.22)!important}
+body.role-logistica .sheet-handle{background:rgba(168,213,106,.3)!important}
+body.role-logistica .sheet-title{color:#fff!important;font-family:'Outfit',sans-serif!important}
+body.role-logistica .sheet-cancel{background:#0d0d0d!important;color:rgba(255,255,255,.6)!important;border:1px solid rgba(168,213,106,.18)!important}
+body.role-logistica .sheet-save{background:var(--hade-green)!important;color:#0a0a0a!important;font-weight:600}
+body.role-logistica .sheet-cancel,body.role-logistica .sheet-save{font-family:'Outfit',sans-serif!important}
+body.role-logistica .sheet-list-item{background:#0d0d0d!important;color:#fff!important;border:1px solid rgba(168,213,106,.12)!important;font-family:'Outfit',sans-serif!important}
+body.role-logistica .sheet-list-item:hover,body.role-logistica .sheet-list-item.selected{border-color:var(--hade-green)!important;background:#161616!important}
+
+/* Divisores */
+body.role-logistica .divider{background:rgba(168,213,106,.12)!important}
+
+/* Esferas de pendientes en bottom nav (badge) */
+body.role-logistica .nav-badge{background:var(--hade-green)!important;border-color:#0a0a0a!important;box-shadow:0 0 4px rgba(168,213,106,.55)!important}
+
 </style>
 </head>
 <body>
@@ -429,7 +526,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.17.1';
+var APP_VERSION='2.18.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -817,6 +914,10 @@ function updateRoleDots(){
 function initApp(){
   const role=getRole();
   const sw=document.getElementById('role-switch');
+  // v2.18.0 — escribe clase del rol en <body> para que el CSS scope los estilos
+  // (theme dark+green-lime solo aplica al rol que ya tiene rediseño)
+  document.body.classList.remove('role-produccion','role-almacen','role-logistica');
+  if(role)document.body.classList.add('role-'+role);
   if(!role){showRoleSelector();if(sw)sw.style.display='none';return;}
   document.getElementById('role-screen').style.display='none';
   if(sw)sw.style.display='flex';
