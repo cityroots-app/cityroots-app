@@ -76,12 +76,14 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .role-screen{position:fixed;inset:0;z-index:9999;background-color:#070707;background-image:radial-gradient(ellipse at 50% -10%,rgba(74,140,63,.06) 0%,transparent 55%),radial-gradient(ellipse at 50% 110%,rgba(74,140,63,.05) 0%,transparent 55%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:28px 22px;overflow-y:auto;overflow-x:hidden}
 .role-screen::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.42 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:240px 240px;opacity:.32;pointer-events:none;mix-blend-mode:overlay;z-index:0}
 .role-screen > *{position:relative;z-index:1}
-.role-logo{width:auto;height:300px;max-width:92vw;margin-bottom:8px;filter:drop-shadow(0 6px 24px rgba(0,0,0,.6))}
-.role-screen h1{font-family:'Outfit',sans-serif;font-size:18px;font-weight:300;color:#c8e2c3;text-align:center;margin:14px 0 0;letter-spacing:.1em;text-transform:lowercase}
+.role-logo{width:auto;height:300px;max-width:92vw;margin-top:32px;margin-bottom:-48px;filter:drop-shadow(0 6px 24px rgba(0,0,0,.6))}
+.role-screen h1{font-family:'Outfit',sans-serif;font-size:18px;font-weight:300;color:#c8e2c3;text-align:center;margin:0;letter-spacing:.1em;text-transform:lowercase}
 .role-screen p{font-family:'Outfit',sans-serif;font-size:11px;font-weight:300;color:rgba(168,213,162,.6);text-align:center;margin:2px 0 16px;letter-spacing:.14em;text-transform:lowercase}
-.role-card{width:100%;max-width:330px;padding:13px 16px;border-radius:14px;border:1px solid rgba(168,213,162,.12);background:linear-gradient(135deg,rgba(255,255,255,.03) 0%,rgba(255,255,255,.015) 100%);backdrop-filter:blur(6px);cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:13px}
-.role-card:hover,.role-card:active{border-color:rgba(168,213,162,.35);background:linear-gradient(135deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.03) 100%);transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
-.role-card .role-icon{width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#a8d5a2;background:rgba(74,140,63,.16);border-radius:10px;border:1px solid rgba(168,213,162,.14)}
+/* Color de marca del logo HADE (verde lima) */
+:root{--hade-green:#a8d56a}
+.role-card{width:100%;max-width:330px;padding:14px 16px;border-radius:14px;border:1px solid rgba(168,213,106,.45);background:#1a1a1a;cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:13px}
+.role-card:hover,.role-card:active{border-color:var(--hade-green);background:#222;transform:translateY(-1px);box-shadow:0 6px 18px rgba(168,213,106,.12)}
+.role-card .role-icon{width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--hade-green);background:rgba(168,213,106,.08);border-radius:10px;border:1px solid rgba(168,213,106,.18)}
 .role-card .role-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .role-card .role-info h3{font-family:'Outfit',sans-serif;font-size:15px;font-weight:500;color:#fff;margin-bottom:1px;letter-spacing:.01em}
 .role-card .role-info span{font-family:'Outfit',sans-serif;font-size:10.5px;font-weight:300;color:rgba(255,255,255,.55);line-height:1.4;letter-spacing:.01em}
@@ -430,7 +432,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.16.8';
+var APP_VERSION='2.16.9';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
