@@ -406,7 +406,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.16.0';
+var APP_VERSION='2.16.1';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -761,47 +761,19 @@ function showRoleSelector(){
 
 // Cuenta pendientes por tab y pinta esferas de color en cada role-card.
 // Solo se muestran esferas con count > 0. Tap → selectRole + ir directo al tab.
-// Colores y mapeo: ver memoria de design system.
+// v2.16.1: solo Logística por ahora (Producción/Almacén ocultos por decisión
+// del operador hasta la sesión de diseño completo).
 function updateRoleDots(){
-  const today=todayKey();
   const fmtCount=n=>n>99?'99+':String(n);
   const dot=(role,tab,cls,count,title)=>count>0?
     `<div class="role-dot ${cls}" title="${title}" onclick="selectRoleAndGoTo('${role}','${tab}',event)">${fmtCount(count)}</div>`
     :'';
 
-  // ─── Producción ───
-  // Lotes pendientes hoy: siembras programadas para hoy NO confirmadas,
-  // O cosechas programadas para hoy NO registradas, O lotes con fecha
-  // pasada que siguen pendientes.
-  const lotes=getLotes();
-  const lotesPendientes=lotes.filter(l=>{
-    const fs=l.fecha_siembra?String(l.fecha_siembra).split('T')[0]:'';
-    const fc=l.fecha_cosecha?String(l.fecha_cosecha).split('T')[0]:'';
-    const sembradoPend=!l.sembrado_confirmado && fs && fs<=today;
-    const cosechaPend=l.sembrado_confirmado && !l.cosecha_real && fc && fc<=today;
-    return sembradoPend||cosechaPend;
-  }).length;
-  // Pedidos de producción no hechos
-  const pedidosProd=getPedidosProduccion()||[];
-  const pedidosProdPend=pedidosProd.filter(p=>!(p.hecho===true||p.hecho==='TRUE'||p.hecho==='true')).length;
+  // ─── Producción y Almacén: deshabilitados por ahora ───
   const dotsProd=document.getElementById('dots-produccion');
-  if(dotsProd){
-    dotsProd.innerHTML=
-      dot('produccion','produccion','dot-lotes',lotesPendientes,`${lotesPendientes} lote(s) pendiente(s) hoy`)+
-      dot('produccion','pedidos','dot-pedidos',pedidosProdPend,`${pedidosProdPend} producto(s) por preparar`);
-  }
-
-  // ─── Almacén ───
-  // Pedidos de almacén (lista de preparación) no hechos.
-  // Usa _pedidos_produccion (mismo dataset, distinta vista). Si en el futuro
-  // _pedidos_almacen vuelve a llenarse independiente, se ajusta aquí.
-  const pedidosAlm=getPedidosAlmacen();
-  const pedidosAlmPend=(pedidosAlm&&pedidosAlm.length?pedidosAlm:pedidosProd)
-    .filter(p=>!(p.hecho===true||p.hecho==='TRUE'||p.hecho==='true')).length;
+  if(dotsProd)dotsProd.innerHTML='';
   const dotsAlm=document.getElementById('dots-almacen');
-  if(dotsAlm){
-    dotsAlm.innerHTML=dot('almacen','alm_pedidos','dot-pedidos',pedidosAlmPend,`${pedidosAlmPend} pedido(s) por preparar`);
-  }
+  if(dotsAlm)dotsAlm.innerHTML='';
 
   // ─── Logística ───
   const compras=getCompras()||[];
