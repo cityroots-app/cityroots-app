@@ -164,7 +164,8 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .reg-card.done{border-color:var(--green-bright);background:var(--green-pale)}
 @media(prefers-color-scheme:dark){.reg-card.done{background:var(--lgreen)}}
 .reg-card.prod{border-color:var(--amber);background:var(--amber-bg)}
-.reg-icon{font-size:24px;margin-bottom:6px}
+.reg-icon{font-size:24px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;min-height:28px}
+.reg-icon svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .reg-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.3}
 .reg-code{font-size:10px;color:var(--stone);margin-top:2px;font-weight:400}
 .reg-st{font-size:10px;font-weight:600;margin-top:5px;letter-spacing:0.02em}
@@ -437,7 +438,10 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card{background:#11
 body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card:hover,body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card:active{border-color:rgba(168,213,106,.5)!important;background:#161616!important}
 body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card.done{border-color:var(--hade-green)!important;background:rgba(168,213,106,.07)!important}
 body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card.prod{border-color:rgba(212,133,10,.5)!important;background:rgba(212,133,10,.08)!important}
-body:is(.role-logistica,.role-almacen,.role-produccion) .reg-icon{filter:saturate(.85) brightness(.9)}
+body:is(.role-logistica,.role-almacen,.role-produccion) .reg-icon{color:var(--hade-green)!important;filter:none}
+body:is(.role-logistica,.role-almacen,.role-produccion) .reg-icon svg{stroke:var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card.done .reg-icon,body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card.done .reg-icon svg{stroke:var(--hade-green)!important;color:var(--hade-green)!important;opacity:.95}
+body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card.prod .reg-icon,body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card.prod .reg-icon svg{stroke:var(--amber)!important;color:var(--amber)!important}
 body:is(.role-logistica,.role-almacen,.role-produccion) .reg-name{color:#fff!important;font-family:'Outfit',sans-serif!important}
 body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card .reg-meta,body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card div:not(.reg-icon):not(.reg-name){color:rgba(255,255,255,.5)!important;font-family:'Outfit',sans-serif!important}
 
@@ -590,7 +594,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.20.0';
+var APP_VERSION='2.20.1';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -598,32 +602,32 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 // ══ REGISTROS DE INOCUIDAD ════════════════════════════════════════════════════
 const REGS = [
-  {id:'temperatura',icon:'🌡️',name:'Temperatura',code:'HACCP-01',freq:'Diario',fields:[
+  {id:'temperatura',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>`,name:'Temperatura',code:'HACCP-01',freq:'Diario',fields:[
     {id:'area',label:'Área',type:'select',req:true,opts:['Cuarto de producción','Refrigerador','Área de empaque','Transporte']},
     {id:'temp',label:'Temperatura (°C)',type:'number',req:true,ph:'Ej. 3.5'},
     {id:'horario',label:'Horario',type:'time',req:true},
     {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Chofer']},
     {id:'observacion',label:'Observación',type:'textarea',ph:'Normal / Acción correctiva...'}
   ]},
-  {id:'limpieza',icon:'🧹',name:'Limpieza',code:'P01–P10',freq:'Diario',fields:[
+  {id:'limpieza',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 3h.01"/><path d="M7 5h.01"/><path d="M11 7h.01"/><path d="M3 7h.01"/><path d="M7 9h.01"/><path d="M3 11h.01"/><rect x="15" y="5" width="4" height="12"/><path d="M19 17v2a2 2 0 0 1-2 2h0a2 2 0 0 1-2-2v-2"/><path d="M19 7V4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v3"/></svg>`,name:'Limpieza',code:'P01–P10',freq:'Diario',fields:[
     {id:'area',label:'Área / Equipo',type:'select',req:true,opts:['Mesas de cosecha (POES-01)','Cuchillos (POES-02)','Racks de cultivo (POES-03)','Área de empaque (POES-04)','Cuarto producción ozono (POES-05)','Charolas de cultivo (POES-06)','Limpieza general cuarto (POES-08)','Refrigerador (POES-09)']},
     {id:'producto',label:'Producto sanitizante',type:'text',req:true,ph:'Ej. Cloro grado alimenticio 200 ppm'},
     {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción']},
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Sin novedad / Incidencia...'}
   ]},
-  {id:'higiene',icon:'🖐️',name:'Higiene personal',code:'POES-07',freq:'Diario',fields:[
+  {id:'higiene',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>`,name:'Higiene personal',code:'POES-07',freq:'Diario',fields:[
     {id:'horario',label:'Horario de revisión',type:'time',req:true},
     {id:'responsable',label:'Personal supervisado',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción','Todo el equipo']},
     {id:'observacion',label:'Observación',type:'textarea',ph:'Cumplimiento correcto / Observación...'}
   ]},
-  {id:'mermas',icon:'📉',name:'Mermas',code:'RES-MER',freq:'Por evento',fields:[
+  {id:'mermas',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>`,name:'Mermas',code:'RES-MER',freq:'Por evento',fields:[
     {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
     {id:'lote',label:'Lote',type:'text',req:true,ph:'Ej. CRF-2612-CHI'},
     {id:'gramos',label:'Merma en gramos',type:'number',req:true,ph:''},
     {id:'causa',label:'Causa',type:'select',req:true,opts:['Hongo / moho','Crecimiento irregular','Temperatura incorrecta','Daño físico','Semilla defectuosa','Otro']},
     {id:'comentarios',label:'Descripción',type:'textarea',ph:'Detalles...'}
   ]},
-  {id:'semillas',icon:'🌾',name:'Recepción semillas',code:'REC-SEM',freq:'Por recepción',fields:[
+  {id:'semillas',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>`,name:'Recepción semillas',code:'REC-SEM',freq:'Por recepción',fields:[
     {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
     {id:'lote_proveedor',label:'Lote del proveedor',type:'text',req:true,ph:'Número de lote'},
     {id:'peso',label:'Peso recibido (kg)',type:'number',req:true,ph:'Ej. 5.0'},
@@ -631,26 +635,26 @@ const REGS = [
     {id:'proveedor',label:'Proveedor',type:'text',req:true,ph:'Nombre del proveedor'},
     {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']}
   ]},
-  {id:'residuos',icon:'♻️',name:'Residuos orgánicos',code:'POES-10',freq:'Semanal',fields:[
+  {id:'residuos',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/><path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/><path d="m14 16-3 3 3 3"/><path d="M8.293 13.596 7.196 9.5 3.1 10.598"/><path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/><path d="m13.378 9.633 4.096 1.098 1.097-4.096"/></svg>`,name:'Residuos orgánicos',code:'POES-10',freq:'Semanal',fields:[
     {id:'peso',label:'Peso (kg)',type:'number',req:true,ph:'Ej. 8.5'},
     {id:'hora_creacion',label:'Hora de generación',type:'time',req:true},
     {id:'hora_recoleccion',label:'Hora de recolección',type:'time'},
     {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción']},
     {id:'proveedor_rec',label:'Empresa recolectora',type:'text',ph:'Nombre del recolector'}
   ]},
-  {id:'no_conforme',icon:'🚫',name:'Producto no conforme',code:'REG-PNC',freq:'Por evento',fields:[
+  {id:'no_conforme',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>`,name:'Producto no conforme',code:'REG-PNC',freq:'Por evento',fields:[
     {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
     {id:'lote',label:'Lote',type:'text',req:true,ph:'Ej. CRF-2612-CHI'},
     {id:'problema',label:'Problema detectado',type:'select',req:true,opts:['Moho / hongos','Contaminación visible','Daño físico','Temperatura fuera de rango','Mal olor','Crecimiento irregular','Otro']},
     {id:'accion',label:'Acción tomada',type:'select',req:true,opts:['Descartado a composta','Segregado — en evaluación','Reprocesado','Retiro de producto activado']},
     {id:'comentarios',label:'Descripción',type:'textarea',ph:'Detalles del problema...'}
   ]},
-  {id:'inventario',icon:'📦',name:'Inventario semanal',code:'INV-SEM',freq:'Por evento',fields:[
+  {id:'inventario',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,name:'Inventario semanal',code:'INV-SEM',freq:'Por evento',fields:[
     {id:'variedad',label:'Variedad',type:'select',req:true,opts:['Chícharo','Chícharo CT (fresco)','Chícharo CT (vivo)','Betabel','Rábano','Cilantro','Girasol','Spicy Mix']},
     {id:'lote',label:'Lote',type:'text',req:true,ph:'Ej. CRF-2612-CHI'},
     {id:'cantidad',label:'Cantidad en gramos',type:'number',req:true,ph:'Ej. 500'}
   ]},
-  {id:'transporte',icon:'🚗',name:'Transporte',code:'POES-11/12',freq:'Por entrega',fields:[
+  {id:'transporte',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><path d="M15 18H9"/><circle cx="17" cy="18" r="2"/></svg>`,name:'Transporte',code:'POES-11/12',freq:'Por entrega',fields:[
     {id:'tipo',label:'Tipo de registro',type:'select',req:true,opts:['Limpieza del vehículo (POES-11)','Temperatura de transporte (POES-12)','Ambos']},
     {id:'temp',label:'Temperatura del compartimento (°C)',type:'number',req:true,ph:'Ej. 4.0'},
     {id:'estado_limpieza',label:'Estado de limpieza',type:'select',req:true,opts:['Conforme — limpio y sanitizado','No conforme — se realizó limpieza adicional']},
@@ -1075,7 +1079,7 @@ function renderInicio(el){
         <div class="reg-st ${doneIds.has(r.id)?'s-done':'s-pend'}">${doneIds.has(r.id)?'✓ Registrado':'Pendiente'}</div>
       </div>`).join('')}
       <div class="reg-card reg-notas" onclick="goTo('notas')">
-        <div class="reg-icon">📝</div>
+        <div class="reg-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
         <div class="reg-name">Bloc de notas</div>
         <div class="reg-code">Libreta del día</div>
         <div class="reg-st s-hoy">${(getNotas()||[]).length} nota${(getNotas()||[]).length===1?'':'s'}</div>
@@ -1090,7 +1094,7 @@ function renderInicio(el){
         <div class="reg-st s-pend">Registrar</div>
       </div>`).join('')}
       <div class="reg-card prod" onclick="goTo('produccion')">
-        <div class="reg-icon">🌱</div>
+        <div class="reg-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg></div>
         <div class="reg-name">Producción</div>
         <div class="reg-code">Siembras · Cosechas</div>
         <div class="reg-st s-hoy">${sembrarHoy.length+cosecharHoy.length} tarea${sembrarHoy.length+cosecharHoy.length!==1?'s':''} hoy</div>
