@@ -445,6 +445,40 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card.prod .reg-icon
 body:is(.role-logistica,.role-almacen,.role-produccion) .reg-name{color:#fff!important;font-family:'Outfit',sans-serif!important}
 body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card .reg-meta,body:is(.role-logistica,.role-almacen,.role-produccion) .reg-card div:not(.reg-icon):not(.reg-name){color:rgba(255,255,255,.5)!important;font-family:'Outfit',sans-serif!important}
 
+/* ── Tab Producción (lotes/siembras) ── */
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-header{background:#111!important;border:1px solid rgba(168,213,106,.25)!important;box-shadow:none!important;color:#fff!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-group.open .lote-header{border-color:rgba(168,213,106,.45)!important;border-bottom:1px solid rgba(168,213,106,.18)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-header-arrow{color:var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-code{color:#fff!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-cosecha{color:rgba(255,255,255,.5)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-header-summary{color:rgba(255,255,255,.55)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-header-summary svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-group.open .lote-body{background:rgba(168,213,106,.04)!important;border:1px solid rgba(168,213,106,.18)!important;border-top:none!important;padding:10px 8px 4px!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .siembra-card{background:#111!important;border:1px solid rgba(168,213,106,.18)!important;color:#fff!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .siembra-card:hover,body:is(.role-logistica,.role-almacen,.role-produccion) .siembra-card:active{border-color:rgba(168,213,106,.45)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .siembra-card.sembrado{background:rgba(168,213,106,.08)!important;border-color:rgba(168,213,106,.45)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .siembra-card.hoy-sembrar{background:rgba(168,213,106,.10)!important;border:1px solid var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .siembra-card.hoy-cosechar{background:rgba(168,213,106,.10)!important;border:1px solid var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .siembra-card.cosechado{background:rgba(168,213,106,.05)!important;border-color:rgba(168,213,106,.3)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .sc-variedad{color:#fff!important;font-family:'Outfit',sans-serif!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .sc-tipo{color:rgba(255,255,255,.55)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .sc-dato-label{color:rgba(255,255,255,.45)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .sc-dato-val{color:#fff!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .sc-dato-val.highlight{color:var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .sc-dato-val.amber{color:var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .sc-status{font-family:'Outfit',sans-serif!important;display:inline-flex;align-items:center;gap:4px}
+body:is(.role-logistica,.role-almacen,.role-produccion) .sc-status svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body:is(.role-logistica,.role-almacen,.role-produccion) .ss-pend{background:rgba(168,213,106,.10)!important;color:var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .ss-sembrado{background:rgba(168,213,106,.16)!important;color:var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .ss-cosechado{background:rgba(168,213,106,.10)!important;color:rgba(255,255,255,.7)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .ss-hoy{background:rgba(168,213,106,.22)!important;color:var(--hade-green)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .sc-top svg.var-icon{width:18px;height:18px;stroke:var(--hade-green);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body:is(.role-logistica,.role-almacen,.role-produccion) .btn-sembrar{background:var(--hade-green)!important;color:#0a1a05!important;box-shadow:0 2px 10px rgba(168,213,106,.25)!important;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+body:is(.role-logistica,.role-almacen,.role-produccion) .btn-cosechar{background:#0f0f0f!important;color:var(--hade-green)!important;border:1px solid var(--hade-green)!important;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+body:is(.role-logistica,.role-almacen,.role-produccion) .btn-ver{background:#0f0f0f!important;color:rgba(255,255,255,.7)!important;border:1px solid rgba(255,255,255,.15)!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .sc-accion svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body:is(.role-logistica,.role-almacen,.role-produccion) .lote-badge{font-family:'Outfit',sans-serif!important;background:rgba(168,213,106,.15)!important;color:var(--hade-green)!important;border:1px solid rgba(168,213,106,.3)!important}
+
 /* Esferas de pendientes en bottom nav (badge) */
 body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:var(--hade-green)!important;border-color:#0a0a0a!important;box-shadow:0 0 4px rgba(168,213,106,.55)!important}
 
@@ -594,7 +628,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.20.1';
+var APP_VERSION='2.20.2';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1161,11 +1195,11 @@ function renderProduccion(el){
           ${fechaCos?`<span class="lote-cosecha">Cosecha: ${fmtDateShort(fechaCos)}</span>`:''}
           <span class="lote-badge ${badgeClass}">${badgeTxt}</span>
           <div class="lote-header-summary">
-            <span>📦 ${allItems.length} lote${allItems.length>1?'s':''}</span>
-            <span>🌿 ${variedades.join(', ')}</span>
-            ${pendientes?`<span style="color:var(--amber)">⏳ ${pendientes} pendiente${pendientes>1?'s':''}</span>`:''}
-            ${sembrados?`<span style="color:var(--green-light)">🌱 ${sembrados} sembrado${sembrados>1?'s':''}</span>`:''}
-            ${cosechados?`<span style="color:#fff">✓ ${cosechados} cosechado${cosechados>1?'s':''}</span>`:''}
+            <span><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> ${allItems.length} lote${allItems.length>1?'s':''}</span>
+            <span><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19.2 2.96c1.4 9.3-3.6 12.1-8.2 12.1"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg> ${variedades.join(', ')}</span>
+            ${pendientes?`<span style="color:var(--hade-green)"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${pendientes} pendiente${pendientes>1?'s':''}</span>`:''}
+            ${sembrados?`<span style="color:var(--hade-green)"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg> ${sembrados} sembrado${sembrados>1?'s':''}</span>`:''}
+            ${cosechados?`<span style="color:#fff"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="20 6 9 17 4 12"/></svg> ${cosechados} cosechado${cosechados>1?'s':''}</span>`:''}
           </div>
         </div>
         <div class="lote-body">
@@ -1187,30 +1221,36 @@ function siembraCard(l,today){
   else if(l.sembrado_confirmado)cardClass+=' sembrado';
   else if(esHoySembrar)cardClass+=' hoy-sembrar';
 
+  const ICO_CHECK='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="20 6 9 17 4 12"/></svg>';
+  const ICO_SCISSORS='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>';
+  const ICO_SPROUT='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>';
+  const ICO_WHEAT='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z"/><path d="M11.47 17.47 13 19l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L5 19l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/><path d="M15.47 13.47 17 15l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L9 15l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/><path d="M19.47 9.47 21 11l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L13 11l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/></svg>';
+  const ICO_ALERT='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+
   let statusTxt='',statusClass='ss-pend';
-  if(l.cosecha_real){statusTxt='✓ Cosechado';statusClass='ss-cosechado';}
-  else if(esHoyCosechar){statusTxt='✂️ Cosechar HOY';statusClass='ss-hoy';}
-  else if(l.sembrado_confirmado){statusTxt='🌱 Sembrado';statusClass='ss-sembrado';}
-  else if(esHoySembrar){statusTxt='🌾 Sembrar HOY';statusClass='ss-hoy';}
-  else if(isPast(l.fecha_siembra)&&!l.sembrado_confirmado){statusTxt='⚠️ Siembra pendiente';statusClass='ss-pend';}
+  if(l.cosecha_real){statusTxt=ICO_CHECK+' Cosechado';statusClass='ss-cosechado';}
+  else if(esHoyCosechar){statusTxt=ICO_SCISSORS+' Cosechar HOY';statusClass='ss-hoy';}
+  else if(l.sembrado_confirmado){statusTxt=ICO_SPROUT+' Sembrado';statusClass='ss-sembrado';}
+  else if(esHoySembrar){statusTxt=ICO_WHEAT+' Sembrar HOY';statusClass='ss-hoy';}
+  else if(isPast(l.fecha_siembra)&&!l.sembrado_confirmado){statusTxt=ICO_ALERT+' Siembra pendiente';statusClass='ss-pend';}
   else{statusTxt='Programado';statusClass='ss-pend';}
 
   const cosEst=l.gr_semilla&&l.charolas_planificadas?`${l.charolas_planificadas * (l.cosecha_est_charola||0)}g`:'—';
   const charConf=l.charolas_confirmadas||l.charolas_planificadas;
-  const varIcon={'Chícharo':'🫛','Chícharo CT':'🫛','Betabel':'🟣','Rábano':'🔴','Cilantro':'🌿','Girasol':'🌻','Spicy Mix':'🌶️'}[l.variedad]||'🌱';
+  const varIcon='<svg class="var-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>';
 
   let accionBtn='';
   if(!l.sembrado_confirmado){
-    accionBtn=`<button class="sc-accion btn-sembrar" onclick="event.stopPropagation();confirmarSiembra('${l.id}')">🌾 Confirmar siembra</button>`;
+    accionBtn=`<button class="sc-accion btn-sembrar" onclick="event.stopPropagation();confirmarSiembra('${l.id}')">${ICO_WHEAT} Confirmar siembra</button>`;
   }else if(!l.cosecha_real){
-    accionBtn=`<button class="sc-accion btn-cosechar" onclick="event.stopPropagation();registrarCosecha('${l.id}')">✂️ Registrar cosecha</button>`;
+    accionBtn=`<button class="sc-accion btn-cosechar" onclick="event.stopPropagation();registrarCosecha('${l.id}')">${ICO_SCISSORS} Registrar cosecha</button>`;
   }else{
     accionBtn=`<button class="sc-accion btn-ver" onclick="event.stopPropagation();verDetalle('${l.id}')">Ver detalle</button>`;
   }
 
   return `<div class="${cardClass}" onclick="verDetalle('${l.id}')">
     <div class="sc-top">
-      <span style="font-size:18px">${varIcon}</span>
+      <span class="sc-var-icon">${varIcon}</span>
       <span class="sc-variedad">${l.variedad}</span>
       <span class="sc-tipo">${l.tipo_variedad||l.tipo||'Fresco'}</span>
       <span class="sc-status ${statusClass}">${statusTxt}</span>
