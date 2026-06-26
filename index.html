@@ -500,6 +500,10 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .lote-detalle-coment{bac
 body:is(.role-logistica,.role-almacen,.role-produccion) .lote-detalle-coment b{color:#fff!important}
 body:is(.role-logistica,.role-almacen,.role-produccion) .modal-ov{background:rgba(0,0,0,.7)!important}
 
+.btn-planear-semana{background:var(--hade-green,#a8d56a);color:#0a1a05;border:1px solid var(--hade-green,#a8d56a);box-shadow:0 2px 10px rgba(168,213,106,.22);font-weight:600;border-radius:50px;cursor:pointer;font-family:var(--font-body);letter-spacing:.01em;transition:all .15s}
+.btn-planear-semana:hover{filter:brightness(1.05)}
+.btn-planear-semana:active{transform:scale(.97)}
+
 /* Esferas de pendientes en bottom nav (badge) */
 body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:var(--hade-green)!important;border-color:#0a0a0a!important;box-shadow:0 0 4px rgba(168,213,106,.55)!important}
 
@@ -649,7 +653,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.20.3';
+var APP_VERSION='2.20.4';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1189,12 +1193,11 @@ function renderProduccion(el){
       <div class="sec" style="margin-bottom:0">Plan de producción</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
         <button class="btn btn-secondary" style="flex:0;padding:7px 12px;font-size:12px" onclick="syncLotesFromSheet().then(()=>render('produccion'))">↓ Sincronizar</button>
-        <button class="btn btn-secondary" style="flex:0;padding:7px 12px;font-size:12px" onclick="openPlanearSemana()">Planear semana</button>
-        <button class="btn btn-secondary" style="flex:0;padding:7px 14px;font-size:12px" onclick="openNuevoLote()">+ Nuevo lote</button>
+        <button class="btn btn-planear-semana" style="flex:0;padding:7px 14px;font-size:12px" onclick="openPlanearSemana()">+ Planear semana</button>
       </div>
     </div>
     <div class="chip-row">${filtros.map(f=>`<span class="chip ${prodFilter===f?'active':''}" onclick="setProdFilter('${f}')">${labelsFil[f]}</span>`).join('')}</div>
-    ${lotes.length===0?`<div class="empty">Sin lotes registrados.<br>Toca <b>"+ Nuevo lote"</b> para agregar siembras.</div>`:''}
+    ${lotes.length===0?`<div class="empty">Sin lotes registrados.<br>Toca <b>"+ Planear semana"</b> para agregar siembras.</div>`:''}
     ${sortedLotes.map(semana=>{
       const items=grouped[semana].filter(matchFilter);
       if(!items.length)return '';
