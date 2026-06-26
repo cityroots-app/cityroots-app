@@ -338,10 +338,9 @@ body.role-logistica html,body.role-logistica{color:#fff}
 body.role-logistica .content{background:#000!important;font-family:'Outfit',sans-serif}
 
 /* Topbar — dark con acento verde lima */
-body.role-logistica .topbar{background:#0a0a0a!important;border-bottom:1px solid rgba(168,213,106,.18)!important;padding:12px 16px!important}
-body.role-logistica .topbar-logo{width:32px;height:32px}
-body.role-logistica .topbar-title{font-family:'Outfit',sans-serif!important;color:#fff!important;letter-spacing:.22em!important;font-weight:600!important;font-size:13px}
-body.role-logistica .topbar-sub{color:var(--hade-green)!important;font-family:'Outfit',sans-serif!important;letter-spacing:.1em!important;font-size:9.5px;font-weight:400}
+body.role-logistica .topbar{background:#0a0a0a!important;border-bottom:1px solid rgba(168,213,106,.18)!important;padding:10px 16px!important;align-items:center}
+body.role-logistica .topbar-hade-logo{height:38px;width:auto;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 1px 4px rgba(0,0,0,.5))}
+body.role-logistica .topbar-sub{color:var(--hade-green)!important;font-family:'Outfit',sans-serif!important;letter-spacing:.12em!important;font-size:10px;font-weight:400;text-transform:uppercase;flex:1;text-align:left;margin-left:4px}
 body.role-logistica .sync-dot{background:#333}
 body.role-logistica .sync-dot.sync-ok{background:var(--hade-green)}
 body.role-logistica .sync-lbl{color:rgba(168,213,106,.7)!important;font-family:'Outfit',sans-serif!important;font-size:10px}
@@ -351,8 +350,9 @@ body.role-logistica .nav{background:rgba(10,10,10,.96)!important;border-top:1px 
 body.role-logistica .nav-btn{color:rgba(255,255,255,.35)!important;font-family:'Outfit',sans-serif!important;font-weight:400!important;letter-spacing:.04em}
 body.role-logistica .nav-btn.active{color:var(--hade-green)!important;font-weight:500!important}
 body.role-logistica .nav-btn.active::before{background:var(--hade-green)!important;height:2px!important;border-radius:0 0 2px 2px}
-body.role-logistica .nav-btn .ni{font-size:18px;filter:grayscale(.5) brightness(.85)}
-body.role-logistica .nav-btn.active .ni{filter:none}
+body.role-logistica .nav-btn .ni{display:flex;align-items:center;justify-content:center;height:20px;margin-bottom:1px}
+body.role-logistica .nav-btn .ni svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+body.role-logistica .nav-btn.active .ni svg{stroke:var(--hade-green)}
 
 /* Greetings, dateline, secciones */
 body.role-logistica .greeting{font-family:'Outfit',sans-serif!important;color:#fff!important;font-size:24px!important;font-weight:500!important;letter-spacing:.01em!important}
@@ -433,11 +433,8 @@ body.role-logistica .nav-badge{background:var(--hade-green)!important;border-col
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="topbar-logo"><img src="ISOTIPO_VERDE_nobg.png" alt="City Roots Farm"></div>
-    <div>
-      <div class="topbar-title">CITYROOTS.FARM</div>
-      <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.9.0</div>
-    </div>
+    <img src="img/hade-topbar.png" class="topbar-hade-logo" alt="HADE">
+    <div class="topbar-sub" id="topbar-version">Sistema de Registros v2.18.x</div>
     <div class="sync-row" id="role-switch" onclick="changeRole()" style="cursor:pointer;margin-right:4px;display:none">
       <span style="font-size:11px;color:rgba(168,213,162,0.8)">🔄</span>
       <span class="sync-lbl" id="role-lbl" style="color:rgba(168,213,162,0.8)">Cambiar</span>
@@ -465,12 +462,30 @@ body.role-logistica .nav-badge{background:var(--hade-green)!important;border-col
   </nav>
   <!-- Nav para LOGÍSTICA (chofer) -->
   <nav class="nav" id="nav-logistica" style="display:none">
-    <button class="nav-btn active" id="nb-log-inicio" onclick="goTo('log_inicio')"><span class="ni">🏠</span>Inicio</button>
-    <button class="nav-btn" id="nb-log-compras" onclick="goTo('log_compras')"><span class="ni">🛒</span>Compras</button>
-    <button class="nav-btn" id="nb-log-entregas" onclick="goTo('log_entregas')"><span class="ni">🚚</span>Entregas</button>
-    <button class="nav-btn" id="nb-log-vueltas" onclick="goTo('log_vueltas')"><span class="ni">📍</span>Vueltas</button>
-    <button class="nav-btn" id="nb-log-diario" onclick="goTo('log_diario')"><span class="ni">📋</span>Diario</button>
-    <button class="nav-btn" id="nb-log-admin" onclick="goTo('log_admin')"><span class="ni">⚙️</span>Admin</button>
+    <button class="nav-btn active" id="nb-log-inicio" onclick="goTo('log_inicio')">
+      <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      Inicio
+    </button>
+    <button class="nav-btn" id="nb-log-compras" onclick="goTo('log_compras')">
+      <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span>
+      Compras
+    </button>
+    <button class="nav-btn" id="nb-log-entregas" onclick="goTo('log_entregas')">
+      <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><path d="M15 18H9"/><circle cx="17" cy="18" r="2"/></svg></span>
+      Entregas
+    </button>
+    <button class="nav-btn" id="nb-log-vueltas" onclick="goTo('log_vueltas')">
+      <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+      Vueltas
+    </button>
+    <button class="nav-btn" id="nb-log-diario" onclick="goTo('log_diario')">
+      <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg></span>
+      Diario
+    </button>
+    <button class="nav-btn" id="nb-log-admin" onclick="goTo('log_admin')">
+      <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>
+      Admin
+    </button>
   </nav>
 </div>
 
@@ -530,7 +545,7 @@ body.role-logistica .nav-badge{background:var(--hade-green)!important;border-col
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.18.1';
+var APP_VERSION='2.18.2';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -3131,7 +3146,7 @@ function renderLogCompras(el){
   el.innerHTML=`<div class="pad">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
       <div class="greeting" style="margin-bottom:0">Compras del día</div>
-      <button class="btn btn-amber" style="flex:0;padding:7px 12px;font-size:12px" onclick="openAddCompraManual()" ${urlOk?'':'disabled'}>+ Agregar</button>
+      <button class="btn btn-primary" style="flex:0;padding:7px 12px;font-size:12px" onclick="openAddCompraManual()" ${urlOk?'':'disabled'}>+ Agregar</button>
     </div>
     <div class="dateline">Actualizado: ${fecha} <span style="text-decoration:underline;cursor:pointer;color:var(--green)" onclick="fetchLogistica()">↻ Actualizar</span></div>
     ${!urlOk?`<div class="banner banner-warn">⚠️ Configura la URL de Logística en Admin para ver las compras.</div>`:''}
@@ -4530,7 +4545,7 @@ function renderLogDiario(el){
       </div>
       ${kmCardStatus}
       <div style="font-size:11px;color:var(--text2);margin-top:4px">${ultimoKmTxt}</div>
-      ${!kmHoy?`<button class="btn btn-primary" style="margin-top:10px;width:100%" onclick="openRegistrarKm()" ${urlOk?'':'disabled'}>+ Registrar kilómetros de hoy</button>`:''}
+      ${!kmHoy?`<button class="btn btn-secondary" style="margin-top:10px;width:100%" onclick="openRegistrarKm()" ${urlOk?'':'disabled'}>+ Registrar kilómetros de hoy</button>`:''}
     </div>
 
     <!-- Card 2: GASOLINA -->
@@ -4539,7 +4554,7 @@ function renderLogDiario(el){
         <div style="font-weight:700;font-size:15px;color:var(--text)">⛽ Gasolina</div>
       </div>
       ${gasCardStatus}
-      <button class="btn btn-primary" style="margin-top:10px;width:100%" onclick="openRegistrarGasolina()" ${urlOk?'':'disabled'}>+ Registrar carga</button>
+      <button class="btn btn-secondary" style="margin-top:10px;width:100%" onclick="openRegistrarGasolina()" ${urlOk?'':'disabled'}>+ Registrar carga</button>
     </div>
 
     <!-- Card 3: CAJA -->
@@ -4565,7 +4580,7 @@ function renderLogDiario(el){
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
         <button class="btn btn-secondary" style="padding:9px 8px;font-size:13px" onclick="openRegistrarCajaEntrada()" ${urlOk?'':'disabled'}>+ Entrada</button>
-        <button class="btn btn-amber" style="padding:9px 8px;font-size:13px" onclick="openRegistrarCajaSalida()" ${urlOk?'':'disabled'}>+ Salida</button>
+        <button class="btn btn-secondary" style="padding:9px 8px;font-size:13px" onclick="openRegistrarCajaSalida()" ${urlOk?'':'disabled'}>+ Salida</button>
       </div>
       <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Últimos movimientos</div>
       ${cached.ultimosMovs && cached.ultimosMovs.length>0?cached.ultimosMovs.map(m=>{
