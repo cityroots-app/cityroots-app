@@ -378,6 +378,10 @@ body.role-logistica details summary{color:var(--hade-green)!important;font-famil
 body.role-logistica .banner{font-family:'Outfit',sans-serif!important;border-radius:10px!important}
 body.role-logistica .banner-warn{background:rgba(212,133,10,.1)!important;border:1px solid rgba(212,133,10,.35)!important;color:#f0c168!important}
 
+/* Banners de pendientes en Inicio (compra/entrega/vuelta) — dark + verde lima */
+body.role-logistica .banner-pend{background:#111!important;border:1px solid rgba(168,213,106,.4)!important;color:#fff!important;cursor:pointer;padding:14px 16px!important;border-radius:12px!important;font-family:'Outfit',sans-serif!important;font-size:13.5px!important;font-weight:400!important;margin-bottom:10px!important;transition:border-color .2s,background .2s,transform .15s;letter-spacing:.01em}
+body.role-logistica .banner-pend:hover,body.role-logistica .banner-pend:active{border-color:var(--hade-green)!important;background:#161616!important;transform:translateY(-1px)}
+
 /* Empty states */
 body.role-logistica .empty-ed,body.role-logistica .empty{color:rgba(255,255,255,.4)!important;font-family:'Outfit',sans-serif!important}
 body.role-logistica .empty-title{color:rgba(255,255,255,.7)!important;font-family:'Outfit',sans-serif!important;font-weight:500}
@@ -526,7 +530,7 @@ body.role-logistica .nav-badge{background:var(--hade-green)!important;border-col
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.18.0';
+var APP_VERSION='2.18.1';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -3007,9 +3011,9 @@ function renderLogInicio(el){
       <div class="stat"><div class="stat-n n-ok">${pendEntregas}</div><div class="stat-l">Por entregar</div></div>
       <div class="stat"><div class="stat-n n-info">${pendVueltas}</div><div class="stat-l">Vueltas</div></div>
     </div>
-    ${pendCompra>0?`<div class="banner banner-warn" style="cursor:pointer" onclick="goTo('log_compras')">🛒 ${pendCompra} producto${pendCompra>1?'s':''} por comprar — toca para ver</div>`:''}
-    ${pendEntregas>0?`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;cursor:pointer" onclick="goTo('log_entregas')">🚚 ${pendEntregas} entrega${pendEntregas>1?'s':''} pendiente${pendEntregas>1?'s':''} hoy</div>`:''}
-    ${pendVueltas>0?`<div class="banner" style="background:var(--bg2);border:1px solid var(--border2);cursor:pointer" onclick="goTo('log_vueltas')">📍 ${pendVueltas} vuelta${pendVueltas>1?'s':''} pendiente${pendVueltas>1?'s':''}</div>`:''}
+    ${pendCompra>0?`<div class="banner banner-pend banner-pend-compra" onclick="goTo('log_compras')">🛒 ${pendCompra} producto${pendCompra>1?'s':''} por comprar — toca para ver</div>`:''}
+    ${pendEntregas>0?`<div class="banner banner-pend banner-pend-entrega" onclick="goTo('log_entregas')">🚚 ${pendEntregas} entrega${pendEntregas>1?'s':''} pendiente${pendEntregas>1?'s':''} hoy</div>`:''}
+    ${pendVueltas>0?`<div class="banner banner-pend banner-pend-vuelta" onclick="goTo('log_vueltas')">📍 ${pendVueltas} vuelta${pendVueltas>1?'s':''} pendiente${pendVueltas>1?'s':''}</div>`:''}
     ${compras.length===0&&entregas.length===0&&vueltas.length===0?`<div class="empty-ed">
       <span class="empty-art">☕</span>
       <div class="empty-title">Día tranquilo</div>
