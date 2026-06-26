@@ -379,9 +379,15 @@ body:is(.role-logistica,.role-almacen) details summary{color:var(--hade-green)!i
 body:is(.role-logistica,.role-almacen) .banner{font-family:'Outfit',sans-serif!important;border-radius:10px!important}
 body:is(.role-logistica,.role-almacen) .banner-warn{background:rgba(212,133,10,.1)!important;border:1px solid rgba(212,133,10,.35)!important;color:#f0c168!important}
 
-/* Banners de pendientes en Inicio (compra/entrega/vuelta) — dark + verde lima */
-body:is(.role-logistica,.role-almacen) .banner-pend{background:#111!important;border:1px solid rgba(168,213,106,.4)!important;color:#fff!important;cursor:pointer;padding:14px 16px!important;border-radius:12px!important;font-family:'Outfit',sans-serif!important;font-size:13.5px!important;font-weight:400!important;margin-bottom:10px!important;transition:border-color .2s,background .2s,transform .15s;letter-spacing:.01em}
+/* Banners de pendientes en Inicio (compra/entrega/vuelta/pedidos/inv) — dark + verde lima */
+body:is(.role-logistica,.role-almacen) .banner-pend{display:flex!important;align-items:center!important;gap:12px!important;background:#111!important;border:1px solid rgba(168,213,106,.4)!important;color:#fff!important;cursor:pointer;padding:13px 16px!important;border-radius:12px!important;font-family:'Outfit',sans-serif!important;font-size:13.5px!important;font-weight:400!important;margin-bottom:10px!important;transition:border-color .2s,background .2s,transform .15s;letter-spacing:.01em}
 body:is(.role-logistica,.role-almacen) .banner-pend:hover,body:is(.role-logistica,.role-almacen) .banner-pend:active{border-color:var(--hade-green)!important;background:#161616!important;transform:translateY(-1px)}
+body:is(.role-logistica,.role-almacen) .banner-pend-icon{flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--hade-green);background:rgba(168,213,106,.08);border-radius:9px;border:1px solid rgba(168,213,106,.2)}
+body:is(.role-logistica,.role-almacen) .banner-pend-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+body:is(.role-logistica,.role-almacen) .banner-pend-card{align-items:center}
+body:is(.role-logistica,.role-almacen) .banner-pend-title{font-size:14px;font-weight:500;color:#fff;line-height:1.2}
+body:is(.role-logistica,.role-almacen) .banner-pend-sub{font-size:11px;font-weight:300;color:rgba(255,255,255,.55);margin-top:2px}
+body:is(.role-logistica,.role-almacen) .banner-pend-empty{cursor:default!important;color:rgba(255,255,255,.5)!important;border-color:rgba(168,213,106,.15)!important;font-style:italic;justify-content:center;text-align:center}
 
 /* Empty states */
 body:is(.role-logistica,.role-almacen) .empty-ed,body:is(.role-logistica,.role-almacen) .empty{color:rgba(255,255,255,.4)!important;font-family:'Outfit',sans-serif!important}
@@ -560,7 +566,7 @@ body:is(.role-logistica,.role-almacen) .nav-badge{background:var(--hade-green)!i
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.19.0';
+var APP_VERSION='2.19.1';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2570,10 +2576,10 @@ function renderAlmInicio(el){
       <div class="stat"><div class="stat-n n-warn">${pend}</div><div class="stat-l">Pendientes</div></div>
       <div class="stat"><div class="stat-n n-ok">${totalItems}</div><div class="stat-l">Items total</div></div>
     </div>
-    ${entregas.length>0?`<div class="banner" style="background:var(--ok-bg);border:1px solid var(--ok);color:#1B5E35;cursor:pointer" onclick="goTo('alm_pedidos')">📦 ${entregas.length} pedido${entregas.length>1?'s':''} por preparar hoy</div>`:`<div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a">Sin pedidos activos por el momento.</div>`}
-    <div class="exp-card" style="margin-top:10px" onclick="goTo('alm_inventario')">
-      <div class="exp-icon" style="background:var(--info-bg)">📊</div>
-      <div><div class="exp-title">Captura semanal</div><div class="exp-sub">${invSem.length?invSem.length+' productos en última captura':'Sin captura esta semana'}</div></div>
+    ${entregas.length>0?`<div class="banner-pend" onclick="goTo('alm_pedidos')"><span class="banner-pend-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>${entregas.length} pedido${entregas.length>1?'s':''} por preparar hoy</div>`:`<div class="banner-pend banner-pend-empty">Sin pedidos activos por el momento.</div>`}
+    <div class="banner-pend banner-pend-card" onclick="goTo('alm_inventario')">
+      <span class="banner-pend-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+      <div><div class="banner-pend-title">Captura semanal</div><div class="banner-pend-sub">${invSem.length?invSem.length+' productos en última captura':'Sin captura esta semana'}</div></div>
     </div>
   </div>`;
 }
