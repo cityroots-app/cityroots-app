@@ -660,7 +660,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.20.5';
+var APP_VERSION='2.20.6';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1780,7 +1780,7 @@ function confirmarSiembra(id){
     <div class="field"><label>Responsable <span style="color:var(--danger)">*</span></label>
       <select id="cs-responsable">
         <option value="">Seleccionar...</option>
-        ${['José Carlos','Encargado de producción','Personal de producción'].map(o=>`<option>${o}</option>`).join('')}
+        ${['José Carlos','Encargado de producción','Personal de producción'].map(o=>`<option${o==='Encargado de producción'?' selected':''}>${o}</option>`).join('')}
       </select></div>
     <div class="field"><label>Observaciones</label>
       <textarea id="cs-obs" placeholder="Sin novedad / Observación..."></textarea></div>
@@ -1844,7 +1844,7 @@ function registrarCosecha(id){
     <div class="field"><label>Responsable <span style="color:var(--danger)">*</span></label>
       <select id="rc-responsable">
         <option value="">Seleccionar...</option>
-        ${['José Carlos','Encargado de producción','Personal de producción'].map(o=>`<option>${o}</option>`).join('')}
+        ${['José Carlos','Encargado de producción','Personal de producción'].map(o=>`<option${o==='Encargado de producción'?' selected':''}>${o}</option>`).join('')}
       </select></div>
     <div class="field"><label>Comentarios</label>
       <textarea id="rc-comentarios" placeholder="Sin novedad / Incidencia..."></textarea></div>
@@ -2174,13 +2174,15 @@ function openForm(id){
     <div class="modal-handle"></div>
     <div class="modal-title form-modal-title"><span class="form-modal-icon">${reg.icon}</span><span>${reg.name}</span></div>
     <div class="modal-sub">${reg.code} · ${new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})}</div>
-    ${reg.fields.map(f=>`<div class="field">
+    ${reg.fields.map(f=>{
+      const defaultOpt = f.id==='responsable' && (f.opts||[]).includes('Encargado de producción') ? 'Encargado de producción' : '';
+      return `<div class="field">
       <label>${f.label}${f.req?` <span style="color:var(--danger)">*</span>`:''}</label>
-      ${f.type==='select'?`<select id="f_${f.id}"><option value="">Seleccionar...</option>${(f.opts||[]).map(o=>`<option>${o}</option>`).join('')}</select>`:
+      ${f.type==='select'?`<select id="f_${f.id}"><option value="">Seleccionar...</option>${(f.opts||[]).map(o=>`<option${o===defaultOpt?' selected':''}>${o}</option>`).join('')}</select>`:
         f.type==='textarea'?`<textarea id="f_${f.id}" placeholder="${f.ph||''}"></textarea>`:
         f.type==='time'?`<input type="time" id="f_${f.id}" value="${nowTime()}">`:
         `<input type="${f.type}" id="f_${f.id}" placeholder="${f.ph||''}">`}
-    </div>`).join('')}
+    </div>`;}).join('')}
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-primary" id="save-btn" onclick="submitForm('${id}')">Guardar registro</button>
