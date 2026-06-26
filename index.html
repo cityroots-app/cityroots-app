@@ -72,29 +72,29 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .nav-badge{position:absolute;top:5px;right:calc(50% - 15px);width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--bg);box-shadow:0 0 4px rgba(192,57,43,0.4)}
 
 /* ROLE SELECTOR */
-/* ── ROLE SCREEN (rediseñado v2.16.5 — cuarto de producción desvanecido) ── */
-.role-screen{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:36px 28px;overflow-y:auto;overflow-x:hidden}
-.role-bg-photo{position:fixed;bottom:0;left:0;right:0;height:55vh;background:url('img/cuarto.jpg') center bottom/cover no-repeat;opacity:.42;filter:brightness(.7) saturate(.85) blur(.5px);mask-image:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.35) 28%,#000 75%);-webkit-mask-image:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.35) 28%,#000 75%);pointer-events:none;z-index:0}
-.role-screen > *:not(.role-bg-photo){position:relative;z-index:1}
-.role-wordmark{font-family:'Outfit',sans-serif;font-size:24px;font-weight:600;color:#fff;letter-spacing:.28em;text-transform:uppercase;margin-bottom:2px;text-align:center;line-height:1;padding-left:.28em}
-.role-screen h1{font-family:'Outfit',sans-serif;font-size:20px;font-weight:300;color:#a8d5a2;text-align:center;margin:18px 0 0;letter-spacing:.08em;text-transform:lowercase}
-.role-screen p{font-family:'Outfit',sans-serif;font-size:12px;font-weight:300;color:rgba(168,213,162,.7);text-align:center;margin:2px 0 20px;letter-spacing:.1em;text-transform:lowercase}
-.role-card{width:100%;max-width:340px;padding:20px 22px;border-radius:18px;border:1px solid rgba(168,213,162,.18);background:rgba(255,255,255,.04);backdrop-filter:blur(8px);cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:18px}
-.role-card:hover,.role-card:active{border-color:rgba(168,213,162,.45);background:rgba(255,255,255,.08);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.role-card .role-icon{width:42px;height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#a8d5a2;background:rgba(74,140,63,.14);border-radius:12px;border:1px solid rgba(168,213,162,.12)}
-.role-card .role-icon svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.role-card .role-info h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#fff;margin-bottom:2px;letter-spacing:-.01em}
-.role-card .role-info span{font-family:'Outfit',sans-serif;font-size:12px;font-weight:400;color:rgba(255,255,255,.62);line-height:1.45;letter-spacing:.01em}
+/* ── ROLE SCREEN (rediseñado v2.16.6 — texture noise + cards compactas) ── */
+.role-screen{position:fixed;inset:0;z-index:9999;background-color:#070707;background-image:radial-gradient(ellipse at 50% -10%,rgba(74,140,63,.06) 0%,transparent 55%),radial-gradient(ellipse at 50% 110%,rgba(74,140,63,.05) 0%,transparent 55%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:28px 22px;overflow-y:auto;overflow-x:hidden}
+.role-screen::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.42 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:240px 240px;opacity:.32;pointer-events:none;mix-blend-mode:overlay;z-index:0}
+.role-screen > *{position:relative;z-index:1}
+.role-logo{width:auto;height:72px;margin-bottom:2px;filter:drop-shadow(0 2px 12px rgba(0,0,0,.5))}
+.role-screen h1{font-family:'Outfit',sans-serif;font-size:18px;font-weight:300;color:#c8e2c3;text-align:center;margin:14px 0 0;letter-spacing:.1em;text-transform:lowercase}
+.role-screen p{font-family:'Outfit',sans-serif;font-size:11px;font-weight:300;color:rgba(168,213,162,.6);text-align:center;margin:2px 0 16px;letter-spacing:.14em;text-transform:lowercase}
+.role-card{width:100%;max-width:330px;padding:13px 16px;border-radius:14px;border:1px solid rgba(168,213,162,.12);background:linear-gradient(135deg,rgba(255,255,255,.03) 0%,rgba(255,255,255,.015) 100%);backdrop-filter:blur(6px);cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:13px}
+.role-card:hover,.role-card:active{border-color:rgba(168,213,162,.35);background:linear-gradient(135deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.03) 100%);transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.role-card .role-icon{width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#a8d5a2;background:rgba(74,140,63,.16);border-radius:10px;border:1px solid rgba(168,213,162,.14)}
+.role-card .role-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.role-card .role-info h3{font-family:'Outfit',sans-serif;font-size:15px;font-weight:500;color:#fff;margin-bottom:1px;letter-spacing:.01em}
+.role-card .role-info span{font-family:'Outfit',sans-serif;font-size:10.5px;font-weight:300;color:rgba(255,255,255,.55);line-height:1.4;letter-spacing:.01em}
 .role-card{width:100%;max-width:320px;padding:24px 20px;border-radius:var(--radius-lg);border:2px solid var(--border);background:var(--bg2);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px}
 .role-card:hover,.role-card:active{border-color:var(--green-bright);background:var(--ok-bg);transform:scale(1.02)}
 .role-card .role-icon{font-size:36px;flex-shrink:0}
 .role-card .role-info h3{font-size:16px;font-weight:600;color:var(--text);margin-bottom:3px}
 .role-card .role-info span{font-size:12px;color:var(--text2)}
-/* Esferas de pendientes en el role-card (v2.16.0) */
+/* Esferas de pendientes en el role-card (v2.16.6 — tamaño reducido) */
 .role-card{position:relative}
-.role-dots{position:absolute;bottom:10px;right:14px;display:flex;align-items:center;gap:5px}
-.role-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.18);cursor:pointer;transition:transform .15s,box-shadow .15s;border:1.5px solid rgba(255,255,255,.08)}
-.role-dot:hover,.role-dot:active{transform:scale(1.15);box-shadow:0 2px 6px rgba(0,0,0,.28)}
+.role-dots{position:absolute;bottom:8px;right:12px;display:flex;align-items:center;gap:4px}
+.role-dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer;transition:transform .15s,box-shadow .15s;border:1px solid rgba(255,255,255,.1)}
+.role-dot:hover,.role-dot:active{transform:scale(1.15);box-shadow:0 2px 6px rgba(0,0,0,.35)}
 .role-dot.dot-lotes{background:#4a8c3f}
 .role-dot.dot-pedidos{background:#8b5cf6}
 .role-dot.dot-compras{background:#d4850a}
@@ -377,7 +377,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 <!-- SELECTOR DE ROL (v2.16.2 — branding HADE + Cormorant + iconos Lucide) -->
 <div class="role-screen" id="role-screen" style="display:none">
   <div id="role-version-badge" style="position:absolute;top:14px;right:16px;background:rgba(168,213,162,.12);color:#a8d5a2;padding:5px 12px;border-radius:14px;font-size:11px;font-weight:600;letter-spacing:.5px;border:1px solid rgba(168,213,162,.2)">v2.5.0</div>
-  <div class="role-wordmark">The Harvest Dealers</div>
+  <img src="hade-logo.png" alt="HADE — The Harvest Dealers" class="role-logo">
   <h1>Bienvenido</h1>
   <p>Selecciona tu área de trabajo</p>
 
@@ -417,8 +417,6 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
     <div class="role-dots" id="dots-logistica"></div>
   </div>
 
-  <!-- Foto del cuarto de producción desvanecida al fondo (v2.16.5) -->
-  <div class="role-bg-photo" aria-hidden="true"></div>
 </div>
 
 <div id="modal-ov" class="modal-ov" style="display:none" onclick="closeOut(event)">
@@ -432,7 +430,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.16.5';
+var APP_VERSION='2.16.6';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
