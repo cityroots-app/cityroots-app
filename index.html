@@ -72,8 +72,10 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .nav-badge{position:absolute;top:5px;right:calc(50% - 15px);width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--bg);box-shadow:0 0 4px rgba(192,57,43,0.4)}
 
 /* ROLE SELECTOR */
-/* ── ROLE SCREEN (rediseñado v2.16.3 — wordmark hero + Outfit ── */
-.role-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(180deg,#0d1f0d 0%,#1a3a1a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:36px 28px;overflow-y:auto}
+/* ── ROLE SCREEN (rediseñado v2.16.5 — cuarto de producción desvanecido) ── */
+.role-screen{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:36px 28px;overflow-y:auto;overflow-x:hidden}
+.role-bg-photo{position:fixed;bottom:0;left:0;right:0;height:55vh;background:url('img/cuarto.jpg') center bottom/cover no-repeat;opacity:.42;filter:brightness(.7) saturate(.85) blur(.5px);mask-image:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.35) 28%,#000 75%);-webkit-mask-image:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.35) 28%,#000 75%);pointer-events:none;z-index:0}
+.role-screen > *:not(.role-bg-photo){position:relative;z-index:1}
 .role-wordmark{font-family:'Outfit',sans-serif;font-size:24px;font-weight:600;color:#fff;letter-spacing:.28em;text-transform:uppercase;margin-bottom:2px;text-align:center;line-height:1;padding-left:.28em}
 .role-screen h1{font-family:'Outfit',sans-serif;font-size:20px;font-weight:300;color:#a8d5a2;text-align:center;margin:18px 0 0;letter-spacing:.08em;text-transform:lowercase}
 .role-screen p{font-family:'Outfit',sans-serif;font-size:12px;font-weight:300;color:rgba(168,213,162,.7);text-align:center;margin:2px 0 20px;letter-spacing:.1em;text-transform:lowercase}
@@ -414,6 +416,9 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
     </div>
     <div class="role-dots" id="dots-logistica"></div>
   </div>
+
+  <!-- Foto del cuarto de producción desvanecida al fondo (v2.16.5) -->
+  <div class="role-bg-photo" aria-hidden="true"></div>
 </div>
 
 <div id="modal-ov" class="modal-ov" style="display:none" onclick="closeOut(event)">
@@ -427,7 +432,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.16.3';
+var APP_VERSION='2.16.5';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
