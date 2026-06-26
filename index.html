@@ -566,7 +566,7 @@ body:is(.role-logistica,.role-almacen) .nav-badge{background:var(--hade-green)!i
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.19.1';
+var APP_VERSION='2.19.2';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2746,7 +2746,6 @@ function renderAlmInventario(el){
     ${!getURLProd()?`<div class="banner banner-warn">⚠️ Falta URL de Producción (Sheet Principal). El catálogo HADE viene de ahí. Configúralo en Admin.</div>`:''}
     ${!catalogHadeOk?`<div class="banner banner-warn">⚠️ Catálogo HADE vacío. Presiona "↻ Cargar catálogo" arriba (trae el inventario del Sheet Principal). Los insumos CRF (semillas, sustratos, contenedores) ya están disponibles.</div>`:''}
     ${legacyCount>0?`<div class="banner banner-warn">⚠️ ${legacyCount} producto${legacyCount>1?'s':''} en la captura sin código Bind (capturados en versión anterior). Re-captúralos para que suban a Bind correctamente.</div>`:''}
-    <div class="banner" style="background:var(--info-bg);border:1px solid var(--info);color:#0e3a6a;font-size:13px">📋 Capture el conteo semanal. Se guarda en Logística para subirlo a Bind.</div>
 
     <div class="sec" style="margin-top:12px">Productos capturados (${draft.length})</div>
     <div id="inv-draft-list"></div>
