@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Tab Administración — HADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --hade-green:#5b8530;          /* verde oscuro para texto/iconos sobre fondo claro */
+  --hade-green-bright:#a8d56a;   /* verde lime para botones primarios y highlights */
+  --bg:#fbfaf6;                  /* fondo crema suave */
+  --bg-card:#fff;
+  --bg-card-2:#f5f3eb;
+  --bg-input:#fff;
+  --border:rgba(91,133,48,.18);
+  --border-strong:rgba(91,133,48,.42);
+  --text:#1a1a1a;
+  --text-2:rgba(0,0,0,.62);
+  --text-3:rgba(0,0,0,.45);
+  --text-4:rgba(0,0,0,.30);
+  --amber:#a05500;
+  --amber-bg:rgba(212,133,10,.14);
+  --green-bg:rgba(168,213,106,.18);
+  --green-bg-strong:rgba(168,213,106,.36);
+  --danger:#c0392b; --info:#185FA5;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Outfit',-apple-system,sans-serif;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;border:none;background:none;color:inherit;width:100%}
+input:focus,select:focus,textarea:focus{outline:none}
+
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+@media(min-width:900px){.app{max-width:980px}}
+
+.topbar{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg-card);position:sticky;top:0;z-index:10}
+.topbar-brand{font-size:11px;letter-spacing:.16em;font-weight:600;line-height:1.3}
+.topbar-sub{font-size:9px;letter-spacing:.10em;color:var(--hade-green);margin-top:2px}
+.sync-pill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--hade-green);background:var(--bg-card-2);padding:5px 11px;border-radius:999px;border:1px solid var(--border)}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--hade-green)}
+
+.content{flex:1;padding:16px;padding-bottom:90px;overflow-y:auto}
+
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg-card);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:10px 0 14px;z-index:20}
+@media(min-width:900px){.bottom-nav{max-width:980px;margin:0 auto}}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 10px;font-size:10px;color:var(--text-3);border:none;background:none}
+.nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-btn.active{color:var(--hade-green)}
+
+.greeting{font-family:'Outfit';font-size:22px;font-weight:300;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.greeting svg{width:22px;height:22px;stroke:var(--hade-green);fill:none;stroke-width:1.8}
+.greeting-sub{color:var(--text-3);font-size:12px;margin-bottom:18px}
+
+.saldo-card{background:var(--bg-card-2);border:1px solid var(--border-strong);border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.saldo-card-label{font-size:10px;letter-spacing:.10em;color:var(--text-3)}
+.saldo-card-value{font-family:'Outfit';font-size:28px;color:var(--hade-green);font-weight:500;margin-top:2px;letter-spacing:-.01em}
+.saldo-card-meta{font-size:11px;color:var(--text-4);margin-top:2px}
+
+.section-title{font-size:11px;letter-spacing:.10em;color:var(--text-3);margin:0 0 10px;font-weight:500}
+
+.toggle-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.toggle-btn{padding:11px;font-size:12px;font-weight:600;border-radius:10px;letter-spacing:.04em;font-family:'Outfit'}
+.toggle-btn.active{background:var(--green-bg-strong);color:#2a4716;border:1px solid var(--hade-green)}
+.toggle-btn:not(.active){background:var(--bg-card);color:var(--text-3);border:1px solid rgba(255,255,255,.12)}
+
+.field{margin-bottom:11px}
+.field-label{font-size:10px;color:var(--text-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.field-input,.field-select{background:var(--bg-input);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:6px;cursor:pointer;transition:border-color .15s}
+.field-input:focus-within,.field-select:focus-within{border-color:var(--hade-green)}
+.field-input input,.field-input select,.field-select select{background:none;font-size:13px;color:var(--text);min-width:0;flex:1}
+.field-input.amount input{font-size:20px;color:var(--hade-green);font-weight:500}
+.field-input > svg{width:15px;height:15px;flex-shrink:0;stroke:var(--hade-green);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.search-pill > svg{width:13px;height:13px;flex-shrink:0;stroke:var(--hade-green);fill:none;stroke-width:1.8}
+.search-pill input{flex:1;min-width:0}
+.field-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.btn-primary{width:100%;background:var(--hade-green-bright);color:#0a1a05;padding:13px;font-size:13px;font-weight:600;border-radius:999px;letter-spacing:.02em;display:flex;align-items:center;justify-content:center;gap:6px;transition:filter .15s}
+.btn-primary:hover{filter:brightness(1.05)}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.btn-secondary{background:var(--bg-card);color:var(--text-2);border:1px solid rgba(255,255,255,.15);padding:10px 14px;font-size:12px;font-weight:500;border-radius:999px}
+.btn-secondary:hover{border-color:var(--hade-green);color:var(--hade-green)}
+.btn-secondary svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;vertical-align:-2px;margin-right:4px}
+
+.movs-list{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.mov-row{background:var(--bg-input);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.mov-row-left{color:var(--text-2);min-width:0;overflow:hidden}
+.mov-row-prov{font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mov-row-concepto{font-size:10px;color:var(--text-3);margin-top:1px}
+.mov-row-amount{font-weight:500;flex-shrink:0;margin-left:8px}
+.mov-row-amount.ingreso{color:var(--hade-green)}
+.mov-row-amount.egreso{color:var(--text-2)}
+
+/* === Pendientes table === */
+.pendientes-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.pendientes-title{font-size:18px;font-weight:500}
+.pendientes-count{font-size:11px;color:var(--text-3);margin-top:2px}
+.search-pill{display:flex;align-items:center;gap:6px;background:var(--bg-card-2);border:1px solid var(--border);padding:8px 12px;border-radius:10px;font-size:12px;color:var(--text-3);min-width:200px}
+.search-pill svg{width:13px;height:13px;stroke:var(--hade-green);fill:none;stroke-width:1.8}
+.search-pill input{font-size:12px;color:var(--text)}
+
+.filter-pills{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;font-size:11px}
+.filter-pill{padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:var(--bg-card);color:var(--text-3);transition:all .15s}
+.filter-pill.active{background:var(--green-bg-strong);color:var(--hade-green);border-color:var(--hade-green);font-weight:500}
+.filter-pill:hover:not(.active){border-color:var(--text-3)}
+
+.pendientes-table{background:var(--bg-input);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.pt-header{display:grid;grid-template-columns:70px 1.3fr 1.4fr 90px 1fr 130px;gap:8px;padding:10px 14px;font-size:10px;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)}
+.pt-row{display:grid;grid-template-columns:70px 1.3fr 1.4fr 90px 1fr 130px;gap:8px;padding:11px 14px;font-size:12px;align-items:center;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s}
+.pt-row:hover{background:rgba(168,213,106,.03)}
+.pt-row:last-child{border-bottom:none}
+.pt-fecha{color:var(--text-2);font-family:monospace;font-size:11px;text-align:left}
+.pt-prov{font-weight:500;text-align:left}
+.pt-concepto{color:var(--text-3);font-size:11px;line-height:1.3;text-align:left}
+.pt-amount{text-align:right;font-weight:500}
+.pt-amount.ingreso{color:var(--hade-green)}
+.pt-amount.egreso{color:var(--text-2)}
+.pt-factura{font-family:monospace;font-size:11px;color:var(--text-2)}
+.pt-factura.pending{background:var(--green-bg);border:1px dashed var(--border-strong);color:var(--hade-green);padding:4px 8px;border-radius:6px;font-size:10px;text-align:center;font-family:'Outfit';cursor:pointer;transition:background .15s}
+.pt-factura.pending:hover{background:var(--green-bg-strong)}
+.pt-factura.pending::after{content:' ✎';opacity:.6;font-size:9px}
+.pt-factura.sin-categ{background:var(--amber-bg);border:1px solid rgba(212,133,10,.45);color:#f5c842;padding:4px 8px;border-radius:6px;font-size:10px;text-align:center;font-family:'Outfit'}
+.pt-factura{cursor:pointer;transition:background .15s;display:inline-flex;align-items:center;gap:4px}
+.pt-factura:hover{background:rgba(168,213,106,.06)}
+.pt-factura svg{width:11px;height:11px;stroke:var(--text-3);fill:none;stroke-width:1.8;opacity:.6;flex-shrink:0}
+.pt-factura:hover svg{stroke:var(--hade-green);opacity:1}
+
+.btn-action{padding:7px 10px;border-radius:7px;font-size:11px;font-weight:600;font-family:'Outfit';display:flex;align-items:center;justify-content:center;gap:4px;width:100%}
+.btn-action.primary{background:var(--hade-green-bright);color:#0a1a05}
+.btn-action.outline{background:var(--bg-input);color:var(--hade-green);border:1px solid var(--hade-green)}
+.btn-action.neutral{background:var(--bg-input);color:var(--text-2);border:1px solid rgba(255,255,255,.18)}
+.btn-action svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+
+@media(max-width:680px){
+  .pt-header{display:none}
+  .pt-row{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
+  .pt-row > *{text-align:left}
+  .pt-row-line1{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;width:100%}
+  .pt-row-line1 > div:first-child{flex:1;min-width:0;text-align:left}
+  .pt-row-line2{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%}
+  .pt-fecha-mobile{font-family:monospace;font-size:10px;color:var(--text-3);letter-spacing:.04em;text-align:left}
+  .pt-row .pt-concepto{text-align:left}
+  .pt-row .pt-prov{text-align:left}
+}
+
+.help-card{margin-top:12px;padding:11px 13px;background:var(--green-bg);border:1px dashed var(--border-strong);border-radius:8px;font-size:11px;color:var(--text-2);display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.help-card svg{width:14px;height:14px;stroke:var(--hade-green);fill:none;stroke-width:1.8;flex-shrink:0;margin-top:1px}
+.help-card code{background:var(--bg-card);padding:1px 5px;border-radius:4px;color:var(--hade-green);font-size:10px}
+
+/* === Saldo dashboard === */
+.dash-cards{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+@media(max-width:680px){.dash-cards{grid-template-columns:1fr 1fr;gap:8px}}
+.dash-card{background:var(--bg-card-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.dash-card.hero{border-color:var(--hade-green)}
+.dash-card-label{font-size:10px;letter-spacing:.08em;color:var(--text-3)}
+.dash-card-value{font-family:'Outfit';font-size:22px;font-weight:500;margin-top:2px;letter-spacing:-.01em}
+.dash-card-value.green{color:var(--hade-green)}
+.dash-card-meta{font-size:10px;color:var(--text-4);margin-top:2px}
+.dash-card-meta.up{color:var(--hade-green)}
+
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:680px){.dash-grid{grid-template-columns:1fr}}
+.dash-panel-title{font-size:11px;color:var(--text-3);letter-spacing:.08em;margin-bottom:8px}
+.dash-list{background:var(--bg-input);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.dash-list-row{display:flex;justify-content:space-between;padding:10px 13px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05)}
+.dash-list-row:last-child{border-bottom:none}
+.dash-list-label{color:var(--text-2)}
+.dash-list-value{color:var(--text);font-weight:500}
+.dash-list-value.green{color:var(--hade-green)}
+
+/* === Programados === */
+.prog-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px}
+@media(max-width:680px){.prog-summary{grid-template-columns:1fr}}
+.prog-week{background:var(--bg-card-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.prog-week.current{border-color:var(--hade-green)}
+.prog-week-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.prog-week-title{font-size:13px;font-weight:500}
+.prog-week-meta{font-size:10px;color:var(--text-3)}
+.prog-week-total{font-size:14px;color:var(--hade-green);font-weight:500;font-family:'Outfit'}
+.prog-row{display:grid;grid-template-columns:60px 1.4fr 1fr 90px 130px;gap:8px;padding:8px 10px;font-size:12px;align-items:center;background:var(--bg-input);border-radius:8px;margin-bottom:4px}
+.prog-row:last-child{margin-bottom:0}
+.prog-row.paid{opacity:.55}
+.prog-row.paid .prog-amount{color:var(--text-3)}
+.prog-row.paid .prog-action button{background:transparent;border:1px solid rgba(255,255,255,.08);color:var(--text-3);cursor:default}
+.prog-fecha{font-family:monospace;font-size:11px;color:var(--text-2)}
+.prog-prov{font-weight:500}
+.prog-categoria{font-size:10px;color:var(--text-3)}
+.prog-amount{text-align:right;font-weight:500;color:var(--text)}
+
+@media(max-width:680px){
+  .prog-row{grid-template-columns:1fr;gap:6px;padding:11px 12px}
+  .prog-row-mobile-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .prog-row-mobile-top > div:first-child{flex:1;min-width:0;text-align:left}
+  .prog-row .prog-fecha{font-size:10px}
+  .prog-row .prog-amount{text-align:right;font-size:13px;white-space:nowrap}
+  .prog-row .prog-concepto-mobile{font-size:11px;color:var(--text-3);text-align:left;line-height:1.3}
+  .prog-row .prog-action button{width:100%}
+}
+
+/* === Admin === */
+.admin-section{background:var(--bg-card-2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.admin-section-title{font-size:13px;font-weight:500;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.admin-section-title svg{width:16px;height:16px;stroke:var(--hade-green);fill:none;stroke-width:1.8}
+.admin-section p{font-size:12px;color:var(--text-2);margin:0 0 10px;line-height:1.5}
+
+/* === Modal Vincular Bind === */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:30;display:none;align-items:flex-end;justify-content:center}
+.modal-ov.show{display:flex}
+@media(min-width:680px){.modal-ov{align-items:center}}
+.modal{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:18px 18px 28px}
+@media(min-width:680px){.modal{border-radius:20px}}
+.modal-handle{width:42px;height:4px;background:rgba(168,213,106,.4);border-radius:99px;margin:0 auto 14px}
+@media(min-width:680px){.modal-handle{display:none}}
+.modal-title{font-size:17px;font-weight:500;margin-bottom:3px}
+.modal-sub{font-size:11px;color:var(--text-3);margin-bottom:16px}
+.modal-close{position:absolute;top:12px;right:14px;background:transparent;color:var(--text-3);padding:6px}
+.modal-close svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+
+.bind-invoice-row{display:flex;align-items:center;gap:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+.bind-invoice-row.selected{border-color:var(--hade-green);background:var(--green-bg)}
+.bind-invoice-check{width:18px;height:18px;border:1.5px solid var(--text-3);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bind-invoice-row.selected .bind-invoice-check{background:var(--hade-green);border-color:var(--hade-green)}
+.bind-invoice-row.selected .bind-invoice-check svg{display:block}
+.bind-invoice-check svg{display:none;width:12px;height:12px;stroke:#0a1a05;fill:none;stroke-width:3}
+.bind-invoice-info{flex:1;min-width:0}
+.bind-invoice-id{font-family:monospace;font-size:12px;font-weight:500}
+.bind-invoice-concepto{font-size:11px;color:var(--text-3);margin-top:1px}
+.bind-invoice-amount{font-weight:500;color:var(--hade-green)}
+
+.match-strip{margin:14px 0;padding:11px 13px;border-radius:10px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:8px}
+.match-strip.ok{background:var(--green-bg);color:var(--hade-green);border:1px solid var(--hade-green)}
+.match-strip.dif{background:var(--amber-bg);color:#f5c842;border:1px solid rgba(212,133,10,.5)}
+.match-strip svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--hade-green);color:var(--hade-green);padding:11px 18px;border-radius:10px;font-size:13px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;align-items:center;gap:8px;font-weight:500}
+.toast.show{display:flex}
+.toast svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+
+.empty{text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px}
+
+/* Datalist autocomplete styling fallback */
+input[list]{cursor:text}
+
+.sandbox-tag{position:fixed;top:6px;left:50%;transform:translateX(-50%);background:var(--hade-green-bright);color:#0a1a05;font-size:9px;letter-spacing:.12em;padding:2px 10px;border-radius:99px;z-index:100;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="sandbox-tag">ADMINISTRACIÓN HADE · PILOTO</div>
+
+<div class="app">
+  <header class="topbar">
+    <div>
+      <div class="topbar-brand">THE HARVEST DEALERS</div>
+      <div class="topbar-sub">ADMINISTRACIÓN · CAJA HADE</div>
+    </div>
+    <div class="sync-pill"><span class="sync-dot"></span>Mock data</div>
+  </header>
+
+  <main class="content" id="content"></main>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="captura" onclick="switchTab('captura')">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Captura
+    </button>
+    <button class="nav-btn" data-tab="pendientes" onclick="switchTab('pendientes')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Pendientes
+    </button>
+    <button class="nav-btn" data-tab="programados" onclick="switchTab('programados')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Próximos
+    </button>
+    <button class="nav-btn" data-tab="saldo" onclick="switchTab('saldo')">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+      Saldo
+    </button>
+    <button class="nav-btn" data-tab="admin" onclick="switchTab('admin')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Admin
+    </button>
+  </nav>
+</div>
+
+<div class="modal-ov" id="modal-ov" onclick="closeModalOnBg(event)">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span id="toast-msg">Guardado</span></div>
+
+<script src="mock-data.js"></script>
+<script>
+// Estado global
+let STATE = {
+  page: 'captura',
+  movs: [...window.MOCK.MOCK_MOVIMIENTOS],
+  tipoSelected: 'INGRESO',
+  pendFilter: 'sin-factura',
+  modal: null
+};
+
+const SVG = {
+  plant: '<svg viewBox="0 0 24 24"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>',
+  sunrise: '<svg viewBox="0 0 24 24"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="23" y1="22" x2="1" y2="22"/><polyline points="8 6 12 2 16 6"/></svg>',
+  search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  link: '<svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+  upload: '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+  edit: '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+  check: '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>',
+  arrow: '<svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+  x: '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  download: '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+  sync: '<svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+  warn: '<svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+};
+
+function fmtMoney(n){
+  return '$' + Math.round(n).toLocaleString('es-MX');
+}
+function fmtMoneyD(n){
+  return '$' + Number(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtDateShort(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  const mes = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()];
+  return d.getDate() + ' ' + mes;
+}
+function fmtDateLong(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return dias[d.getDay()] + ', ' + d.getDate() + ' de ' + meses[d.getMonth()];
+}
+function todayISO(){ return new Date().toISOString().split('T')[0]; }
+
+// ISO week number — ej. 29-jun-2026 → {year:2026, week:27} → "2627"
+function getISOWeek(d){
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  return { year: date.getUTCFullYear(), week };
+}
+function fmtWeekId(y, w){
+  return String(y % 100).padStart(2,'0') + String(w).padStart(2,'0');
+}
+function getMondayOfWeek(d){
+  const date = new Date(d);
+  const day = date.getDay() || 7;
+  date.setDate(date.getDate() - day + 1);
+  date.setHours(0,0,0,0);
+  return date;
+}
+function getWeekRange(year, week){
+  const jan4 = new Date(year, 0, 4);
+  const jan4Day = jan4.getDay() || 7;
+  const monday = new Date(jan4);
+  monday.setDate(jan4.getDate() - jan4Day + 1 + (week - 1) * 7);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return { monday, sunday };
+}
+function fmtWeekRange(monday, sunday){
+  return fmtDateShort(monday.toISOString()) + ' – ' + fmtDateShort(sunday.toISOString());
+}
+
+// Rollover: mueve programados de semanas pasadas a la semana actual
+function rolloverProgramados(){
+  const now = new Date();
+  const curMonday = getMondayOfWeek(now);
+  let moved = 0;
+  STATE.movs.filter(m=>m.estado==='programado').forEach(m=>{
+    const fechaM = new Date(m.fecha);
+    if(fechaM < curMonday){
+      const dayOfWeek = fechaM.getDay() || 7;
+      const newFecha = new Date(curMonday);
+      newFecha.setDate(newFecha.getDate() + (dayOfWeek - 1));
+      m.fecha = newFecha.toISOString();
+      m.aplicado = 'POSPUESTO ' + (m.aplicado || 'PROGRAMADO');
+      m.updated_by = 'Sistema-rollover';
+      moved++;
+    }
+  });
+  return moved;
+}
+function greetingTime(){
+  const h = new Date().getHours();
+  if(h < 12) return 'Buenos días';
+  if(h < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+function switchTab(tab){
+  STATE.page = tab;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  render();
+  window.scrollTo(0,0);
+}
+
+function render(){
+  const el = document.getElementById('content');
+  if(STATE.page==='captura') el.innerHTML = renderCaptura();
+  else if(STATE.page==='pendientes') el.innerHTML = renderPendientes();
+  else if(STATE.page==='programados') el.innerHTML = renderProgramados();
+  else if(STATE.page==='saldo') el.innerHTML = renderSaldo();
+  else if(STATE.page==='admin') el.innerHTML = renderAdmin();
+}
+
+// =========================================================================
+// VISTA 1 · CAPTURA
+// =========================================================================
+function renderCaptura(){
+  // Últimos 3 capturados en orden del Sheet (más viejo arriba, más nuevo abajo)
+  const ultimos = [...STATE.movs]
+    .filter(m=>m.estado!=='programado')
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))
+    .slice(0,3)
+    .reverse();
+
+  const isIngreso = STATE.tipoSelected==='INGRESO';
+  const cats = window.MOCK.CATEGORIAS[isIngreso?'INGRESO':'EGRESO'];
+
+  return `
+    <div class="greeting">${greetingTime()}${SVG.sunrise}</div>
+    <div class="greeting-sub">${fmtDateLong(new Date().toISOString())}</div>
+
+    <div class="saldo-card">
+      <div class="saldo-card-label">SALDO BANCARIO</div>
+      <div class="saldo-card-value">${fmtMoneyD(window.MOCK.getSaldo())}</div>
+      <div class="saldo-card-meta">Banregio · al ${fmtDateShort(new Date().toISOString())}</div>
+    </div>
+
+    <div class="section-title">NUEVO MOVIMIENTO</div>
+
+    <div class="toggle-row">
+      <button class="toggle-btn ${isIngreso?'active':''}" onclick="setTipo('INGRESO')">+ INGRESO</button>
+      <button class="toggle-btn ${!isIngreso?'active':''}" onclick="setTipo('EGRESO')">− EGRESO</button>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Fecha</div>
+      <div class="field-input">${SVG.calendar}<input type="date" id="cap-fecha" value="${todayISO()}" onclick="this.showPicker && this.showPicker()"></div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">${isIngreso?'Cliente':'Proveedor'}</div>
+      <div class="field-input">${SVG.search}<input list="contrapartes" id="cap-prov" placeholder="Buscar o escribir nuevo..."></div>
+      <datalist id="contrapartes">
+        ${window.MOCK.CONTRAPARTES.map(c=>`<option value="${c}">`).join('')}
+      </datalist>
+    </div>
+
+    ${!isIngreso?`
+    <div class="field-grid-2">
+      <div class="field">
+        <div class="field-label">Tipo</div>
+        <div class="field-select"><select id="cap-tipo">
+          ${window.MOCK.TIPOS_EGRESO.map(t=>`<option ${t==='GASTO'?'selected':''}>${t}</option>`).join('')}
+        </select></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Documento</div>
+        <div class="field-select"><select id="cap-doc" onchange="onDocChange()">
+          ${window.MOCK.DOCUMENTOS.map(d=>`<option ${d==='PENDIENTE'?'selected':''}>${d}</option>`).join('')}
+        </select></div>
+      </div>
+    </div>
+    `:`
+    <div class="field">
+      <div class="field-label">Documento</div>
+      <div class="field-select"><select id="cap-doc" onchange="onDocChange()">
+        ${window.MOCK.DOCUMENTOS.map(d=>`<option ${d==='PENDIENTE'?'selected':''}>${d}</option>`).join('')}
+      </select></div>
+    </div>
+    `}
+
+    <div id="cap-folios-wrapper" style="display:none">
+      <div class="field">
+        <div class="field-label">Folios de factura (separa con coma si son varias)</div>
+        <div class="field-input"><input type="text" id="cap-folios" placeholder="Ej. 3290, 3291, 3306"></div>
+      </div>
+    </div>
+
+    <div class="field-grid-2">
+      <div class="field">
+        <div class="field-label">Categoría</div>
+        <div class="field-select"><select id="cap-cat" onchange="onCategoriaChange()">
+          ${isIngreso?'':'<option value="">Seleccionar...</option>'}
+          ${cats.map(c=>`<option ${isIngreso&&c==='INGRESO'?'selected':''}>${c}</option>`).join('')}
+        </select></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Sub-categoría</div>
+        <div id="subcat-wrapper">${renderSubcatField(isIngreso?'INGRESO':'')}</div>
+      </div>
+    </div>
+
+    <div class="field-grid-2">
+      <div class="field">
+        <div class="field-label">Monto</div>
+        <div class="field-input amount"><input type="number" id="cap-monto" placeholder="0.00" step="0.01"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Forma pago</div>
+        <div class="field-select"><select id="cap-pago">
+          ${window.MOCK.FORMAS_PAGO.map(f=>`<option ${f==='TRANSFERENCIA'?'selected':''}>${f}</option>`).join('')}
+        </select></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Concepto</div>
+      <div class="field-input"><input type="text" id="cap-concepto" value="PAGO FACTURAS" placeholder="Descripción del movimiento"></div>
+    </div>
+
+    <div class="field-grid-2">
+      <div class="field">
+        <div class="field-label">Registrado por</div>
+        <div class="field-select"><select id="cap-registrado">
+          ${window.MOCK.REGISTRADO_POR.map(r=>`<option ${r==='Director'?'selected':''}>${r}</option>`).join('')}
+        </select></div>
+      </div>
+      ${!isIngreso?`
+      <div class="field">
+        <div class="field-label">Estado del pago</div>
+        <div class="field-select"><select id="cap-estado-pago">
+          <option value="ejecutado" selected>Pago ejecutado</option>
+          <option value="por-pagar">Factura a crédito (sin pagar)</option>
+        </select></div>
+      </div>
+      `:'<div></div>'}
+    </div>
+
+    <button class="btn-primary" onclick="guardarCaptura()" id="btn-guardar" style="margin-top:8px">${SVG.check}Guardar y siguiente</button>
+
+    <div class="section-title" style="margin-top:22px">ÚLTIMOS 3 CAPTURADOS</div>
+    <div class="movs-list">
+      ${ultimos.length===0?'<div class="empty">Sin movimientos aún.</div>':ultimos.map(m=>`
+        <div class="mov-row">
+          <div class="mov-row-left">
+            <div class="mov-row-prov">${m.prov}</div>
+            <div class="mov-row-concepto">${fmtDateShort(m.fecha)} · ${m.forma_pago} · ${m.categoria||'—'}</div>
+          </div>
+          <div class="mov-row-amount ${m.ingreso?'ingreso':'egreso'}">${m.ingreso?'+':'−'}${fmtMoney(m.ingreso||m.egreso)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderSubcatField(catActual){
+  // Siempre editable. Default = categoría seleccionada.
+  // Sugerencias: la categoría misma + "GASTO FIJO" + desgloses típicos de gasto fijo.
+  const sugerencias = [];
+  if(catActual && catActual !== 'GASTO FIJO') sugerencias.push(catActual);
+  sugerencias.push('GASTO FIJO');
+  sugerencias.push(...window.MOCK.SUBCATEGORIAS_GASTO_FIJO);
+  return `<div class="field-input"><input list="subcats-dl" id="cap-subcat" value="${catActual||''}" placeholder="Editable · sugerencias disponibles"></div>
+    <datalist id="subcats-dl">${sugerencias.map(s=>`<option value="${s}">`).join('')}</datalist>`;
+}
+
+function onCategoriaChange(){
+  const cat = document.getElementById('cap-cat').value;
+  const wrapper = document.getElementById('subcat-wrapper');
+  if(wrapper) wrapper.innerHTML = renderSubcatField(cat);
+}
+
+function onDocChange(){
+  const doc = document.getElementById('cap-doc').value;
+  const wrapper = document.getElementById('cap-folios-wrapper');
+  if(!wrapper) return;
+  wrapper.style.display = doc === 'FACTURA' ? '' : 'none';
+  if(doc !== 'FACTURA'){
+    const inp = document.getElementById('cap-folios');
+    if(inp) inp.value = '';
+  } else {
+    setTimeout(()=>document.getElementById('cap-folios')?.focus(),50);
+  }
+}
+
+function setTipo(t){ STATE.tipoSelected = t; render(); setTimeout(()=>document.getElementById('cap-prov')?.focus(),50); }
+
+function guardarCaptura(){
+  const isIngreso = STATE.tipoSelected==='INGRESO';
+  const fecha = document.getElementById('cap-fecha').value;
+  const prov = document.getElementById('cap-prov').value.trim();
+  const cat = document.getElementById('cap-cat').value;
+  const subcat = document.getElementById('cap-subcat')?.value.trim() || cat;
+  const tipoSelect = isIngreso ? 'INGRESO' : (document.getElementById('cap-tipo')?.value || 'GASTO');
+  const doc = document.getElementById('cap-doc')?.value || 'PENDIENTE';
+  const pago = document.getElementById('cap-pago').value;
+  const monto = parseFloat(document.getElementById('cap-monto').value);
+  const concepto = document.getElementById('cap-concepto').value.trim();
+  const registrado = document.getElementById('cap-registrado')?.value || 'Director';
+  const estadoPago = document.getElementById('cap-estado-pago')?.value || 'ejecutado';
+  const esCredito = !isIngreso && estadoPago === 'por-pagar';
+
+  if(!prov){ toast('Falta cliente/proveedor', false); document.getElementById('cap-prov').focus(); return; }
+  if(!cat){ toast('Falta categoría', false); document.getElementById('cap-cat').focus(); return; }
+  if(!monto || isNaN(monto) || monto<=0){ toast('Monto inválido', false); document.getElementById('cap-monto').focus(); return; }
+
+  // Mapear Documento → valor de columna FACTURA
+  const folios = document.getElementById('cap-folios')?.value.trim() || '';
+  let facturaValue;
+  if(doc === 'NO APLICA') facturaValue = 'NA';
+  else if(doc === 'FACTURA') facturaValue = folios || 'PENDIENTE';
+  else facturaValue = 'PENDIENTE';
+
+  const m = {
+    id: window.MOCK.uuid(),
+    fecha: new Date(fecha+'T12:00:00').toISOString(),
+    prov: prov.toUpperCase(),
+    concepto, forma_pago: pago, aplicado: '',
+    factura: facturaValue,
+    documento: doc, // metadata extra del form
+    tipo: tipoSelect,
+    categoria: cat,
+    subcategoria: subcat,
+    ingreso: isIngreso ? monto : 0,
+    egreso: !isIngreso ? monto : 0,
+    estado: esCredito ? 'por-pagar'
+            : (doc === 'NO APLICA' || (doc === 'FACTURA' && folios)) ? 'con-factura'
+            : 'capturado',
+    created_by: registrado,
+    created_at: new Date().toISOString(),
+    factura_at: (doc === 'NO APLICA' || (doc === 'FACTURA' && folios)) ? new Date().toISOString() : null,
+    bind_at: null, updated_by: registrado
+  };
+  STATE.movs.unshift(m);
+  toast('Movimiento guardado');
+  // Limpiar y enfocar
+  STATE.lastFecha = fecha;
+  render();
+  setTimeout(()=>{
+    document.getElementById('cap-fecha').value = fecha;
+    document.getElementById('cap-prov').focus();
+  }, 80);
+}
+
+// =========================================================================
+// VISTA 2 · PENDIENTES
+// =========================================================================
+function renderPendientes(){
+  const counts = {
+    'sin-factura': STATE.movs.filter(m=>m.estado==='capturado').length,
+    'con-factura': STATE.movs.filter(m=>m.estado==='con-factura').length,
+    'por-pagar': STATE.movs.filter(m=>m.estado==='por-pagar').length,
+    'sin-categ': STATE.movs.filter(m=>m.estado==='sin-categoria').length,
+    'todos': STATE.movs.filter(m=>['capturado','con-factura','sin-categoria','por-pagar'].includes(m.estado)).length
+  };
+  let filtered;
+  if(STATE.pendFilter==='sin-factura') filtered = STATE.movs.filter(m=>m.estado==='capturado');
+  else if(STATE.pendFilter==='con-factura') filtered = STATE.movs.filter(m=>m.estado==='con-factura');
+  else if(STATE.pendFilter==='por-pagar') filtered = STATE.movs.filter(m=>m.estado==='por-pagar');
+  else if(STATE.pendFilter==='sin-categ') filtered = STATE.movs.filter(m=>m.estado==='sin-categoria');
+  else filtered = STATE.movs.filter(m=>['capturado','con-factura','sin-categoria','por-pagar'].includes(m.estado));
+
+  if(STATE.search){
+    const q = STATE.search.toLowerCase();
+    filtered = filtered.filter(m =>
+      m.prov.toLowerCase().includes(q) ||
+      (m.concepto||'').toLowerCase().includes(q) ||
+      String(m.ingreso||m.egreso).includes(q) ||
+      (m.factura||'').toLowerCase().includes(q)
+    );
+  }
+
+  filtered.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+
+  return `
+    <div class="pendientes-header">
+      <div>
+        <div class="pendientes-title">Pendientes</div>
+        <div class="pendientes-count">${counts.todos} movimientos requieren atención</div>
+      </div>
+      <div class="search-pill">${SVG.search}<input type="text" placeholder="Buscar..." value="${STATE.search||''}" oninput="STATE.search=this.value;render();this.focus();"></div>
+    </div>
+
+    <div class="filter-pills">
+      <button class="filter-pill ${STATE.pendFilter==='sin-factura'?'active':''}" onclick="setPendFilter('sin-factura')">Sin factura · ${counts['sin-factura']}</button>
+      <button class="filter-pill ${STATE.pendFilter==='con-factura'?'active':''}" onclick="setPendFilter('con-factura')">Con factura · sin Bind · ${counts['con-factura']}</button>
+      <button class="filter-pill ${STATE.pendFilter==='por-pagar'?'active':''}" onclick="setPendFilter('por-pagar')">Por pagar (crédito) · ${counts['por-pagar']}</button>
+      <button class="filter-pill ${STATE.pendFilter==='sin-categ'?'active':''}" onclick="setPendFilter('sin-categ')">Sin categorizar · ${counts['sin-categ']}</button>
+      <button class="filter-pill ${STATE.pendFilter==='todos'?'active':''}" onclick="setPendFilter('todos')">Todos · ${counts.todos}</button>
+    </div>
+
+    <div class="pendientes-table">
+      <div class="pt-header">
+        <div>Fecha</div>
+        <div>Cliente / Prov.</div>
+        <div>Concepto</div>
+        <div style="text-align:right">Monto</div>
+        <div>Factura</div>
+        <div>Acción</div>
+      </div>
+      ${filtered.length===0?'<div class="empty">Sin movimientos en este filtro.</div>':filtered.map(m=>renderPendRow(m)).join('')}
+    </div>
+
+    <div class="help-card">${SVG.info}<span><strong style="color:var(--hade-green);font-weight:500">Vincular Bind</strong> abre la lista de facturas pendientes del cliente y sugiere las que cuadran con el pago. Martha revisa y <strong style="color:var(--text)">autoriza la vinculación</strong> con un click — nada se marca automático sin su confirmación.</span></div>
+  `;
+}
+
+function renderPendRow(m){
+  let facturaCell, actionBtn;
+  const tieneFacturasBind = m.ingreso > 0 && (window.MOCK.MOCK_BIND_PENDING[m.prov] || []).length > 0;
+  if(m.estado === 'capturado'){
+    facturaCell = `<div class="pt-factura pending" onclick="openEditarFactura('${m.id}')" title="Click para asignar factura">PENDIENTE</div>`;
+    if(tieneFacturasBind){
+      actionBtn = `<div style="display:flex;flex-direction:column;gap:4px">
+        <button class="btn-action primary" onclick="openVincularBind('${m.id}')">${SVG.link}Vincular Bind</button>
+        <button class="btn-action neutral" style="font-size:10px;padding:4px 8px" onclick="openEditarFactura('${m.id}')">${SVG.edit}Asignar manual</button>
+      </div>`;
+    } else {
+      actionBtn = `<button class="btn-action outline" onclick="openEditarFactura('${m.id}')">${SVG.edit}Asignar factura</button>`;
+    }
+  } else if(m.estado === 'con-factura'){
+    facturaCell = `<div class="pt-factura" onclick="openEditarFactura('${m.id}')" title="Click para editar">${m.factura} ${SVG.edit}</div>`;
+    actionBtn = `<button class="btn-action outline" onclick="subirABind('${m.id}')">${SVG.upload}Subir a Bind</button>`;
+  } else if(m.estado === 'por-pagar'){
+    facturaCell = `<div class="pt-factura" style="background:rgba(212,133,10,.10);border:1px solid rgba(212,133,10,.35);color:#f5c842" onclick="openEditarFactura('${m.id}')" title="Click para editar factura">${m.factura||'PEND'} ${SVG.edit}</div>`;
+    actionBtn = `<button class="btn-action primary" onclick="marcarPagado('${m.id}')">${SVG.check}Marcar pagado</button>`;
+  } else if(m.estado === 'sin-categoria'){
+    facturaCell = `<div class="pt-factura sin-categ">SIN CATEG.</div>`;
+    actionBtn = `<button class="btn-action neutral" onclick="categorizarMov('${m.id}')">${SVG.edit}Categorizar</button>`;
+  }
+  const isMobile = window.innerWidth <= 680;
+  if(isMobile){
+    return `
+      <div class="pt-row">
+        <div class="pt-row-line1">
+          <div>
+            <div class="pt-fecha-mobile">${fmtDateShort(m.fecha)} · ${m.forma_pago}</div>
+            <div class="pt-prov">${m.prov}</div>
+          </div>
+          <div class="pt-amount ${m.ingreso?'ingreso':'egreso'}" style="white-space:nowrap">${m.ingreso?'+':'−'}${fmtMoney(m.ingreso||m.egreso)}</div>
+        </div>
+        <div class="pt-concepto">${m.concepto||'—'}</div>
+        <div class="pt-row-line2">
+          ${facturaCell}
+          <div style="min-width:140px;flex-shrink:0">${actionBtn}</div>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="pt-row">
+      <div class="pt-fecha">${fmtDateShort(m.fecha)}</div>
+      <div class="pt-prov">${m.prov}</div>
+      <div class="pt-concepto">${m.concepto||'—'}</div>
+      <div class="pt-amount ${m.ingreso?'ingreso':'egreso'}">${m.ingreso?'+':'−'}${fmtMoney(m.ingreso||m.egreso)}</div>
+      <div>${facturaCell}</div>
+      <div>${actionBtn}</div>
+    </div>
+  `;
+}
+
+function setPendFilter(f){ STATE.pendFilter = f; render(); }
+
+function openVincularBind(movId){
+  const m = STATE.movs.find(x=>x.id===movId);
+  if(!m) return;
+  const pending = window.MOCK.MOCK_BIND_PENDING[m.prov] || [];
+  const target = m.ingreso || m.egreso;
+  const suggested = computeSuggestedInvoices(pending, target);
+  STATE.modal = { type:'bind', movId, selected: new Set(suggested), suggestedSet: new Set(suggested) };
+  renderModal();
+  showModal();
+}
+
+// Busca el subset de facturas cuya suma exacta = target.
+// Greedy primero (factura sola que cuadre), luego prueba el conjunto completo.
+// No resuelve subset-sum completo para no complicar; suficiente para casos típicos.
+function computeSuggestedInvoices(pending, target){
+  if(!pending.length) return [];
+  // 1) ¿Una sola factura cuadra?
+  for(const inv of pending){
+    if(Math.abs(inv.monto - target) < 0.01) return [inv.id];
+  }
+  // 2) ¿La suma de todas cuadra?
+  const totalAll = pending.reduce((s,i)=>s+i.monto, 0);
+  if(Math.abs(totalAll - target) < 0.01) return pending.map(i=>i.id);
+  // 3) ¿La suma consecutiva por orden cuadra (cliente pagó las más viejas)?
+  let acc = 0;
+  const consec = [];
+  for(const inv of pending){
+    acc += inv.monto;
+    consec.push(inv.id);
+    if(Math.abs(acc - target) < 0.01) return consec;
+    if(acc > target) break;
+  }
+  return [];
+}
+
+function openEditarFactura(movId){
+  const m = STATE.movs.find(x=>x.id===movId);
+  if(!m) return;
+  STATE.modal = { type:'factura', movId };
+  renderModal();
+  showModal();
+  setTimeout(()=>document.getElementById('fact-input')?.focus(), 80);
+}
+
+function toggleInvoiceSelect(invoiceId){
+  if(STATE.modal.selected.has(invoiceId)) STATE.modal.selected.delete(invoiceId);
+  else STATE.modal.selected.add(invoiceId);
+  renderModal();
+}
+
+function renderModal(){
+  const body = document.getElementById('modal-body');
+  if(STATE.modal.type==='bind'){
+    const m = STATE.movs.find(x=>x.id===STATE.modal.movId);
+    const pending = window.MOCK.MOCK_BIND_PENDING[m.prov] || [];
+    const sumSelected = pending.filter(p=>STATE.modal.selected.has(p.id)).reduce((s,p)=>s+p.monto, 0);
+    const target = m.ingreso || m.egreso;
+    const dif = sumSelected - target;
+    const hasSuggestion = STATE.modal.suggestedSet && STATE.modal.suggestedSet.size > 0;
+    let matchStrip = '';
+    if(STATE.modal.selected.size>0){
+      if(Math.abs(dif)<0.01) matchStrip = `<div class="match-strip ok">${SVG.check}Match exacto · ${fmtMoney(sumSelected)}</div>`;
+      else matchStrip = `<div class="match-strip dif">${SVG.warn}Diferencia ${dif>0?'+':''}${fmtMoney(dif)} · se anotará como APLICADO</div>`;
+    }
+    body.innerHTML = `
+      <button class="modal-close" onclick="closeModal()">${SVG.x}</button>
+      <div class="modal-handle"></div>
+      <div class="modal-title">Vincular facturas de Bind</div>
+      <div class="modal-sub">${m.prov} · pago de ${fmtMoney(target)} el ${fmtDateShort(m.fecha)}</div>
+      ${hasSuggestion?`
+        <div class="help-card" style="margin:8px 0 14px"><span style="display:flex;align-items:center;gap:6px;color:var(--hade-green);font-weight:500">${SVG.info}Sugerencia automática de Bind</span>
+        <div style="margin-top:5px">La PWA encontró ${STATE.modal.suggestedSet.size} factura${STATE.modal.suggestedSet.size!==1?'s':''} que suma${STATE.modal.suggestedSet.size===1?'':'n'} exacto al monto del pago. <strong style="color:var(--text)">Revisa</strong> y deselecciona o ajusta antes de autorizar.</div></div>
+      `:`
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:10px">Selecciona manualmente las facturas que cubre este pago.</div>
+      `}
+      ${pending.length===0?'<div class="empty">No hay facturas pendientes para este cliente en Bind.</div>':pending.map(inv=>{
+        const isSuggested = STATE.modal.suggestedSet && STATE.modal.suggestedSet.has(inv.id);
+        return `
+        <div class="bind-invoice-row ${STATE.modal.selected.has(inv.id)?'selected':''}" onclick="toggleInvoiceSelect('${inv.id}')" style="position:relative">
+          <div class="bind-invoice-check">${SVG.check}</div>
+          <div class="bind-invoice-info">
+            <div class="bind-invoice-id">Factura ${inv.id}${isSuggested?'<span style="font-size:9px;color:var(--hade-green);background:rgba(168,213,106,.14);padding:2px 7px;border-radius:8px;margin-left:6px;font-weight:500;letter-spacing:.03em">SUGERIDA</span>':''}</div>
+            <div class="bind-invoice-concepto">${inv.concepto} · ${fmtDateShort(inv.date)}</div>
+          </div>
+          <div class="bind-invoice-amount">${fmtMoney(inv.monto)}</div>
+        </div>
+      `}).join('')}
+      ${matchStrip}
+      <div style="font-size:11px;color:var(--text-3);text-align:center;margin:10px 0">⚠ Esta acción solo crea la vinculación en el flujo. Para registrar el pago en Bind ERP, después usa "Subir a Bind".</div>
+      <button class="btn-primary" onclick="confirmarVincularBind('${m.id}')" ${STATE.modal.selected.size===0?'disabled style="opacity:.4;cursor:not-allowed"':''}>${SVG.check}Autorizar vinculación · ${STATE.modal.selected.size} factura${STATE.modal.selected.size!==1?'s':''}</button>
+    `;
+  } else if(STATE.modal.type==='editar-prog'){
+    const m = STATE.movs.find(x=>x.id===STATE.modal.movId);
+    const isIngreso = m.ingreso > 0;
+    body.innerHTML = `
+      <button class="modal-close" onclick="closeModal()">${SVG.x}</button>
+      <div class="modal-handle"></div>
+      <div class="modal-title">Editar pago programado</div>
+      <div class="modal-sub">${m.prov} · ${m.categoria||'—'}${m.subcategoria?' · '+m.subcategoria:''}</div>
+
+      <div class="field-grid-2">
+        <div class="field">
+          <div class="field-label">Fecha programada</div>
+          <div class="field-input">${SVG.calendar}<input type="date" id="ed-fecha" value="${m.fecha.slice(0,10)}"></div>
+        </div>
+        <div class="field">
+          <div class="field-label">Monto ${isIngreso?'ingreso':'egreso'}</div>
+          <div class="field-input amount"><input type="number" id="ed-monto" value="${isIngreso?m.ingreso:m.egreso}" step="0.01"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Concepto</div>
+        <div class="field-input"><input type="text" id="ed-concepto" value="${m.concepto||''}"></div>
+      </div>
+
+      <div class="help-card" style="margin:14px 0">${SVG.info}<span>Esta acción solo actualiza el pago programado (queda en estado programado). Para registrar el pago real, usa "Marcar pagado".</span></div>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" style="flex:2" onclick="guardarEdicionProgramado('${m.id}')">${SVG.check}Guardar cambios</button>
+      </div>
+    `;
+  } else if(STATE.modal.type==='pagar'){
+    const m = STATE.movs.find(x=>x.id===STATE.modal.movId);
+    const programado = m.egreso || m.ingreso;
+    body.innerHTML = `
+      <button class="modal-close" onclick="closeModal()">${SVG.x}</button>
+      <div class="modal-handle"></div>
+      <div class="modal-title">Marcar pagado · ${m.prov}</div>
+      <div class="modal-sub">Programado ${fmtMoney(programado)} para ${fmtDateShort(m.fecha)}. Ajusta si el monto real difiere.</div>
+
+      <div class="field-grid-2">
+        <div class="field">
+          <div class="field-label">Fecha real del pago</div>
+          <div class="field-input">${SVG.calendar}<input type="date" id="pagar-fecha" value="${todayISO()}"></div>
+        </div>
+        <div class="field">
+          <div class="field-label">Monto real</div>
+          <div class="field-input amount"><input type="number" id="pagar-monto" value="${programado}" step="0.01"></div>
+        </div>
+      </div>
+
+      <div class="field-grid-2">
+        <div class="field">
+          <div class="field-label">Documento</div>
+          <div class="field-select"><select id="pagar-doc">
+            ${window.MOCK.DOCUMENTOS.map(d=>`<option ${d==='PENDIENTE'?'selected':''}>${d}</option>`).join('')}
+          </select></div>
+        </div>
+        <div class="field">
+          <div class="field-label">Factura (si la tienes)</div>
+          <div class="field-input"><input type="text" id="pagar-factura" placeholder="Folio / NA / dejar vacío"></div>
+        </div>
+      </div>
+
+      <div class="help-card" style="margin:14px 0">${SVG.info}<span>Si el monto real difiere del programado, el flujo se ajusta al monto real. El pago entra al saldo bancario y desaparece de Próximos.</span></div>
+
+      <button class="btn-primary" onclick="confirmarPagado('${m.id}')">${SVG.check}Confirmar pago</button>
+    `;
+  } else if(STATE.modal.type==='factura'){
+    const m = STATE.movs.find(x=>x.id===STATE.modal.movId);
+    const pending = window.MOCK.MOCK_BIND_PENDING[m.prov] || [];
+    const hasBindSuggestions = m.ingreso > 0 && pending.length > 0;
+    body.innerHTML = `
+      <button class="modal-close" onclick="closeModal()">${SVG.x}</button>
+      <div class="modal-handle"></div>
+      <div class="modal-title">Asignar factura</div>
+      <div class="modal-sub">${m.prov} · ${m.ingreso?'+':'−'}${fmtMoney(m.ingreso||m.egreso)} · ${fmtDateShort(m.fecha)}</div>
+      <div class="field">
+        <div class="field-label">Número de factura (o varias separadas por coma)</div>
+        <div class="field-input"><input type="text" id="fact-input" placeholder="Ej. 3290, 3291" value="${m.factura&&m.factura!=='PENDIENTE'&&m.factura!=='PEND'?m.factura:''}"></div>
+      </div>
+      ${hasBindSuggestions?`
+        <div class="section-title" style="margin-top:14px">SUGERENCIAS BIND · facturas pendientes de ${m.prov}</div>
+        ${pending.map(inv=>`
+          <div class="bind-invoice-row" onclick="addFacturaToInput('${inv.id}')">
+            <div class="bind-invoice-info">
+              <div class="bind-invoice-id">+ Factura ${inv.id}</div>
+              <div class="bind-invoice-concepto">${inv.concepto} · ${fmtDateShort(inv.date)}</div>
+            </div>
+            <div class="bind-invoice-amount">${fmtMoney(inv.monto)}</div>
+          </div>
+        `).join('')}
+      `:`
+        <div class="help-card" style="margin-top:14px">${SVG.info}<span>Pega o teclea el número de factura del documento. Para múltiples facturas, sepáralas con coma. Cuando hay facturas pendientes en Bind del cliente, aparecen aquí como sugerencias clickeables.</span></div>
+      `}
+      <div class="field">
+        <div class="field-label">Aplicado / nota (opcional)</div>
+        <div class="field-input"><input type="text" id="fact-aplicado" placeholder="A CUENTA / DIF +$23.98 / ..." value="${m.aplicado||''}"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn-secondary" style="flex:1" onclick="marcarSinFactura('${m.id}')">Sin factura (NA)</button>
+        <button class="btn-primary" style="flex:2" onclick="guardarFactura('${m.id}')">${SVG.check}Guardar factura</button>
+      </div>
+    `;
+  } else if(STATE.modal.type==='categorizar'){
+    const m = STATE.movs.find(x=>x.id===STATE.modal.movId);
+    const cats = window.MOCK.CATEGORIAS[m.tipo==='INGRESO'?'INGRESO':'EGRESO'];
+    body.innerHTML = `
+      <button class="modal-close" onclick="closeModal()">${SVG.x}</button>
+      <div class="modal-handle"></div>
+      <div class="modal-title">Categorizar movimiento</div>
+      <div class="modal-sub">${m.prov} · ${fmtMoney(m.ingreso||m.egreso)} · ${m.tipo}</div>
+      <div class="field">
+        <div class="field-label">Categoría</div>
+        <div class="field-select"><select id="cat-select">
+          ${cats.map(c=>`<option ${c===m.categoria?'selected':''}>${c}</option>`).join('')}
+        </select></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Sub-categoría (opcional)</div>
+        <div class="field-input"><input type="text" id="subcat-input" value="${m.subcategoria||''}"></div>
+      </div>
+      <button class="btn-primary" onclick="confirmarCategorizar('${m.id}')">${SVG.check}Guardar categoría</button>
+    `;
+  }
+}
+
+function confirmarVincularBind(movId){
+  if(STATE.modal.selected.size===0) return;
+  const m = STATE.movs.find(x=>x.id===movId);
+  const pending = window.MOCK.MOCK_BIND_PENDING[m.prov] || [];
+  const selectedInvoices = pending.filter(p=>STATE.modal.selected.has(p.id));
+  const sum = selectedInvoices.reduce((s,p)=>s+p.monto, 0);
+  const target = m.ingreso || m.egreso;
+  const dif = sum - target;
+  m.factura = selectedInvoices.map(i=>i.id).join(', ');
+  m.aplicado = Math.abs(dif)<0.01 ? '' : `DIF ${dif>0?'+':''}${fmtMoney(dif)}`;
+  m.estado = 'con-factura';
+  m.factura_at = new Date().toISOString();
+  m.updated_by = 'Martha';
+  closeModal();
+  toast(`Vinculado ${selectedInvoices.length} factura${selectedInvoices.length!==1?'s':''}`);
+  render();
+}
+
+function addFacturaToInput(facturaId){
+  const inp = document.getElementById('fact-input');
+  if(!inp) return;
+  const current = inp.value.trim();
+  if(current.split(',').map(s=>s.trim()).includes(facturaId)) return;
+  inp.value = current ? current + ', ' + facturaId : facturaId;
+  inp.focus();
+}
+
+function guardarFactura(movId){
+  const m = STATE.movs.find(x=>x.id===movId);
+  const numFactura = document.getElementById('fact-input').value.trim();
+  const aplicado = document.getElementById('fact-aplicado').value.trim();
+  if(!numFactura){ toast('Escribe el número de factura', false); return; }
+  m.factura = numFactura;
+  m.aplicado = aplicado;
+  m.estado = 'con-factura';
+  m.factura_at = new Date().toISOString();
+  m.updated_by = 'Martha';
+  closeModal();
+  toast('Factura asignada');
+  render();
+}
+
+function marcarSinFactura(movId){
+  const m = STATE.movs.find(x=>x.id===movId);
+  m.factura = 'NA';
+  m.estado = 'con-factura';
+  m.factura_at = new Date().toISOString();
+  m.updated_by = 'Martha';
+  closeModal();
+  toast('Marcado sin factura (NA)');
+  render();
+}
+
+function categorizarMov(movId){
+  STATE.modal = { type:'categorizar', movId };
+  renderModal();
+  showModal();
+}
+
+function confirmarCategorizar(movId){
+  const m = STATE.movs.find(x=>x.id===movId);
+  const cat = document.getElementById('cat-select').value;
+  const subcat = document.getElementById('subcat-input').value;
+  m.categoria = cat;
+  m.subcategoria = subcat;
+  m.estado = m.factura && m.factura!=='PENDIENTE' && m.factura!=='PEND' ? 'con-factura' : 'capturado';
+  m.updated_by = 'Martha';
+  closeModal();
+  toast('Categoría actualizada');
+  render();
+}
+
+function subirABind(movId){
+  // Simula POST a hade-erpweb /api/finanzas/payment
+  const m = STATE.movs.find(x=>x.id===movId);
+  toast('Subiendo a Bind...', true, 1200);
+  setTimeout(()=>{
+    m.estado = 'en-bind';
+    m.bind_at = new Date().toISOString();
+    m.updated_by = 'Martha';
+    toast('✓ Subido a Bind exitosamente');
+    render();
+  }, 1100);
+}
+
+function showModal(){ document.getElementById('modal-ov').classList.add('show'); }
+function closeModal(){ document.getElementById('modal-ov').classList.remove('show'); STATE.modal=null; }
+function closeModalOnBg(e){ if(e.target.id==='modal-ov') closeModal(); }
+
+// =========================================================================
+// VISTA 3 · PROGRAMADOS (Próximos pagos)
+// =========================================================================
+function renderProgramados(){
+  // 1. Auto-rollover de programados vencidos
+  const movedCount = rolloverProgramados();
+
+  const programados = STATE.movs.filter(m=>m.estado==='programado').sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+
+  // 2. Agrupar por semana ISO del año
+  const grouped = {};
+  programados.forEach(m=>{
+    const d = new Date(m.fecha);
+    const iso = getISOWeek(d);
+    const key = `${iso.year}-${String(iso.week).padStart(2,'0')}`;
+    if(!grouped[key]){
+      const range = getWeekRange(iso.year, iso.week);
+      grouped[key] = {
+        year: iso.year, week: iso.week,
+        weekId: fmtWeekId(iso.year, iso.week),
+        monday: range.monday, sunday: range.sunday,
+        items: [], total: 0
+      };
+    }
+    grouped[key].items.push(m);
+    grouped[key].total += (m.egreso||0) - (m.ingreso||0);
+  });
+
+  const totalProgramado = programados.reduce((s,m)=>s + (m.egreso||0) - (m.ingreso||0), 0);
+  const saldoActual = window.MOCK.getSaldo();
+  const saldoProyectado = saldoActual - totalProgramado;
+
+  const now = new Date();
+  const curISO = getISOWeek(now);
+  const curWeekId = fmtWeekId(curISO.year, curISO.week);
+
+  return `
+    <div class="pendientes-header" style="margin-bottom:18px">
+      <div>
+        <div class="pendientes-title">Próximos pagos</div>
+        <div class="pendientes-count">${programados.length} pagos programados · ${fmtMoney(totalProgramado)} total · semana actual <strong style="color:var(--hade-green)">${curWeekId}</strong></div>
+      </div>
+      <button class="btn-secondary" onclick="agregarProgramado()">${SVG.arrow}Agregar pago</button>
+    </div>
+
+    ${movedCount>0?`<div class="help-card" style="margin-bottom:14px">${SVG.warn}<span><strong style="color:#f5c842">${movedCount} pago${movedCount!==1?'s':''}</strong> de semanas anteriores se movió a la semana actual automáticamente. Revisa si siguen siendo válidos.</span></div>`:''}
+
+    <div class="prog-summary">
+      <div class="dash-card hero">
+        <div class="dash-card-label">SALDO ACTUAL</div>
+        <div class="dash-card-value green">${fmtMoney(saldoActual)}</div>
+        <div class="dash-card-meta">Banregio · ${fmtDateShort(new Date().toISOString())}</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">PROGRAMADO</div>
+        <div class="dash-card-value">−${fmtMoney(totalProgramado)}</div>
+        <div class="dash-card-meta">Total pendiente</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">SALDO PROYECTADO</div>
+        <div class="dash-card-value ${saldoProyectado<50000?'':'green'}">${fmtMoney(saldoProyectado)}</div>
+        <div class="dash-card-meta">${saldoProyectado<50000?'⚠ Liquidez baja':'OK'}</div>
+      </div>
+    </div>
+
+    ${Object.entries(grouped).map(([key, g])=>{
+      const isCurrent = g.weekId === curWeekId;
+      return `
+        <div class="prog-week ${isCurrent?'current':''}">
+          <div class="prog-week-header">
+            <div>
+              <div class="prog-week-title">Semana <span style="font-family:monospace">${g.weekId}</span>${isCurrent?' <span style="font-size:9px;color:var(--hade-green);background:rgba(168,213,106,.18);padding:2px 7px;border-radius:8px;margin-left:4px;font-weight:500;letter-spacing:.04em">ESTA SEMANA</span>':''}</div>
+              <div class="prog-week-meta">${fmtWeekRange(g.monday, g.sunday)} · ${g.items.length} pago${g.items.length!==1?'s':''}</div>
+            </div>
+            <div class="prog-week-total">−${fmtMoney(g.total)}</div>
+          </div>
+          ${g.items.map(m=>{
+            const isMobile = window.innerWidth <= 680;
+            const wasMoved = m.aplicado && m.aplicado.startsWith('POSPUESTO');
+            if(isMobile){
+              return `<div class="prog-row">
+                <div class="prog-row-mobile-top">
+                  <div>
+                    <div class="prog-fecha">${fmtDateShort(m.fecha)} · ${m.categoria||'—'}${wasMoved?' · <span style="color:#f5c842">↻ pospuesto</span>':''}</div>
+                    <div class="prog-prov">${m.prov}</div>
+                    <div class="prog-concepto-mobile">${m.concepto||''}</div>
+                  </div>
+                  <div class="prog-amount" onclick="editarProgramado('${m.id}')" style="cursor:pointer" title="Editar">−${fmtMoney(m.egreso||m.ingreso)} <span style="font-size:9px;opacity:.5">✎</span></div>
+                </div>
+                <div class="prog-action" style="display:flex;gap:6px">
+                  <button class="btn-action primary" style="flex:1" onclick="marcarPagado('${m.id}')">${SVG.check}Marcar pagado</button>
+                  <button class="btn-action neutral" style="flex:0;padding:7px 11px" onclick="editarProgramado('${m.id}')" title="Editar">${SVG.edit}</button>
+                  <button class="btn-action neutral" style="flex:0;padding:7px 11px" onclick="borrarProgramado('${m.id}')" title="Borrar pago programado">${SVG.x}</button>
+                </div>
+              </div>`;
+            }
+            return `<div class="prog-row">
+              <div class="prog-fecha">${fmtDateShort(m.fecha)}${wasMoved?'<div style="font-size:9px;color:#f5c842">↻ pospuesto</div>':''}</div>
+              <div>
+                <div class="prog-prov">${m.prov}</div>
+                <div class="prog-categoria">${m.categoria || '—'}${m.subcategoria?' · '+m.subcategoria:''}</div>
+              </div>
+              <div style="font-size:11px;color:var(--text-3)">${m.concepto||'—'}</div>
+              <div class="prog-amount" onclick="editarProgramado('${m.id}')" style="cursor:pointer" title="Editar monto">−${fmtMoney(m.egreso||m.ingreso)} <span style="font-size:9px;opacity:.5">✎</span></div>
+              <div class="prog-action" style="display:flex;gap:5px">
+                <button class="btn-action primary" style="flex:1" onclick="marcarPagado('${m.id}')">${SVG.check}Pagado</button>
+                <button class="btn-action neutral" style="flex:0;padding:6px 8px" onclick="editarProgramado('${m.id}')" title="Editar">${SVG.edit}</button>
+                <button class="btn-action neutral" style="flex:0;padding:6px 8px" onclick="borrarProgramado('${m.id}')" title="Borrar">${SVG.x}</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      `;
+    }).join('')}
+
+    <div class="help-card">${SVG.info}<span>Pagos programados <strong style="color:var(--hade-green);font-weight:500">no afectan el saldo bancario actual</strong>, solo el proyectado. Al marcar pagado, entra al flujo real. Si pasa la semana sin pagarse, se mueve automático a la siguiente.</span></div>
+  `;
+}
+
+function borrarProgramado(movId){
+  const m = STATE.movs.find(x=>x.id===movId);
+  if(!m) return;
+  if(!confirm(`Borrar pago programado?\n\n${m.prov} · ${fmtMoney(m.egreso||m.ingreso)} · ${fmtDateShort(m.fecha)}`)) return;
+  STATE.movs = STATE.movs.filter(x=>x.id!==movId);
+  toast('Pago programado borrado');
+  render();
+}
+
+function editarProgramado(movId){
+  const m = STATE.movs.find(x=>x.id===movId);
+  if(!m) return;
+  STATE.modal = { type:'editar-prog', movId };
+  renderModal();
+  showModal();
+  setTimeout(()=>document.getElementById('ed-monto')?.focus(),80);
+}
+
+function guardarEdicionProgramado(movId){
+  const m = STATE.movs.find(x=>x.id===movId);
+  const fecha = document.getElementById('ed-fecha').value;
+  const monto = parseFloat(document.getElementById('ed-monto').value);
+  const concepto = document.getElementById('ed-concepto').value.trim();
+  if(!monto || isNaN(monto) || monto<=0){ toast('Monto inválido', false); return; }
+  m.fecha = new Date(fecha+'T12:00:00').toISOString();
+  if(m.ingreso > 0) m.ingreso = monto;
+  else m.egreso = monto;
+  if(concepto) m.concepto = concepto;
+  m.updated_by = 'Martha';
+  closeModal();
+  toast('Programado actualizado');
+  render();
+}
+
+function marcarPagado(movId){
+  const m = STATE.movs.find(x=>x.id===movId);
+  if(!m) return;
+  STATE.modal = { type:'pagar', movId };
+  renderModal();
+  showModal();
+  setTimeout(()=>document.getElementById('pagar-monto')?.focus(),80);
+}
+
+function confirmarPagado(movId){
+  const m = STATE.movs.find(x=>x.id===movId);
+  const fecha = document.getElementById('pagar-fecha').value;
+  const monto = parseFloat(document.getElementById('pagar-monto').value);
+  const doc = document.getElementById('pagar-doc').value;
+  const factura = document.getElementById('pagar-factura').value.trim();
+  if(!monto || isNaN(monto) || monto<=0){ toast('Monto inválido', false); return; }
+
+  const wasIngreso = m.ingreso > 0;
+  m.fecha = new Date(fecha+'T12:00:00').toISOString();
+  if(wasIngreso) m.ingreso = monto; else m.egreso = monto;
+  m.factura = doc === 'NO APLICA' ? 'NA' : (factura || (doc === 'FACTURA' ? 'PENDIENTE' : 'PEND'));
+  m.aplicado = '';
+  m.updated_by = 'JC';
+  // Estado final
+  if(doc === 'NO APLICA') m.estado = 'con-factura'; // se considera cerrado
+  else if(factura && doc === 'FACTURA') m.estado = 'con-factura';
+  else m.estado = 'capturado'; // pasa a pendiente de factura
+
+  closeModal();
+  toast(`Pago ejecutado · ${fmtMoney(monto)}`);
+  render();
+}
+
+function agregarProgramado(){
+  toast('Función v2 — agrega desde Captura con fecha futura', false);
+}
+
+// =========================================================================
+// VISTA 4 · SALDO
+// =========================================================================
+function renderSaldo(){
+  const activos = STATE.movs.filter(m=>m.estado!=='programado' && m.estado!=='sin-categoria');
+
+  const now = new Date();
+  const startMes = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startMesAnt = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const endMesAnt = new Date(now.getFullYear(), now.getMonth(), 0);
+
+  const mesActual = activos.filter(m=>new Date(m.fecha)>=startMes);
+  const mesAnterior = activos.filter(m=>new Date(m.fecha)>=startMesAnt && new Date(m.fecha)<=endMesAnt);
+
+  const ingresoMes = mesActual.reduce((s,m)=>s+(m.ingreso||0), 0);
+  const egresoMes = mesActual.reduce((s,m)=>s+(m.egreso||0), 0);
+  const utilidad = ingresoMes - egresoMes;
+  const margenPct = ingresoMes>0 ? (utilidad/ingresoMes*100) : 0;
+  const ingresoMesAnt = mesAnterior.reduce((s,m)=>s+(m.ingreso||0), 0);
+  const cambioIng = ingresoMesAnt>0 ? ((ingresoMes-ingresoMesAnt)/ingresoMesAnt*100) : 0;
+  const pctEgreso = ingresoMes>0 ? (egresoMes/ingresoMes*100) : 0;
+
+  // Top categorías mes actual
+  const catMap = {};
+  mesActual.filter(m=>m.egreso>0).forEach(m=>{
+    const k = m.categoria || 'SIN CATEG';
+    catMap[k] = (catMap[k]||0) + m.egreso;
+  });
+  const topCats = Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  const ultimos = activos.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5);
+
+  return `
+    <div style="margin-bottom:14px">
+      <div class="pendientes-title">Saldo y flujo</div>
+      <div class="pendientes-count">Vista de consulta · ${new Date().toLocaleString('es-MX',{month:'long',year:'numeric'})}</div>
+    </div>
+
+    <div class="dash-cards">
+      <div class="dash-card hero">
+        <div class="dash-card-label">SALDO BANCARIO</div>
+        <div class="dash-card-value green">${fmtMoneyD(window.MOCK.getSaldo())}</div>
+        <div class="dash-card-meta">Banregio · al ${fmtDateShort(new Date().toISOString())}</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">INGRESOS MES</div>
+        <div class="dash-card-value">${fmtMoney(ingresoMes)}</div>
+        <div class="dash-card-meta ${cambioIng>=0?'up':''}">${cambioIng>=0?'+':''}${cambioIng.toFixed(0)}% vs mes anterior</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">EGRESOS MES</div>
+        <div class="dash-card-value">${fmtMoney(egresoMes)}</div>
+        <div class="dash-card-meta">${pctEgreso.toFixed(0)}% del ingreso</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">UTILIDAD</div>
+        <div class="dash-card-value ${utilidad>=0?'green':''}">${utilidad>=0?'+':''}${fmtMoney(utilidad)}</div>
+        <div class="dash-card-meta">${margenPct.toFixed(1)}% margen</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div>
+        <div class="dash-panel-title">TOP 5 GASTOS DEL MES</div>
+        <div class="dash-list">
+          ${topCats.length===0?'<div class="empty">Sin egresos este mes.</div>':topCats.map(([cat,monto])=>`
+            <div class="dash-list-row">
+              <span class="dash-list-label">${cat}</span>
+              <span class="dash-list-value">${fmtMoney(monto)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div>
+        <div class="dash-panel-title">ÚLTIMOS 5 MOVIMIENTOS</div>
+        <div class="dash-list">
+          ${ultimos.length===0?'<div class="empty">Sin movimientos.</div>':ultimos.map(m=>`
+            <div class="dash-list-row">
+              <span class="dash-list-label">${m.prov}</span>
+              <span class="dash-list-value ${m.ingreso?'green':''}">${m.ingreso?'+':'−'}${fmtMoney(m.ingreso||m.egreso)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// =========================================================================
+// VISTA 5 · ADMIN
+// =========================================================================
+function renderAdmin(){
+  const total = STATE.movs.length;
+  const sin = STATE.movs.filter(m=>m.estado==='capturado').length;
+  const con = STATE.movs.filter(m=>m.estado==='con-factura').length;
+  const enbind = STATE.movs.filter(m=>m.estado==='en-bind').length;
+  const prog = STATE.movs.filter(m=>m.estado==='programado').length;
+  const sinCat = STATE.movs.filter(m=>m.estado==='sin-categoria').length;
+
+  return `
+    <div style="margin-bottom:14px">
+      <div class="pendientes-title">Administración</div>
+      <div class="pendientes-count">Configuración · sincronización · exportar</div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">${SVG.sync}Conexión Apps Script</div>
+      <p>URL del Apps Script TEST del Sheet <code>FlujoEfectivo_2026_TEST</code>:</p>
+      <div class="field-input"><input type="text" id="adm-url" value="${window.MOCK.TEST_SHEET_URL||'No configurada — usando mock data'}" readonly></div>
+      <button class="btn-secondary" style="margin-top:10px" onclick="testConn()">${SVG.check}Probar conexión</button>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">${SVG.sync}Sincronización Bind (cron 7pm)</div>
+      <p>Última corrida: <strong style="color:var(--text)">hoy 19:00 CST</strong></p>
+      <div class="dash-list" style="margin-bottom:10px">
+        <div class="dash-list-row"><span class="dash-list-label">✓ Ingresos subidos como Payment</span><span class="dash-list-value green">4 / 4</span></div>
+        <div class="dash-list-row"><span class="dash-list-label">✓ Egresos subidos como Purchase</span><span class="dash-list-value green">8 / 10</span></div>
+        <div class="dash-list-row"><span class="dash-list-label">⚠ Errores (revisar abajo)</span><span class="dash-list-value" style="color:#f5c842">2</span></div>
+        <div class="dash-list-row"><span class="dash-list-label">— Gasto ND (solo flujo)</span><span class="dash-list-value">4</span></div>
+      </div>
+      <div style="background:var(--bg-input);border:1px solid rgba(212,133,10,.3);border-radius:8px;padding:10px 12px;margin-bottom:10px">
+        <div style="font-size:11px;color:#f5c842;font-weight:500;margin-bottom:6px">2 errores pendientes</div>
+        <div style="font-size:11px;color:var(--text-2);line-height:1.5">
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+            <span>BODEGA 72 · −$1,450 · Factura no encontrada en Bind</span>
+            <button class="btn-secondary" style="padding:4px 10px;font-size:10px">Reintentar</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0">
+            <span>COSTCO · −$2,640 · Proveedor no existe en Bind</span>
+            <button class="btn-secondary" style="padding:4px 10px;font-size:10px">Reintentar</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-secondary" onclick="alert('Sandbox: el cron real vive en hade-erpweb (Node.js). Aquí solo se muestra el panel UI.')">${SVG.sync}Correr cron ahora</button>
+        <button class="btn-secondary" onclick="alert('Ver log completo en hoja _admin_sync_log del Sheet master')">${SVG.download}Ver log completo</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">${SVG.info}Resumen del flujo (sandbox)</div>
+      <div class="dash-list">
+        <div class="dash-list-row"><span class="dash-list-label">Total movimientos</span><span class="dash-list-value">${total}</span></div>
+        <div class="dash-list-row"><span class="dash-list-label">Capturados (sin factura)</span><span class="dash-list-value">${sin}</span></div>
+        <div class="dash-list-row"><span class="dash-list-label">Con factura (sin Bind)</span><span class="dash-list-value">${con}</span></div>
+        <div class="dash-list-row"><span class="dash-list-label">En Bind</span><span class="dash-list-value green">${enbind}</span></div>
+        <div class="dash-list-row"><span class="dash-list-label">Programados</span><span class="dash-list-value">${prog}</span></div>
+        <div class="dash-list-row"><span class="dash-list-label">Sin categoría</span><span class="dash-list-value">${sinCat}</span></div>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">${SVG.download}Exportar</div>
+      <p>Descarga el flujo completo como CSV o Excel.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-secondary" onclick="exportCSV()">${SVG.download}CSV completo</button>
+        <button class="btn-secondary" onclick="exportPendientes()">${SVG.download}Solo pendientes</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">${SVG.warn}Acciones de mantenimiento</div>
+      <p>Solo administradores. <strong style="color:var(--text)">No usar en producción sin respaldo.</strong></p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-secondary" onclick="seedMockData()">Recargar mock data</button>
+        <button class="btn-secondary" onclick="alert('Migración del color rojo — solo se corre 1 vez al inicializar el master')">Migrar color rojo</button>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0;color:var(--text-4);font-size:11px">
+      Tab Admin sandbox · v0.1.0 · ${new Date().toISOString().split('T')[0]}
+    </div>
+  `;
+}
+
+function testConn(){
+  if(!window.MOCK.TEST_SHEET_URL){
+    toast('No hay URL configurada · usando mock', false);
+    return;
+  }
+  toast('Probando conexión...', true, 1500);
+  fetch(window.MOCK.TEST_SHEET_URL+'?action=ping')
+    .then(r=>r.text())
+    .then(()=>toast('Conexión OK'))
+    .catch(()=>toast('Error de conexión', false));
+}
+
+function exportCSV(){
+  const rows = [['fecha','prov','concepto','forma_pago','factura','tipo','categoria','ingreso','egreso','estado','created_by','created_at']];
+  STATE.movs.forEach(m=>rows.push([m.fecha, m.prov, m.concepto, m.forma_pago, m.factura, m.tipo, m.categoria, m.ingreso, m.egreso, m.estado, m.created_by, m.created_at]));
+  download(rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n'), 'flujo-export.csv');
+  toast('CSV descargado');
+}
+
+function exportPendientes(){
+  const rows = [['fecha','prov','concepto','monto','factura','estado']];
+  STATE.movs.filter(m=>['capturado','con-factura','sin-categoria'].includes(m.estado))
+    .forEach(m=>rows.push([m.fecha, m.prov, m.concepto, m.ingreso||m.egreso, m.factura, m.estado]));
+  download(rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n'), 'pendientes.csv');
+  toast('Pendientes descargados');
+}
+
+function download(content, filename){
+  const blob = new Blob(['﻿'+content], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 100);
+}
+
+function seedMockData(){
+  if(!confirm('¿Reiniciar con los 30 movimientos de muestra?')) return;
+  STATE.movs = [...window.MOCK.MOCK_MOVIMIENTOS];
+  toast('Mock data recargada');
+  render();
+}
+
+// Toast helper
+let _toastTimer = null;
+function toast(msg, ok=true, ms=2200){
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.style.borderColor = ok ? 'var(--hade-green)' : '#c0392b';
+  t.style.color = ok ? 'var(--hade-green)' : '#e88';
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(()=>t.classList.remove('show'), ms);
+}
+
+// Init
+render();
+</script>
+</body>
+</html>

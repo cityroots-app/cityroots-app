@@ -647,6 +647,17 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
     <div class="role-dots" id="dots-logistica"></div>
   </div>
 
+  <div class="role-card" onclick="window.location.href='./admin/'">
+    <div class="role-icon">
+      <!-- Lucide: receipt -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>
+    </div>
+    <div class="role-info">
+      <h3>Administración</h3>
+      <span>HADE — Flujo de efectivo, pendientes y proyección</span>
+    </div>
+  </div>
+
 </div>
 
 <div id="modal-ov" class="modal-ov" style="display:none" onclick="closeOut(event)">
@@ -660,7 +671,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.20.6';
+var APP_VERSION='2.21.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
