@@ -380,6 +380,16 @@ function migrarColorRojo() {
   return migradas;
 }
 
+// Recalcula la columna L (saldo running) desde una row específica hacia el final,
+// respetando los 4 estados que no afectan saldo. Útil si se editaron manualmente
+// filas o si cambiaron estados de un grupo de movimientos.
+function recalcularSaldoDesde() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME);
+  const desdeRow = 1450; // ajustar si necesitas empezar en otra fila
+  recalcSaldoDesde(sh, desdeRow);
+  Logger.log('Saldo recalculado desde row ' + desdeRow + ' hasta ' + sh.getLastRow());
+}
+
 function inicializarHeaders() {
   // Agregar headers M-S si no existen. Correr 1 vez antes de migrarColorRojo.
   const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME);

@@ -740,21 +740,34 @@ function guardarCaptura(){
 // VISTA 2 · PENDIENTES
 // =========================================================================
 function renderPendientes(){
+  // Cutoff: mostrar solo pendientes de julio 2026 en adelante.
+  // Bloqueados (fecha 'BLOQ') o fechas inválidas siempre pasan (son recientes).
+  const CUTOFF = new Date('2026-07-01T00:00:00');
+  const isRecent = m => {
+    if(!m.fecha) return true;
+    if(m.fecha === 'BLOQ') return true;
+    const d = new Date(m.fecha);
+    if(isNaN(d.getTime())) return true;
+    return d >= CUTOFF;
+  };
+  const inPend = m => ['capturado','con-factura','sin-categoria','por-pagar','bloqueado'].includes(m.estado);
+  const pool = STATE.movs.filter(m => inPend(m) && isRecent(m));
+
   const counts = {
-    'sin-factura': STATE.movs.filter(m=>m.estado==='capturado').length,
-    'con-factura': STATE.movs.filter(m=>m.estado==='con-factura').length,
-    'por-pagar': STATE.movs.filter(m=>m.estado==='por-pagar').length,
-    'bloqueado': STATE.movs.filter(m=>m.estado==='bloqueado').length,
-    'sin-categ': STATE.movs.filter(m=>m.estado==='sin-categoria').length,
-    'todos': STATE.movs.filter(m=>['capturado','con-factura','sin-categoria','por-pagar','bloqueado'].includes(m.estado)).length
+    'sin-factura': pool.filter(m=>m.estado==='capturado').length,
+    'con-factura': pool.filter(m=>m.estado==='con-factura').length,
+    'por-pagar': pool.filter(m=>m.estado==='por-pagar').length,
+    'bloqueado': pool.filter(m=>m.estado==='bloqueado').length,
+    'sin-categ': pool.filter(m=>m.estado==='sin-categoria').length,
+    'todos': pool.length
   };
   let filtered;
-  if(STATE.pendFilter==='sin-factura') filtered = STATE.movs.filter(m=>m.estado==='capturado');
-  else if(STATE.pendFilter==='con-factura') filtered = STATE.movs.filter(m=>m.estado==='con-factura');
-  else if(STATE.pendFilter==='por-pagar') filtered = STATE.movs.filter(m=>m.estado==='por-pagar');
-  else if(STATE.pendFilter==='bloqueado') filtered = STATE.movs.filter(m=>m.estado==='bloqueado');
-  else if(STATE.pendFilter==='sin-categ') filtered = STATE.movs.filter(m=>m.estado==='sin-categoria');
-  else filtered = STATE.movs.filter(m=>['capturado','con-factura','sin-categoria','por-pagar','bloqueado'].includes(m.estado));
+  if(STATE.pendFilter==='sin-factura') filtered = pool.filter(m=>m.estado==='capturado');
+  else if(STATE.pendFilter==='con-factura') filtered = pool.filter(m=>m.estado==='con-factura');
+  else if(STATE.pendFilter==='por-pagar') filtered = pool.filter(m=>m.estado==='por-pagar');
+  else if(STATE.pendFilter==='bloqueado') filtered = pool.filter(m=>m.estado==='bloqueado');
+  else if(STATE.pendFilter==='sin-categ') filtered = pool.filter(m=>m.estado==='sin-categoria');
+  else filtered = pool;
 
   if(STATE.search){
     const q = STATE.search.toLowerCase();
