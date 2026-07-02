@@ -252,7 +252,6 @@ input[list]{cursor:text}
 </head>
 <body>
 
-<div class="sandbox-tag">ADMINISTRACIÓN HADE · PILOTO</div>
 
 <div class="app">
   <header class="topbar">
@@ -261,7 +260,7 @@ input[list]{cursor:text}
       <div class="topbar-sub">ADMINISTRACIÓN · CAJA HADE</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
-      <div class="sync-pill" id="sync-pill" onclick="syncNow()"><span class="sync-dot"></span><span id="sync-label">Sheet TEST</span></div>
+      <div class="sync-pill" id="sync-pill" onclick="syncNow()"><span class="sync-dot"></span><span id="sync-label">Sheet</span></div>
       <button class="topbar-home" onclick="window.location.href='../'" title="Cambiar rol" aria-label="Cambiar rol">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><path d="M3 12L12 3l9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
       </button>
@@ -326,7 +325,7 @@ let STATE = {
 };
 
 // ═══════════════ SHEET SYNC ═══════════════
-// Lee movimientos recientes del Sheet TEST vía Apps Script
+// Lee movimientos recientes del Sheet vía Apps Script
 async function syncFromSheet(){
   const url = window.MOCK.TEST_SHEET_URL;
   if(!url) return { ok:false, error:'Sin URL Apps Script' };
@@ -396,7 +395,7 @@ function inferirEstado(m){
   return 'con-factura';
 }
 
-// Envía un movimiento al Sheet TEST vía Apps Script POST
+// Envía un movimiento al Sheet vía Apps Script POST
 async function pushToSheet(mov, action){
   const url = window.MOCK.TEST_SHEET_URL;
   if(!url) return { ok:false, error:'Sin URL' };
@@ -755,7 +754,7 @@ function guardarCaptura(){
   };
   STATE.movs.unshift(m);
   toast('Movimiento guardado');
-  syncMovNuevo(m); // sync en background al Sheet TEST
+  syncMovNuevo(m); // sync en background al Sheet
   // Limpiar y enfocar
   STATE.lastFecha = fecha;
   render();
