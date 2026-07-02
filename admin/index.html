@@ -315,12 +315,15 @@ async function syncFromSheet(){
     const r = await fetch(url + '?action=getFlujo&periodo=all&filtro=todos', {redirect:'follow'});
     const data = await r.json();
     if(!data.ok) throw new Error(data.error || 'getFlujo failed');
-    // Filtrar solo los últimos 30 días para no cargar todo el histórico
+    // Filtrar últimos 30 días. Fechas inválidas (BLOQ, texto libre) SIEMPRE pasan
+    // porque son estados que requieren atención sin fecha real definida.
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 30);
     const recientes = data.movs.filter(m => {
-      if(!m.fecha) return false;
-      return new Date(m.fecha) >= cutoff;
+      if(!m.fecha) return true; // sin fecha → siempre incluir
+      const d = new Date(m.fecha);
+      if(isNaN(d.getTime())) return true; // fecha inválida (BLOQ, TRANS, etc) → incluir
+      return d >= cutoff;
     });
     const s = v => String(v||'').trim();
     const remote = recientes.map(m => ({
