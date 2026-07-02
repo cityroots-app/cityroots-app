@@ -45,7 +45,7 @@ const SUBCATEGORIAS_GASTO_FIJO = [
 
 const FORMAS_PAGO = ['TRANSFERENCIA', 'TARJETA', 'EFECTIVO'];
 
-const TIPOS_EGRESO = ['GASTO', 'GASTO ND', 'COMPRA'];
+const TIPOS_EGRESO = ['GASTO', 'GASTO ND', 'COMPRA', 'CAJA CHICA', 'TRASLADO', 'CREDITO'];
 
 const DOCUMENTOS = ['FACTURA', 'NO APLICA', 'PENDIENTE'];
 
@@ -170,25 +170,36 @@ const MOCK_BIND_PENDING = {
   ]
 };
 
-const ESTADOS_NO_AFECTAN_SALDO = ['programado', 'sin-categoria', 'por-pagar'];
+const ESTADOS_NO_AFECTAN_SALDO = ['programado', 'sin-categoria', 'por-pagar', 'bloqueado'];
 
-// SALDO_INICIAL representa el saldo al último registro que ya viene del Sheet.
-// Los movs sincronizados del Sheet (que tienen _row) NO afectan saldo — ya están incluidos.
-// Solo los movs NUEVOS capturados por PWA (sin _row) afectan al saldo.
+// SALDO_INICIAL = saldo bancario al row ROW_CUTOFF del Sheet (cierre real).
+// Movs con _row <= ROW_CUTOFF ya están en SALDO_INICIAL (no afectan).
+// Movs con _row > ROW_CUTOFF (posteriores al cierre) SÍ afectan.
+// Movs sin _row (nuevos capturados en PWA aún sin sync) SÍ afectan.
+const ROW_CUTOFF = 1443; // última row con saldo running cerrado (30-jun BANREGIO IVA COMISION)
+
 function movsBase() {
   return (typeof STATE !== 'undefined' && STATE.movs) ? STATE.movs : MOCK_MOVIMIENTOS;
 }
 
+function afectaSaldo(m) {
+  if (m.historico) return false;
+  if (ESTADOS_NO_AFECTAN_SALDO.includes(m.estado)) return false;
+  if (m._row && m._row <= ROW_CUTOFF) return false; // ya incluido en SALDO_INICIAL
+  return true;
+}
+
 function getSaldo() {
   return movsBase()
-    .filter(m => !m._row && !m.historico && !ESTADOS_NO_AFECTAN_SALDO.includes(m.estado))
+    .filter(afectaSaldo)
     .reduce((sum, m) => sum + (m.ingreso || 0) - (m.egreso || 0), SALDO_INICIAL);
 }
 
 function getSaldoProyectado() {
   return movsBase()
     .reduce((sum, m) => {
-      if (m._row || m.historico || m.estado === 'sin-categoria') return sum;
+      if (m.historico || m.estado === 'sin-categoria') return sum;
+      if (m._row && m._row <= ROW_CUTOFF) return sum;
       return sum + (m.ingreso || 0) - (m.egreso || 0);
     }, SALDO_INICIAL);
 }

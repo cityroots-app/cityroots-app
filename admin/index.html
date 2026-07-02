@@ -615,6 +615,7 @@ function renderCaptura(){
         <div class="field-label">Estado del pago</div>
         <div class="field-select"><select id="cap-estado-pago">
           <option value="ejecutado" selected>Pago ejecutado</option>
+          <option value="bloqueado">Bloqueado (dinero apartado en banco)</option>
           <option value="por-pagar">Factura a crédito (sin pagar)</option>
         </select></div>
       </div>
@@ -684,6 +685,7 @@ function guardarCaptura(){
   const registrado = document.getElementById('cap-registrado')?.value || 'Director';
   const estadoPago = document.getElementById('cap-estado-pago')?.value || 'ejecutado';
   const esCredito = !isIngreso && estadoPago === 'por-pagar';
+  const esBloqueado = !isIngreso && estadoPago === 'bloqueado';
 
   if(!prov){ toast('Falta cliente/proveedor', false); document.getElementById('cap-prov').focus(); return; }
   if(!cat){ toast('Falta categoría', false); document.getElementById('cap-cat').focus(); return; }
@@ -708,7 +710,8 @@ function guardarCaptura(){
     subcategoria: subcat,
     ingreso: isIngreso ? monto : 0,
     egreso: !isIngreso ? monto : 0,
-    estado: esCredito ? 'por-pagar'
+    estado: esBloqueado ? 'bloqueado'
+            : esCredito ? 'por-pagar'
             : (doc === 'NO APLICA' || (doc === 'FACTURA' && folios)) ? 'con-factura'
             : 'capturado',
     created_by: registrado,
@@ -736,15 +739,17 @@ function renderPendientes(){
     'sin-factura': STATE.movs.filter(m=>m.estado==='capturado').length,
     'con-factura': STATE.movs.filter(m=>m.estado==='con-factura').length,
     'por-pagar': STATE.movs.filter(m=>m.estado==='por-pagar').length,
+    'bloqueado': STATE.movs.filter(m=>m.estado==='bloqueado').length,
     'sin-categ': STATE.movs.filter(m=>m.estado==='sin-categoria').length,
-    'todos': STATE.movs.filter(m=>['capturado','con-factura','sin-categoria','por-pagar'].includes(m.estado)).length
+    'todos': STATE.movs.filter(m=>['capturado','con-factura','sin-categoria','por-pagar','bloqueado'].includes(m.estado)).length
   };
   let filtered;
   if(STATE.pendFilter==='sin-factura') filtered = STATE.movs.filter(m=>m.estado==='capturado');
   else if(STATE.pendFilter==='con-factura') filtered = STATE.movs.filter(m=>m.estado==='con-factura');
   else if(STATE.pendFilter==='por-pagar') filtered = STATE.movs.filter(m=>m.estado==='por-pagar');
+  else if(STATE.pendFilter==='bloqueado') filtered = STATE.movs.filter(m=>m.estado==='bloqueado');
   else if(STATE.pendFilter==='sin-categ') filtered = STATE.movs.filter(m=>m.estado==='sin-categoria');
-  else filtered = STATE.movs.filter(m=>['capturado','con-factura','sin-categoria','por-pagar'].includes(m.estado));
+  else filtered = STATE.movs.filter(m=>['capturado','con-factura','sin-categoria','por-pagar','bloqueado'].includes(m.estado));
 
   if(STATE.search){
     const q = STATE.search.toLowerCase();
@@ -771,6 +776,7 @@ function renderPendientes(){
       <button class="filter-pill ${STATE.pendFilter==='sin-factura'?'active':''}" onclick="setPendFilter('sin-factura')">Sin factura · ${counts['sin-factura']}</button>
       <button class="filter-pill ${STATE.pendFilter==='con-factura'?'active':''}" onclick="setPendFilter('con-factura')">Con factura · sin Bind · ${counts['con-factura']}</button>
       <button class="filter-pill ${STATE.pendFilter==='por-pagar'?'active':''}" onclick="setPendFilter('por-pagar')">Por pagar (crédito) · ${counts['por-pagar']}</button>
+      <button class="filter-pill ${STATE.pendFilter==='bloqueado'?'active':''}" onclick="setPendFilter('bloqueado')">Bloqueado · ${counts['bloqueado']}</button>
       <button class="filter-pill ${STATE.pendFilter==='sin-categ'?'active':''}" onclick="setPendFilter('sin-categ')">Sin categorizar · ${counts['sin-categ']}</button>
       <button class="filter-pill ${STATE.pendFilter==='todos'?'active':''}" onclick="setPendFilter('todos')">Todos · ${counts.todos}</button>
     </div>
@@ -810,6 +816,9 @@ function renderPendRow(m){
   } else if(m.estado === 'por-pagar'){
     facturaCell = `<div class="pt-factura" style="background:rgba(212,133,10,.10);border:1px solid rgba(212,133,10,.35);color:#f5c842" onclick="openEditarFactura('${m.id}')" title="Click para editar factura">${m.factura||'PEND'} ${SVG.edit}</div>`;
     actionBtn = `<button class="btn-action primary" onclick="marcarPagado('${m.id}')">${SVG.check}Marcar pagado</button>`;
+  } else if(m.estado === 'bloqueado'){
+    facturaCell = `<div class="pt-factura" style="background:rgba(245,166,35,.14);border:1px dashed rgba(245,166,35,.55);color:#c07a00;font-weight:600" title="Dinero apartado en banco, aún no asentado">🔒 BLOQUEADO</div>`;
+    actionBtn = `<button class="btn-action primary" onclick="marcarPagado('${m.id}')">${SVG.check}Marcar asentado</button>`;
   } else if(m.estado === 'sin-categoria'){
     facturaCell = `<div class="pt-factura sin-categ">SIN CATEG.</div>`;
     actionBtn = `<button class="btn-action neutral" onclick="categorizarMov('${m.id}')">${SVG.edit}Categorizar</button>`;
@@ -1383,6 +1392,26 @@ function renderSaldo(){
       <div class="pendientes-count">Vista de consulta · ${new Date().toLocaleString('es-MX',{month:'long',year:'numeric'})}</div>
     </div>
 
+    ${(() => {
+      const bloqueadoTotal = STATE.movs.filter(m=>m.estado==='bloqueado').reduce((s,m)=>s+(m.egreso||0)-(m.ingreso||0),0);
+      return bloqueadoTotal>0 ? `<div class="dash-cards" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="dash-card hero">
+          <div class="dash-card-label">SALDO BANCARIO</div>
+          <div class="dash-card-value green">${fmtMoneyD(window.MOCK.getSaldo())}</div>
+          <div class="dash-card-meta">Contable Banregio</div>
+        </div>
+        <div class="dash-card" style="border-color:rgba(245,166,35,.4)">
+          <div class="dash-card-label" style="color:#c07a00">🔒 BLOQUEADO</div>
+          <div class="dash-card-value" style="color:#c07a00">−${fmtMoney(bloqueadoTotal)}</div>
+          <div class="dash-card-meta">${STATE.movs.filter(m=>m.estado==='bloqueado').length} movs apartados</div>
+        </div>
+        <div class="dash-card" style="border-color:var(--hade-green-bright)">
+          <div class="dash-card-label">DISPONIBLE</div>
+          <div class="dash-card-value green">${fmtMoney(window.MOCK.getSaldo()-bloqueadoTotal)}</div>
+          <div class="dash-card-meta">Real para operar</div>
+        </div>
+      </div>` : '';
+    })()}
     <div class="dash-cards">
       <div class="dash-card hero">
         <div class="dash-card-label">SALDO BANCARIO</div>
