@@ -409,7 +409,9 @@ function fmtMoneyD(n){
 }
 function fmtDateShort(iso){
   if(!iso) return '';
+  if(iso === 'BLOQ' || String(iso).toUpperCase() === 'BLOQ') return 'BLOQ';
   const d = new Date(iso);
+  if(isNaN(d.getTime())) return String(iso);
   const mes = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()];
   return d.getDate() + ' ' + mes;
 }

@@ -200,18 +200,15 @@ function addMovimiento(data) {
   const ingreso = Number(data.ingreso) || 0;
   const egreso = Number(data.egreso) || 0;
 
-  // Calcular TOTAL: si es programado o sin-categoria, NO afecta saldo (mismo TOTAL anterior).
-  // Si es capturado/con-factura/en-bind, suma/resta.
+  // Estados que NO afectan saldo (programado, sin-categoria, por-pagar, bloqueado).
+  // Los bloqueados NO tienen fecha real → col A = "BLOQ".
+  const estadosNoAfectan = ['programado', 'sin-categoria', 'por-pagar', 'bloqueado'];
   const prevTotal = getLastValidTotal(sh, newRow);
-  let total;
-  if (estado === 'programado' || estado === 'sin-categoria') {
-    total = prevTotal;
-  } else {
-    total = prevTotal + ingreso - egreso;
-  }
+  const total = estadosNoAfectan.indexOf(estado) >= 0 ? prevTotal : prevTotal + ingreso - egreso;
+  const fechaCol = (estado === 'bloqueado') ? 'BLOQ' : fechaStr;
 
   const row = [
-    fechaStr,
+    fechaCol,
     data.prov || '',
     data.concepto || '',
     data.forma_pago || '',
@@ -316,10 +313,11 @@ function getLastValidTotal(sh, beforeRow) {
 
 function recalcSaldoDesde(sh, fromRow) {
   const lastRow = sh.getLastRow();
+  const estadosNoAfectan = ['programado', 'sin-categoria', 'por-pagar', 'bloqueado'];
   let total = getLastValidTotal(sh, fromRow);
   for (let r = fromRow; r <= lastRow; r++) {
     const estado = sh.getRange(r, COL.ESTADO).getValue();
-    if (estado === 'programado' || estado === 'sin-categoria') {
+    if (estadosNoAfectan.indexOf(estado) >= 0) {
       sh.getRange(r, COL.TOTAL).setValue(total);
       continue;
     }
