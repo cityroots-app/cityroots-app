@@ -109,7 +109,7 @@ const MOCK_MOVIMIENTOS = [
   // Renta Juventino: primeros 5 días → viernes 3 jul
   { id: uuid(), fecha: d('2026-07-03'), prov: 'JUVENTINO GARZA', concepto: 'Renta bodega julio', forma_pago: 'TRANSFERENCIA', aplicado: 'PROGRAMADO', factura: 'PEND', tipo: 'GASTO', categoria: 'GASTO FIJO', subcategoria: 'RENTA', ingreso: 0, egreso: 16000, estado: 'programado', created_by: 'Claude', created_at: d('2026-06-29'), factura_at: null, bind_at: null, updated_by: 'Claude' },
   // Edenred: primeros 5 días → viernes 3 jul
-  { id: uuid(), fecha: d('2026-07-03'), prov: 'EDENRED', concepto: 'Vales gasolina JC julio', forma_pago: 'TRANSFERENCIA', aplicado: 'PROGRAMADO', factura: 'PEND', tipo: 'GASTO', categoria: 'NOMINA DIRECTOR', subcategoria: 'GASOLINA', ingreso: 0, egreso: 4800, estado: 'programado', created_by: 'Claude', created_at: d('2026-06-29'), factura_at: null, bind_at: null, updated_by: 'Claude' },
+  { id: uuid(), fecha: d('2026-07-03'), prov: 'EDENRED', concepto: 'Gasolina RAM', forma_pago: 'TRANSFERENCIA', aplicado: 'PROGRAMADO', factura: 'PEND', tipo: 'GASTO', categoria: 'VEHICULO', subcategoria: 'GASOLINA', ingreso: 0, egreso: 4800, estado: 'programado', created_by: 'Claude', created_at: d('2026-06-29'), factura_at: null, bind_at: null, updated_by: 'Claude' },
   // Unboxing: 2da semana del mes (semillas pedidas día 28 anterior)
   { id: uuid(), fecha: d('2026-07-10'), prov: 'UNBOXING', concepto: 'Envío semillas TrueLeaf', forma_pago: 'TARJETA', aplicado: 'PROGRAMADO', factura: 'PEND', tipo: 'GASTO', categoria: 'ENVIOS', subcategoria: 'ENVIOS', ingreso: 0, egreso: 830, estado: 'programado', created_by: 'Claude', created_at: d('2026-06-29'), factura_at: null, bind_at: null, updated_by: 'Claude' },
   // Agua mensual: día 15
