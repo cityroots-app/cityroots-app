@@ -505,10 +505,13 @@ function render(){
 // VISTA 1 · CAPTURA
 // =========================================================================
 function renderCaptura(){
-  // Últimos 3 capturados en orden del Sheet (más viejo arriba, más nuevo abajo)
+  // Últimos 3 capturados REALES del Sheet: excluye programados y bloqueados
+  // (dinero apartado no es un movimiento asentado). Ordena por _row del Sheet
+  // (orden físico de captura), toma los 3 más recientes y los invierte para
+  // mostrar más viejo arriba y más nuevo abajo, como el Sheet.
   const ultimos = [...STATE.movs]
-    .filter(m=>m.estado!=='programado')
-    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))
+    .filter(m => m.estado !== 'programado' && m.estado !== 'bloqueado')
+    .sort((a,b) => (b._row || 0) - (a._row || 0))
     .slice(0,3)
     .reverse();
 
