@@ -2,10 +2,12 @@
 // 30 movimientos sintéticos con todos los estados representados.
 // Reemplazar con respuestas del Apps Script TEST cuando esté deployado.
 
-const TEST_SHEET_URL = ''; // Pegar aquí la URL del Apps Script TEST cuando se deploye
+// URL del Apps Script del Sheet FlujoEfectivo_2026_TEST (clon del master)
+// Deploy 2-jul-2026: conecta la PWA al Sheet para lectura/escritura real.
+const TEST_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxrt2_smxjCMrNXh65ltFOxlaRsWuAzY9odeGr5D8ApsXNWMh8qqnSR9Gxw7ynxiR7v1w/exec';
 
-// Saldo bancario al cierre del 22-jun-2026 — último registro real del flujo HADE
-const SALDO_INICIAL = 268531.69;
+// Saldo bancario al cierre real del 30-jun-2026 (fila 1441 del Sheet TEST)
+const SALDO_INICIAL = 199271.61;
 
 // Categorías del Estado de Resultados (extraídas del flujo real 2026)
 // El usuario solo desglosa subcategoría cuando categoría = GASTO FIJO
@@ -170,18 +172,23 @@ const MOCK_BIND_PENDING = {
 
 const ESTADOS_NO_AFECTAN_SALDO = ['programado', 'sin-categoria', 'por-pagar'];
 
-// Movimientos marcados con historico:true ya están incluidos en SALDO_INICIAL
-// (vienen del cierre real del banco). NO deben volver a aplicarse al saldo.
+// SALDO_INICIAL representa el saldo al último registro que ya viene del Sheet.
+// Los movs sincronizados del Sheet (que tienen _row) NO afectan saldo — ya están incluidos.
+// Solo los movs NUEVOS capturados por PWA (sin _row) afectan al saldo.
+function movsBase() {
+  return (typeof STATE !== 'undefined' && STATE.movs) ? STATE.movs : MOCK_MOVIMIENTOS;
+}
+
 function getSaldo() {
-  return MOCK_MOVIMIENTOS
-    .filter(m => !m.historico && !ESTADOS_NO_AFECTAN_SALDO.includes(m.estado))
+  return movsBase()
+    .filter(m => !m._row && !m.historico && !ESTADOS_NO_AFECTAN_SALDO.includes(m.estado))
     .reduce((sum, m) => sum + (m.ingreso || 0) - (m.egreso || 0), SALDO_INICIAL);
 }
 
 function getSaldoProyectado() {
-  return MOCK_MOVIMIENTOS
+  return movsBase()
     .reduce((sum, m) => {
-      if (m.historico || m.estado === 'sin-categoria') return sum;
+      if (m._row || m.historico || m.estado === 'sin-categoria') return sum;
       return sum + (m.ingreso || 0) - (m.egreso || 0);
     }, SALDO_INICIAL);
 }

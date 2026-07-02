@@ -257,7 +257,7 @@ input[list]{cursor:text}
       <div class="topbar-brand">THE HARVEST DEALERS</div>
       <div class="topbar-sub">ADMINISTRACIÓN · CAJA HADE</div>
     </div>
-    <div class="sync-pill"><span class="sync-dot"></span>Mock data</div>
+    <div class="sync-pill" id="sync-pill" onclick="syncNow()"><span class="sync-dot"></span><span id="sync-label">Sheet TEST</span></div>
   </header>
 
   <main class="content" id="content"></main>
@@ -300,8 +300,89 @@ let STATE = {
   movs: [...window.MOCK.MOCK_MOVIMIENTOS],
   tipoSelected: 'INGRESO',
   pendFilter: 'sin-factura',
-  modal: null
+  modal: null,
+  syncing: false,
+  lastSync: null
 };
+
+// ═══════════════ SHEET SYNC ═══════════════
+// Lee movimientos recientes del Sheet TEST vía Apps Script
+async function syncFromSheet(){
+  const url = window.MOCK.TEST_SHEET_URL;
+  if(!url) return { ok:false, error:'Sin URL Apps Script' };
+  STATE.syncing = true;
+  try {
+    const r = await fetch(url + '?action=getFlujo&periodo=all&filtro=todos', {redirect:'follow'});
+    const data = await r.json();
+    if(!data.ok) throw new Error(data.error || 'getFlujo failed');
+    // Filtrar solo los últimos 30 días para no cargar todo el histórico
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    const recientes = data.movs.filter(m => {
+      if(!m.fecha) return false;
+      return new Date(m.fecha) >= cutoff;
+    });
+    const s = v => String(v||'').trim();
+    const remote = recientes.map(m => ({
+      id: s(m.id) || window.MOCK.uuid(),
+      fecha: m.fecha,
+      prov: s(m.prov),
+      concepto: s(m.concepto),
+      forma_pago: s(m.forma_pago),
+      aplicado: s(m.aplicado),
+      factura: s(m.factura),
+      tipo: s(m.tipo),
+      categoria: s(m.categoria),
+      subcategoria: s(m.subcategoria),
+      ingreso: Number(m.ingreso)||0,
+      egreso: Number(m.egreso)||0,
+      estado: s(m.estado) || inferirEstado(m),
+      historico: !s(m.id), // sin row_id = registro histórico pre-PWA
+      created_by: s(m.created_by),
+      created_at: s(m.created_at),
+      factura_at: s(m.factura_at) || null,
+      bind_at: s(m.bind_at) || null,
+      updated_by: s(m.updated_by),
+      _row: m._row
+    }));
+    // Reemplaza los históricos del mock (mantener programados)
+    const programados = STATE.movs.filter(x => x.estado === 'programado');
+    STATE.movs = [...remote, ...programados];
+    STATE.lastSync = new Date().toISOString();
+    localStorage.setItem('crf_admin_lastsync', STATE.lastSync);
+    return { ok:true, count: remote.length };
+  } catch(err){
+    return { ok:false, error: String(err) };
+  } finally {
+    STATE.syncing = false;
+  }
+}
+
+function inferirEstado(m){
+  const cat = (m.categoria||'').trim();
+  const fact = (m.factura||'').trim().toUpperCase();
+  if(!cat) return 'sin-categoria';
+  if(fact === 'PENDIENTE' || fact === 'PEND' || fact === '') return 'capturado';
+  if(fact === 'NA') return 'con-factura';
+  return 'con-factura';
+}
+
+// Envía un movimiento al Sheet TEST vía Apps Script POST
+async function pushToSheet(mov, action){
+  const url = window.MOCK.TEST_SHEET_URL;
+  if(!url) return { ok:false, error:'Sin URL' };
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action, data: mov }),
+      headers: {'Content-Type':'text/plain'},
+      redirect: 'follow'
+    });
+    return await r.json();
+  } catch(err){
+    return { ok:false, error: String(err) };
+  }
+}
 
 const SVG = {
   plant: '<svg viewBox="0 0 24 24"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>',
@@ -637,6 +718,7 @@ function guardarCaptura(){
   };
   STATE.movs.unshift(m);
   toast('Movimiento guardado');
+  syncMovNuevo(m); // sync en background al Sheet TEST
   // Limpiar y enfocar
   STATE.lastFecha = fecha;
   render();
@@ -1494,8 +1576,58 @@ function toast(msg, ok=true, ms=2200){
   _toastTimer = setTimeout(()=>t.classList.remove('show'), ms);
 }
 
-// Init
+// Sync manual (touch en el pill)
+async function syncNow(){
+  setSyncLabel('Sincronizando...', true);
+  const res = await syncFromSheet();
+  if(res.ok){
+    setSyncLabel(`Sheet · ${res.count} movs`);
+    render();
+  } else {
+    setSyncLabel('Error · retry', false);
+    toast(res.error, false);
+  }
+}
+
+function setSyncLabel(txt, ok=true){
+  const el = document.getElementById('sync-label');
+  if(el) el.textContent = txt;
+  const pill = document.getElementById('sync-pill');
+  if(pill){
+    pill.style.color = ok ? 'var(--hade-green)' : '#c0392b';
+    pill.style.borderColor = ok ? 'var(--border)' : 'rgba(192,57,43,.4)';
+  }
+}
+
+// Guarda captura al Sheet en segundo plano
+async function syncMovNuevo(mov){
+  const res = await pushToSheet(mov, 'addMovimiento');
+  if(res.ok){
+    mov._row = res.row;
+    mov.id = res.id || mov.id;
+    setSyncLabel('Sheet · sincronizado');
+    setTimeout(()=>setSyncLabel(`Sheet · ${STATE.movs.filter(m=>!m.historico&&m.estado!=='programado').length} movs`), 1500);
+  } else {
+    setSyncLabel('Pendiente sync', false);
+    // Guardar en cola local para reintentar
+    const pend = JSON.parse(localStorage.getItem('crf_admin_pending')||'[]');
+    pend.push(mov);
+    localStorage.setItem('crf_admin_pending', JSON.stringify(pend));
+  }
+}
+
+// Init: render inicial + sync automática
 render();
+setSyncLabel('Cargando Sheet...', true);
+syncFromSheet().then(res => {
+  if(res.ok){
+    setSyncLabel(`Sheet · ${res.count} movs`);
+    render();
+  } else {
+    setSyncLabel('Offline', false);
+    console.warn('Sync error:', res.error);
+  }
+});
 </script>
 </body>
 </html>
