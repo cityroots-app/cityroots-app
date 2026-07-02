@@ -1007,9 +1007,10 @@ function renderModal(){
         Actualmente hay <strong style="color:var(--text)">${totalCxP}</strong> CxP importados en este dispositivo.
       </div>
 
-      <div style="display:flex;gap:8px">
-        ${totalCxP > 0 ? `<button class="btn-secondary" style="flex:1;color:#c0392b;border-color:rgba(192,57,43,.4)" onclick="borrarTodosCxP()">Borrar todos</button>` : ''}
-        <button class="btn-primary" style="flex:2" onclick="ejecutarImportarCxP()">${SVG.check}Importar CxP</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${totalCxP > 0 ? `<button class="btn-secondary" style="flex:1 1 45%;color:#c0392b;border-color:rgba(192,57,43,.4)" onclick="borrarTodosCxP()">Borrar todos</button>` : ''}
+        ${totalCxP > 0 ? `<button class="btn-secondary" style="flex:1 1 45%" onclick="alinearCxPAViernes()">Alinear a viernes</button>` : ''}
+        <button class="btn-primary" style="flex:1 1 100%" onclick="ejecutarImportarCxP()">${SVG.check}Importar CxP</button>
       </div>
     `;
   } else if(STATE.modal.type==='editar-prog'){
@@ -1480,11 +1481,15 @@ function parsearCxP(texto){
     // Monto
     const monto = parseFloat(montoRaw.replace(/[$,\s]/g,''));
     if(isNaN(monto) || monto <= 0){ errores.push(`L${idx+1}: monto inválido "${montoRaw}"`); return; }
+    let fechaISO = new Date(fecha + 'T12:00:00').toISOString();
+    // Auto-mover al viernes de la misma semana ISO si el proveedor lo requiere
+    const provUpper = provRaw.toUpperCase();
+    if(esProveedorViernes(provUpper)) fechaISO = viernesDeSemanaISO(fechaISO);
     items.push({
       id: window.MOCK.uuid(),
       _cxp: true,
-      fecha: new Date(fecha + 'T12:00:00').toISOString(),
-      prov: provRaw.toUpperCase(),
+      fecha: fechaISO,
+      prov: provUpper,
       concepto: conceptoRaw,
       forma_pago: 'TRANSFERENCIA',
       aplicado: 'CxP Bind',
@@ -1525,6 +1530,44 @@ function borrarTodosCxP(){
   closeModal();
   toast('Todos los CxP borrados');
   render();
+}
+
+// Proveedores cuyos pagos SIEMPRE se hacen los viernes.
+const PROVEEDORES_VIERNES = ['GEORGINA', 'HORACIO', 'JOSUE', 'AYUDANTE PRODUCCION', 'CHOFER', 'ASISTENTE ADMIN', 'VENTAS JC'];
+function esProveedorViernes(prov){
+  const p = (prov || '').toUpperCase();
+  return PROVEEDORES_VIERNES.some(t => p.includes(t));
+}
+function viernesDeSemanaISO(fechaISO){
+  const d = new Date(fechaISO);
+  const dayOfWeek = d.getDay(); // 0=dom, 1=lun, ..., 5=vie, 6=sáb
+  const isoDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+  const offset = 5 - isoDay;
+  const viernes = new Date(d);
+  viernes.setDate(d.getDate() + offset);
+  viernes.setHours(12,0,0,0);
+  return viernes.toISOString();
+}
+
+// Ejecuta ajuste manual sobre los CxP existentes en localStorage
+function alinearCxPAViernes(){
+  let ajustados = 0;
+  STATE.movs.forEach(m => {
+    if(!m._cxp) return;
+    if(!esProveedorViernes(m.prov)) return;
+    const nueva = viernesDeSemanaISO(m.fecha);
+    if(nueva.slice(0,10) !== m.fecha.slice(0,10)){
+      m.fecha = nueva;
+      ajustados++;
+    }
+  });
+  if(ajustados > 0){
+    saveCxPs(STATE.movs.filter(m => m._cxp));
+    toast(`✓ ${ajustados} CxP movidas al viernes`);
+    render();
+  } else {
+    toast('Todos los CxP ya están en viernes', true);
+  }
 }
 
 // =========================================================================
