@@ -320,19 +320,24 @@ async function syncFromSheet(){
   if(!url) return { ok:false, error:'Sin URL Apps Script' };
   STATE.syncing = true;
   try {
-    const r = await fetch(url + '?action=getFlujo&periodo=all&filtro=todos', {redirect:'follow'});
-    const data = await r.json();
-    if(!data.ok) throw new Error(data.error || 'getFlujo failed');
-    // Filtrar últimos 30 días. Fechas inválidas (BLOQ, texto libre) SIEMPRE pasan
-    // porque son estados que requieren atención sin fecha real definida.
+    // Dos llamadas separadas porque Apps Script puede truncar en respuestas grandes:
+    // 1) Movimientos con estado asentado/pendiente (últimos 30 días)
+    // 2) TODOS los programados (independiente de fecha)
+    const [rAll, rProg] = await Promise.all([
+      fetch(url + '?action=getFlujo&periodo=all&filtro=todos', {redirect:'follow'}).then(r => r.json()),
+      fetch(url + '?action=getFlujo&periodo=all&filtro=programados', {redirect:'follow'}).then(r => r.json())
+    ]);
+    if(!rAll.ok || !rProg.ok) throw new Error((rAll.error||rProg.error) || 'getFlujo failed');
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 30);
-    const recientes = data.movs.filter(m => {
-      if(!m.fecha) return true; // sin fecha → siempre incluir
+    // De la lista general: filtrar últimos 30 días. Fechas inválidas siempre pasan.
+    const recientes = rAll.movs.filter(m => {
+      if(m.estado === 'programado') return false; // ya vienen en rProg, evita duplicados
+      if(!m.fecha) return true;
       const d = new Date(m.fecha);
-      if(isNaN(d.getTime())) return true; // fecha inválida (BLOQ, TRANS, etc) → incluir
+      if(isNaN(d.getTime())) return true;
       return d >= cutoff;
-    });
+    }).concat(rProg.movs); // agregar TODOS los programados (sin filtro de fecha)
     const s = v => String(v||'').trim();
     const remote = recientes.map(m => ({
       id: s(m.id) || window.MOCK.uuid(),
@@ -1233,11 +1238,21 @@ function renderProgramados(){
 
   const totalProgramado = programados.reduce((s,m)=>s + (m.egreso||0) - (m.ingreso||0), 0);
   const saldoActual = window.MOCK.getSaldo();
-  const saldoProyectado = saldoActual - totalProgramado;
 
   const now = new Date();
   const curISO = getISOWeek(now);
   const curWeekId = fmtWeekId(curISO.year, curISO.week);
+
+  // Programado y proyectado SOLO de la semana actual (JC 2-jul-2026)
+  const programadosSemana = programados.filter(m => {
+    if(!m.fecha) return false;
+    const d = new Date(m.fecha);
+    if(isNaN(d.getTime())) return false;
+    const iso = getISOWeek(d);
+    return fmtWeekId(iso.year, iso.week) === curWeekId;
+  });
+  const totalProgramadoSemana = programadosSemana.reduce((s,m)=>s + (m.egreso||0) - (m.ingreso||0), 0);
+  const saldoProyectadoSemana = saldoActual - totalProgramadoSemana;
 
   return `
     <div class="pendientes-header" style="margin-bottom:18px">
@@ -1257,14 +1272,14 @@ function renderProgramados(){
         <div class="dash-card-meta">Banregio · ${fmtDateShort(new Date().toISOString())}</div>
       </div>
       <div class="dash-card">
-        <div class="dash-card-label">PROGRAMADO</div>
-        <div class="dash-card-value">−${fmtMoney(totalProgramado)}</div>
-        <div class="dash-card-meta">Total pendiente</div>
+        <div class="dash-card-label">PROGRAMADO SEMANA</div>
+        <div class="dash-card-value">−${fmtMoney(totalProgramadoSemana)}</div>
+        <div class="dash-card-meta">Semana ${curWeekId} · ${programadosSemana.length} pago${programadosSemana.length!==1?'s':''}</div>
       </div>
       <div class="dash-card">
-        <div class="dash-card-label">SALDO PROYECTADO</div>
-        <div class="dash-card-value ${saldoProyectado<50000?'':'green'}">${fmtMoney(saldoProyectado)}</div>
-        <div class="dash-card-meta">${saldoProyectado<50000?'⚠ Liquidez baja':'OK'}</div>
+        <div class="dash-card-label">SALDO PROYECTADO SEMANA</div>
+        <div class="dash-card-value ${saldoProyectadoSemana<50000?'':'green'}">${fmtMoney(saldoProyectadoSemana)}</div>
+        <div class="dash-card-meta">${saldoProyectadoSemana<50000?'⚠ Liquidez baja':'Tras pagos de la semana'}</div>
       </div>
     </div>
 

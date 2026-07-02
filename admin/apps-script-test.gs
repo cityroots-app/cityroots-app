@@ -380,6 +380,45 @@ function migrarColorRojo() {
   return migradas;
 }
 
+// Mueve las fechas de los programados de Georgina Martinez Antonio y Josue
+// Arturo Ramirez Moreno (más nóminas si se agregan más adelante) al viernes
+// de la misma semana ISO. Los pagos a estos proveedores se hacen los viernes.
+function moverAViernes() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME);
+  const lastRow = sh.getLastRow();
+  const targets = ['GEORGINA MARTINEZ ANTONIO', 'JOSUE ARTURO RAMIREZ MORENO',
+                   'AYUDANTE PRODUCCION', 'CHOFER', 'ASISTENTE ADMIN', 'VENTAS JC'];
+  let ajustados = 0;
+  for (let r = HEADER_ROW + 1; r <= lastRow; r++) {
+    const prov = String(sh.getRange(r, COL.PROVEEDOR).getValue() || '').trim().toUpperCase();
+    const estado = sh.getRange(r, COL.ESTADO).getValue();
+    if (estado !== 'programado') continue;
+    if (!targets.some(t => prov.indexOf(t) >= 0)) continue;
+    const fecha = sh.getRange(r, COL.FECHA).getValue();
+    if (!(fecha instanceof Date)) continue;
+    const viernes = viernesDeLaSemanaISO(fecha);
+    if (viernes.getTime() === fecha.getTime()) continue; // ya es viernes
+    sh.getRange(r, COL.FECHA).setValue(viernes);
+    sh.getRange(r, COL.UPDATED_BY).setValue('Ajuste viernes');
+    ajustados++;
+  }
+  Logger.log('Fechas movidas al viernes: ' + ajustados + ' movimientos');
+}
+
+// Retorna el viernes de la misma semana ISO (lunes = día 1, viernes = día 5).
+// Ejemplo: jueves 2-jul-2026 → viernes 3-jul-2026.
+// Ejemplo: domingo 19-jul-2026 → viernes 17-jul-2026 (viernes anterior en la misma semana ISO).
+function viernesDeLaSemanaISO(fecha) {
+  const d = new Date(fecha);
+  const dayOfWeek = d.getDay(); // 0=dom, 1=lun, ..., 5=vie, 6=sáb
+  // ISO: la semana empieza lunes. Ajustar para que domingo sea 7.
+  const isoDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+  const offset = 5 - isoDay; // 5 = viernes en ISO
+  const viernes = new Date(d);
+  viernes.setDate(d.getDate() + offset);
+  return viernes;
+}
+
 // Recalcula la columna L (saldo running) desde una row específica hacia el final,
 // respetando los 4 estados que no afectan saldo. Útil si se editaron manualmente
 // filas o si cambiaron estados de un grupo de movimientos.
