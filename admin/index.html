@@ -841,7 +841,7 @@ function renderPendRow(m){
     }
   } else if(m.estado === 'con-factura'){
     facturaCell = `<div class="pt-factura" onclick="openEditarFactura('${m.id}')" title="Click para editar">${m.factura} ${SVG.edit}</div>`;
-    actionBtn = `<button class="btn-action outline" onclick="subirABind('${m.id}')">${SVG.upload}Subir a Bind</button>`;
+    actionBtn = `<button class="btn-action primary" onclick="marcarRegistradoBind('${m.id}')">${SVG.check}Registrado en Bind</button>`;
   } else if(m.estado === 'por-pagar'){
     facturaCell = `<div class="pt-factura" style="background:rgba(212,133,10,.10);border:1px solid rgba(212,133,10,.35);color:#f5c842" onclick="openEditarFactura('${m.id}')" title="Click para editar factura">${m.factura||'PEND'} ${SVG.edit}</div>`;
     actionBtn = `<button class="btn-action primary" onclick="marcarPagado('${m.id}')">${SVG.check}Marcar pagado</button>`;
@@ -973,7 +973,7 @@ function renderModal(){
         </div>
       `}).join('')}
       ${matchStrip}
-      <div style="font-size:11px;color:var(--text-3);text-align:center;margin:10px 0">⚠ Esta acción solo crea la vinculación en el flujo. Para registrar el pago en Bind ERP, después usa "Subir a Bind".</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;margin:10px 0">⚠ Esta acción solo asigna la factura en el flujo. Después captura el pago en Bind y usa el botón "Registrado en Bind" para eliminar de pendientes.</div>
       <button class="btn-primary" onclick="confirmarVincularBind('${m.id}')" ${STATE.modal.selected.size===0?'disabled style="opacity:.4;cursor:not-allowed"':''}>${SVG.check}Autorizar vinculación · ${STATE.modal.selected.size} factura${STATE.modal.selected.size!==1?'s':''}</button>
     `;
   } else if(STATE.modal.type==='editar-prog'){
@@ -1176,18 +1176,36 @@ function confirmarCategorizar(movId){
   render();
 }
 
-function subirABind(movId){
-  // Simula POST a hade-erpweb /api/finanzas/payment
+async function marcarRegistradoBind(movId){
   const m = STATE.movs.find(x=>x.id===movId);
-  toast('Subiendo a Bind...', true, 1200);
-  setTimeout(()=>{
-    m.estado = 'en-bind';
-    m.bind_at = new Date().toISOString();
-    m.updated_by = 'Martha';
-    toast('✓ Subido a Bind exitosamente');
-    render();
-  }, 1100);
+  if(!m) return;
+  if(!confirm(`¿Confirmar que el movimiento se registró en Bind?\n\n${m.prov} · ${m.ingreso?'+':'−'}${fmtMoney(m.ingreso||m.egreso)}\nFactura: ${m.factura||'—'}\n\nAl confirmar, el movimiento sale de la lista de pendientes.`)) return;
+
+  // Optimista: actualizar UI local
+  const prevEstado = m.estado;
+  const prevBindAt = m.bind_at;
+  m.estado = 'en-bind';
+  m.bind_at = new Date().toISOString();
+  m.updated_by = document.getElementById('cap-registrado')?.value || 'Director';
+  render();
+  toast('Marcando en Bind...');
+
+  // Sync real al Sheet vía Apps Script
+  if(m._row && window.MOCK.TEST_SHEET_URL){
+    const res = await pushToSheet({row_id: m.id, factura: m.factura, userId: m.updated_by}, 'markEnBind');
+    if(!res.ok){
+      // Rollback si falla
+      m.estado = prevEstado;
+      m.bind_at = prevBindAt;
+      toast('Error al sincronizar. Reintenta.', false);
+      render();
+      return;
+    }
+  }
+  toast('✓ Registrado en Bind · sale de pendientes');
 }
+// Alias legacy — cualquier onclick colgado sigue funcionando
+const subirABind = marcarRegistradoBind;
 
 function showModal(){ document.getElementById('modal-ov').classList.add('show'); }
 function closeModal(){ document.getElementById('modal-ov').classList.remove('show'); STATE.modal=null; }
