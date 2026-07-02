@@ -39,7 +39,10 @@ input:focus,select:focus,textarea:focus{outline:none}
 .topbar{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg-card);position:sticky;top:0;z-index:10}
 .topbar-brand{font-size:11px;letter-spacing:.16em;font-weight:600;line-height:1.3}
 .topbar-sub{font-size:9px;letter-spacing:.10em;color:var(--hade-green);margin-top:2px}
-.sync-pill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--hade-green);background:var(--bg-card-2);padding:5px 11px;border-radius:999px;border:1px solid var(--border)}
+.sync-pill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--hade-green);background:var(--bg-card-2);padding:5px 11px;border-radius:999px;border:1px solid var(--border);cursor:pointer}
+.topbar-home{display:flex;align-items:center;justify-content:center;background:var(--bg-card-2);border:1px solid var(--border);width:30px;height:30px;border-radius:50%;color:var(--hade-green);cursor:pointer;padding:0;transition:all .15s}
+.topbar-home:hover{background:var(--green-bg);border-color:var(--hade-green-bright)}
+.topbar-home svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--hade-green)}
 
 .content{flex:1;padding:16px;padding-bottom:90px;overflow-y:auto}
@@ -257,7 +260,12 @@ input[list]{cursor:text}
       <div class="topbar-brand">THE HARVEST DEALERS</div>
       <div class="topbar-sub">ADMINISTRACIÓN · CAJA HADE</div>
     </div>
-    <div class="sync-pill" id="sync-pill" onclick="syncNow()"><span class="sync-dot"></span><span id="sync-label">Sheet TEST</span></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="sync-pill" id="sync-pill" onclick="syncNow()"><span class="sync-dot"></span><span id="sync-label">Sheet TEST</span></div>
+      <button class="topbar-home" onclick="window.location.href='../'" title="Cambiar rol" aria-label="Cambiar rol">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><path d="M3 12L12 3l9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+      </button>
+    </div>
   </header>
 
   <main class="content" id="content"></main>
