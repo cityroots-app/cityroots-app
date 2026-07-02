@@ -1482,9 +1482,12 @@ function parsearCxP(texto){
     const monto = parseFloat(montoRaw.replace(/[$,\s]/g,''));
     if(isNaN(monto) || monto <= 0){ errores.push(`L${idx+1}: monto inválido "${montoRaw}"`); return; }
     let fechaISO = new Date(fecha + 'T12:00:00').toISOString();
-    // Auto-mover al viernes de la misma semana ISO si el proveedor lo requiere
     const provUpper = provRaw.toUpperCase();
-    if(esProveedorViernes(provUpper)) fechaISO = viernesDeSemanaISO(fechaISO);
+    // Auto-mover: (1) sábado/domingo → viernes anterior · (2) provs viernes → siempre viernes
+    const day = new Date(fechaISO).getDay();
+    if(day === 0 || day === 6 || esProveedorViernes(provUpper)){
+      fechaISO = viernesDeSemanaISO(fechaISO);
+    }
     items.push({
       id: window.MOCK.uuid(),
       _cxp: true,
@@ -1549,24 +1552,37 @@ function viernesDeSemanaISO(fechaISO){
   return viernes.toISOString();
 }
 
-// Ejecuta ajuste manual sobre los CxP existentes en localStorage
+// Ejecuta ajuste manual sobre los CxP existentes en localStorage.
+// Dos reglas:
+//   1. TODOS los CxP en sábado/domingo → viernes anterior (JC no paga fines de semana)
+//   2. CxP de Georgina/Horacio/Josué/nóminas → siempre viernes de esa semana ISO
 function alinearCxPAViernes(){
-  let ajustados = 0;
+  let sabdomMovidos = 0;
+  let provViernesMovidos = 0;
   STATE.movs.forEach(m => {
     if(!m._cxp) return;
-    if(!esProveedorViernes(m.prov)) return;
+    const d = new Date(m.fecha);
+    const dayOfWeek = d.getDay(); // 0=dom, 5=vie, 6=sáb
+    const esSabDom = (dayOfWeek === 0 || dayOfWeek === 6);
+    const esProvViernes = esProveedorViernes(m.prov);
+    if(!esSabDom && !esProvViernes) return;
     const nueva = viernesDeSemanaISO(m.fecha);
     if(nueva.slice(0,10) !== m.fecha.slice(0,10)){
       m.fecha = nueva;
-      ajustados++;
+      if(esSabDom) sabdomMovidos++;
+      else provViernesMovidos++;
     }
   });
-  if(ajustados > 0){
+  const total = sabdomMovidos + provViernesMovidos;
+  if(total > 0){
     saveCxPs(STATE.movs.filter(m => m._cxp));
-    toast(`✓ ${ajustados} CxP movidas al viernes`);
+    const partes = [];
+    if(sabdomMovidos) partes.push(`${sabdomMovidos} de fin de semana`);
+    if(provViernesMovidos) partes.push(`${provViernesMovidos} de proveedores viernes`);
+    toast(`✓ ${total} CxP movidas (${partes.join(' + ')})`);
     render();
   } else {
-    toast('Todos los CxP ya están en viernes', true);
+    toast('Todos los CxP ya están en día hábil / viernes', true);
   }
 }
 
