@@ -751,18 +751,10 @@ function guardarCaptura(){
 // VISTA 2 · PENDIENTES
 // =========================================================================
 function renderPendientes(){
-  // Cutoff: mostrar solo pendientes de julio 2026 en adelante.
-  // Bloqueados (fecha 'BLOQ') o fechas inválidas siempre pasan (son recientes).
-  const CUTOFF = new Date('2026-07-01T00:00:00');
-  const isRecent = m => {
-    if(!m.fecha) return true;
-    if(m.fecha === 'BLOQ') return true;
-    const d = new Date(m.fecha);
-    if(isNaN(d.getTime())) return true;
-    return d >= CUTOFF;
-  };
+  // TODOS los movs con estado distinto de 'en-bind' aparecen en pendientes
+  // hasta que se registren en Bind (según flujo real de JC).
   const inPend = m => ['capturado','con-factura','sin-categoria','por-pagar','bloqueado'].includes(m.estado);
-  const pool = STATE.movs.filter(m => inPend(m) && isRecent(m));
+  const pool = STATE.movs.filter(inPend);
 
   const counts = {
     'sin-factura': pool.filter(m=>m.estado==='capturado').length,

@@ -390,6 +390,32 @@ function recalcularSaldoDesde() {
   Logger.log('Saldo recalculado desde row ' + desdeRow + ' hasta ' + sh.getLastRow());
 }
 
+// Cierre masivo: marca como 'en-bind' todos los movimientos con estado
+// 'con-factura' o 'capturado' cuya fecha sea ANTERIOR al cutoff.
+// Uso: arrancar limpio con julio (los históricos ya se registraron
+// en Bind hace tiempo, la migración del color rojo solo los perdió).
+function cerrarHistoricoEnBind() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME);
+  const cutoff = new Date(2026, 6, 1); // 1-jul-2026 (mes 6 = julio en JS)
+  const lastRow = sh.getLastRow();
+  const data = sh.getRange(HEADER_ROW + 1, 1, lastRow - HEADER_ROW, COL.UPDATED_BY).getValues();
+  const now = new Date();
+  let cerrados = 0;
+  for (let i = 0; i < data.length; i++) {
+    const rowNum = i + HEADER_ROW + 1;
+    const fecha = data[i][COL.FECHA - 1];
+    const estado = data[i][COL.ESTADO - 1];
+    if (!(fecha instanceof Date)) continue; // BLOQ o texto → skip
+    if (fecha >= cutoff) continue;
+    if (estado !== 'con-factura' && estado !== 'capturado') continue;
+    sh.getRange(rowNum, COL.ESTADO).setValue('en-bind');
+    sh.getRange(rowNum, COL.BIND_AT).setValue(now);
+    sh.getRange(rowNum, COL.UPDATED_BY).setValue('Cierre masivo');
+    cerrados++;
+  }
+  Logger.log('Cierre masivo · ' + cerrados + ' movimientos anteriores al 1-jul-2026 marcados como en-bind');
+}
+
 function inicializarHeaders() {
   // Agregar headers M-S si no existen. Correr 1 vez antes de migrarColorRojo.
   const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME);
