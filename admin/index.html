@@ -430,7 +430,10 @@ const SVG = {
 };
 
 function fmtMoney(n){
-  return '$' + Math.round(n).toLocaleString('es-MX');
+  // App financiera: mostrar SIEMPRE 2 decimales para que cuadre al centavo con
+  // el estado de cuenta. (Antes hacía Math.round → escondía los centavos y el
+  // saldo/bloqueados parecían no aceptar decimales aunque sí se guardan.)
+  return '$' + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 function fmtMoneyD(n){
   return '$' + Number(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1776,7 +1779,7 @@ function renderAdmin(){
     </div>
 
     <div style="text-align:center;padding:20px 0;color:var(--text-4);font-size:11px">
-      Tab Admin sandbox · v0.1.0 · ${new Date().toISOString().split('T')[0]}
+      Tab Admin · v0.2.0 · ${new Date().toISOString().split('T')[0]}
     </div>
   `;
 }
