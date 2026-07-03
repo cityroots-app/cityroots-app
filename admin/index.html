@@ -301,22 +301,15 @@ input[list]{cursor:text}
 
 <script src="mock-data.js"></script>
 <script>
-// ═══════════════ CxP LOCALES (localStorage) ═══════════════
-// Cuentas por pagar de Bind que NO se guardan en el Sheet.
-// Viven solo en este navegador. Formato: array de movimientos con estado='programado' + flag _cxp:true.
-const CXP_KEY = 'crf_admin_cxp';
-function loadCxPs(){
-  try { return JSON.parse(localStorage.getItem(CXP_KEY) || '[]'); }
-  catch(e){ return []; }
-}
-function saveCxPs(cxps){
-  localStorage.setItem(CXP_KEY, JSON.stringify(cxps));
-}
+// ═══════════════ CxP en Sheet (hoja _cxp_bind) ═══════════════
+// Cuentas por pagar de Bind viven en la hoja _cxp_bind del Sheet.
+// Dedup por bind_folio, persistente entre dispositivos.
+// (Migrado de localStorage a Sheet el 3-jul-2026)
 
 // Estado global
 let STATE = {
   page: 'captura',
-  movs: [...window.MOCK.MOCK_MOVIMIENTOS, ...loadCxPs()],
+  movs: [...window.MOCK.MOCK_MOVIMIENTOS],
   tipoSelected: 'INGRESO',
   pendFilter: 'todos',
   modal: null,
@@ -372,13 +365,41 @@ async function syncFromSheet(){
       updated_by: s(m.updated_by),
       _row: m._row
     }));
-    // Reemplaza los históricos del mock (mantener programados del mock + CxP locales)
-    const programados = STATE.movs.filter(x => x.estado === 'programado' && !x._cxp);
-    const cxps = loadCxPs();
-    STATE.movs = [...remote, ...programados, ...cxps];
+    // También traer CxP de la hoja _cxp_bind (persistente entre dispositivos)
+    let cxps = [];
+    try {
+      const rCxP = await fetch(url + '?action=getCxP', {redirect:'follow'});
+      const dCxP = await rCxP.json();
+      if(dCxP.ok){
+        cxps = dCxP.movs.map(c => ({
+          id: c.id,
+          _cxp: true,
+          bind_folio: c.bind_folio,
+          fecha: c.fecha,
+          prov: c.prov,
+          concepto: c.concepto,
+          forma_pago: c.forma_pago,
+          aplicado: 'CxP Bind',
+          factura: 'PEND',
+          tipo: c.tipo,
+          categoria: c.categoria,
+          subcategoria: c.subcategoria,
+          ingreso: 0,
+          egreso: c.monto,
+          estado: 'programado',
+          created_by: 'CxP Bind',
+          created_at: c.created_at,
+          last_imported: c.last_imported,
+          updated_by: c.updated_by
+        }));
+      }
+    } catch(e){ console.warn('getCxP fail', e); }
+    // Reemplaza los históricos del mock (mantener programados del mock)
+    const programadosMock = STATE.movs.filter(x => x.estado === 'programado' && !x._cxp);
+    STATE.movs = [...remote, ...programadosMock, ...cxps];
     STATE.lastSync = new Date().toISOString();
     localStorage.setItem('crf_admin_lastsync', STATE.lastSync);
-    return { ok:true, count: remote.length };
+    return { ok:true, count: remote.length, cxpCount: cxps.length };
   } catch(err){
     return { ok:false, error: String(err) };
   } finally {
@@ -1170,30 +1191,49 @@ function addFacturaToInput(facturaId){
   inp.focus();
 }
 
-function guardarFactura(movId){
+// Persiste un cambio de un movimiento existente al Sheet (updateMovimiento por row_id=id).
+// Optimista con rollback: si el push falla, revierte los campos locales cambiados.
+// Guarda por `id` (no `_row`): updateMovimiento localiza la fila por id, así que
+// funciona aunque `_row` no se haya capturado (bug histórico del Drive error page).
+async function persistUpdate(m, prev, campos, okMsg){
+  if(m.historico || !window.MOCK.TEST_SHEET_URL){ toast(okMsg); return; }
+  toast('Guardando...');
+  const res = await pushToSheet(Object.assign({row_id:m.id}, campos), 'updateMovimiento');
+  if(!res.ok){
+    Object.assign(m, prev);            // rollback
+    toast('Error al sincronizar. Reintenta.', false);
+    render();
+    return;
+  }
+  toast('✓ '+okMsg+' · sincronizado');
+}
+
+async function guardarFactura(movId){
   const m = STATE.movs.find(x=>x.id===movId);
   const numFactura = document.getElementById('fact-input').value.trim();
   const aplicado = document.getElementById('fact-aplicado').value.trim();
   if(!numFactura){ toast('Escribe el número de factura', false); return; }
+  const prev = { factura:m.factura, aplicado:m.aplicado, estado:m.estado, factura_at:m.factura_at, updated_by:m.updated_by };
   m.factura = numFactura;
   m.aplicado = aplicado;
   m.estado = 'con-factura';
   m.factura_at = new Date().toISOString();
   m.updated_by = 'Martha';
   closeModal();
-  toast('Factura asignada');
   render();
+  await persistUpdate(m, prev, { factura:numFactura, aplicado, estado:'con-factura', updated_by:'Martha' }, 'Factura asignada');
 }
 
-function marcarSinFactura(movId){
+async function marcarSinFactura(movId){
   const m = STATE.movs.find(x=>x.id===movId);
+  const prev = { factura:m.factura, estado:m.estado, factura_at:m.factura_at, updated_by:m.updated_by };
   m.factura = 'NA';
   m.estado = 'con-factura';
   m.factura_at = new Date().toISOString();
   m.updated_by = 'Martha';
   closeModal();
-  toast('Marcado sin factura (NA)');
   render();
+  await persistUpdate(m, prev, { factura:'NA', estado:'con-factura', updated_by:'Martha' }, 'Marcado sin factura (NA)');
 }
 
 function categorizarMov(movId){
@@ -1202,17 +1242,18 @@ function categorizarMov(movId){
   showModal();
 }
 
-function confirmarCategorizar(movId){
+async function confirmarCategorizar(movId){
   const m = STATE.movs.find(x=>x.id===movId);
   const cat = document.getElementById('cat-select').value;
   const subcat = document.getElementById('subcat-input').value;
+  const prev = { categoria:m.categoria, subcategoria:m.subcategoria, estado:m.estado, updated_by:m.updated_by };
   m.categoria = cat;
   m.subcategoria = subcat;
   m.estado = m.factura && m.factura!=='PENDIENTE' && m.factura!=='PEND' ? 'con-factura' : 'capturado';
   m.updated_by = 'Martha';
   closeModal();
-  toast('Categoría actualizada');
   render();
+  await persistUpdate(m, prev, { categoria:cat, subcategoria:subcat, estado:m.estado, updated_by:'Martha' }, 'Categoría actualizada');
 }
 
 async function marcarRegistradoBind(movId){
@@ -1229,8 +1270,10 @@ async function marcarRegistradoBind(movId){
   render();
   toast('Marcando en Bind...');
 
-  // Sync real al Sheet vía Apps Script
-  if(m._row && window.MOCK.TEST_SHEET_URL){
+  // Sync real al Sheet vía Apps Script. Gatea por !historico (tiene id/row_id),
+  // NO por _row: markEnBind localiza la fila por row_id=id, así que sincroniza
+  // aunque _row no se haya capturado (bug del Drive error page en addMovimiento).
+  if(!m.historico && window.MOCK.TEST_SHEET_URL){
     const res = await pushToSheet({row_id: m.id, factura: m.factura, userId: m.updated_by}, 'markEnBind');
     if(!res.ok){
       // Rollback si falla
