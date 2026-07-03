@@ -183,6 +183,12 @@ input:focus,select:focus,textarea:focus{outline:none}
 .prog-week-title{font-size:13px;font-weight:500}
 .prog-week-meta{font-size:10px;color:var(--text-3)}
 .prog-week-total{font-size:14px;color:var(--hade-green);font-weight:500;font-family:'Outfit'}
+.prog-prov-group{margin-bottom:10px}
+.prog-prov-group:last-child{margin-bottom:0}
+.prog-prov-header{display:flex;align-items:baseline;gap:10px;padding:6px 10px 6px 0;margin-bottom:5px;border-bottom:1px dashed var(--border)}
+.prog-prov-name{font-size:11.5px;font-weight:600;letter-spacing:.02em;color:var(--text);flex:1;min-width:0;text-transform:uppercase}
+.prog-prov-meta{font-size:10px;color:var(--text-3);white-space:nowrap}
+.prog-prov-total{font-size:12px;color:var(--hade-green);font-weight:500;font-family:'Outfit';white-space:nowrap}
 .prog-row{display:grid;grid-template-columns:60px 1.4fr 1fr 90px 130px;gap:8px;padding:8px 10px;font-size:12px;align-items:center;background:var(--bg-input);border-radius:8px;margin-bottom:4px}
 .prog-row:last-child{margin-bottom:0}
 .prog-row.paid{opacity:.55}
@@ -1375,11 +1381,28 @@ function renderProgramados(){
           <div class="prog-week-header">
             <div>
               <div class="prog-week-title">Semana <span style="font-family:monospace">${g.weekId}</span>${isCurrent?' <span style="font-size:9px;color:var(--hade-green);background:rgba(168,213,106,.18);padding:2px 7px;border-radius:8px;margin-left:4px;font-weight:500;letter-spacing:.04em">ESTA SEMANA</span>':''}</div>
-              <div class="prog-week-meta">${fmtWeekRange(g.monday, g.sunday)} · ${g.items.length} pago${g.items.length!==1?'s':''}</div>
+              <div class="prog-week-meta">${fmtWeekRange(g.monday, g.sunday)} · ${g.items.length} pago${g.items.length!==1?'s':''} · ${(()=>{const provs=new Set();g.items.forEach(x=>provs.add((x.prov||'—').trim().toUpperCase()));return provs.size;})()} proveedores</div>
             </div>
             <div class="prog-week-total">−${fmtMoney(g.total)}</div>
           </div>
-          ${g.items.map(m=>{
+          ${(()=>{
+            const byProv = {};
+            g.items.forEach(m=>{
+              const k = (m.prov||'—').trim().toUpperCase();
+              if(!byProv[k]) byProv[k] = { prov: m.prov||'—', items: [], total: 0, firstDate: m.fecha };
+              byProv[k].items.push(m);
+              byProv[k].total += (m.egreso||0) - (m.ingreso||0);
+              if(new Date(m.fecha) < new Date(byProv[k].firstDate)) byProv[k].firstDate = m.fecha;
+            });
+            const grupos = Object.values(byProv).sort((a,b)=> b.total - a.total);
+            return grupos.map(gp => `
+              <div class="prog-prov-group">
+                <div class="prog-prov-header">
+                  <div class="prog-prov-name">${gp.prov}</div>
+                  <div class="prog-prov-meta">${gp.items.length} pago${gp.items.length!==1?'s':''}</div>
+                  <div class="prog-prov-total">−${fmtMoney(gp.total)}</div>
+                </div>
+                ${gp.items.map(m=>{
             const isMobile = window.innerWidth <= 680;
             const wasMoved = m.aplicado && m.aplicado.startsWith('POSPUESTO');
             if(isMobile){
@@ -1414,6 +1437,9 @@ function renderProgramados(){
               </div>
             </div>`;
           }).join('')}
+              </div>
+            `).join('');
+          })()}
         </div>
       `;
     }).join('')}
@@ -1862,7 +1888,7 @@ function renderAdmin(){
     </div>
 
     <div style="text-align:center;padding:20px 0;color:var(--text-4);font-size:11px">
-      Tab Admin · v0.2.0 · ${new Date().toISOString().split('T')[0]}
+      Tab Admin · v0.2.1 · ${new Date().toISOString().split('T')[0]}
     </div>
   `;
 }
