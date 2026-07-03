@@ -1392,19 +1392,24 @@ function renderProgramados(){
             <div class="prog-week-total">−${fmtMoney(g.total)}</div>
           </div>
           ${(()=>{
+            // Las nóminas (categoría NOMINA*: asistente admin, chofer, ayudante
+            // producción, ventas/comisiones) se juntan en UN solo grupo "Nóminas".
+            // El resto se agrupa por proveedor como siempre.
+            const esNomina = m => String(m.categoria||'').toUpperCase().startsWith('NOMINA');
             const byProv = {};
             g.items.forEach(m=>{
-              const k = (m.prov||'—').trim().toUpperCase();
-              if(!byProv[k]) byProv[k] = { prov: m.prov||'—', items: [], total: 0, firstDate: m.fecha };
+              const nomina = esNomina(m);
+              const k = nomina ? '__NOMINAS__' : (m.prov||'—').trim().toUpperCase();
+              if(!byProv[k]) byProv[k] = { prov: nomina ? 'Nóminas' : (m.prov||'—'), items: [], total: 0, firstDate: m.fecha, esNomina: nomina };
               byProv[k].items.push(m);
               byProv[k].total += (m.egreso||0) - (m.ingreso||0);
               if(new Date(m.fecha) < new Date(byProv[k].firstDate)) byProv[k].firstDate = m.fecha;
             });
             const grupos = Object.values(byProv).sort((a,b)=> b.total - a.total);
             return grupos.map(gp => `
-              <div class="prog-prov-group">
+              <div class="prog-prov-group${gp.esNomina?' nomina':''}">
                 <div class="prog-prov-header">
-                  <div class="prog-prov-name">${gp.prov}</div>
+                  <div class="prog-prov-name">${gp.esNomina?'👥 ':''}${gp.prov}</div>
                   <div class="prog-prov-meta">${gp.items.length} pago${gp.items.length!==1?'s':''}</div>
                   <div class="prog-prov-total">−${fmtMoney(gp.total)}</div>
                 </div>
