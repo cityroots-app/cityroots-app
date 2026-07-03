@@ -1077,7 +1077,6 @@ function renderModal(){
   } else if(STATE.modal.type==='pagar'){
     const m = STATE.movs.find(x=>x.id===STATE.modal.movId);
     const programado = m.egreso || m.ingreso;
-    const yaPospuesto = m.aplicado && m.aplicado.startsWith('POSPUESTO');
     body.innerHTML = `
       <button class="modal-close" onclick="closeModal()">${SVG.x}</button>
       <div class="modal-handle"></div>
@@ -1108,12 +1107,7 @@ function renderModal(){
         </div>
       </div>
 
-      <label style="display:flex;align-items:flex-start;gap:10px;margin:14px 0;padding:12px;border:1px solid ${yaPospuesto?'#f5c842':'var(--border)'};border-radius:10px;background:${yaPospuesto?'rgba(245,200,66,.08)':'transparent'};cursor:pointer">
-        <input type="checkbox" id="pagar-yaenflujo" ${yaPospuesto?'checked':''} style="margin-top:2px;width:18px;height:18px;flex-shrink:0">
-        <span style="font-size:13px;line-height:1.4"><strong>Ya está en el flujo — solo cerrar CxP (no duplicar)</strong><br><span style="color:var(--text-muted);font-size:12px">Actívalo cuando el pago YA se registró en el flujo. Cierra el CxP sin generar un movimiento nuevo.${yaPospuesto?' <span style="color:#f5c842">↻ pospuesto — activado por defecto</span>':''}</span></span>
-      </label>
-
-      <div class="help-card" style="margin:14px 0">${SVG.info}<span>Sin el check: el pago entra al saldo bancario y desaparece de CxP (si el monto real difiere, el flujo se ajusta). Con el check: solo se quita el CxP, sin tocar el saldo.</span></div>
+      <div class="help-card" style="margin:14px 0">${SVG.info}<span>El pago entra al saldo bancario y desaparece de CxP. Si el monto real difiere del programado, el flujo se ajusta.</span></div>
 
       <button class="btn-primary" onclick="confirmarPagado('${m.id}')">${SVG.check}Confirmar pago</button>
     `;
@@ -1514,22 +1508,6 @@ function marcarPagado(movId){
 async function confirmarPagado(movId){
   const m = STATE.movs.find(x=>x.id===movId);
 
-  // "Ya está en el flujo": el pago ya se registró antes → solo cerrar el CxP,
-  // SIN generar movimiento nuevo en FLUJO_2026 (evita duplicados). Usa borrarCxP.
-  const yaEnFlujo = document.getElementById('pagar-yaenflujo')?.checked;
-  if(yaEnFlujo){
-    if(m._cxp){
-      toast('Cerrando CxP (sin duplicar)...', true, 2000);
-      const res = await pushToSheet({row_id: m.id}, 'borrarCxP');
-      if(!res.ok){ toast('Error al cerrar CxP: ' + res.error, false); return; }
-    }
-    STATE.movs = STATE.movs.filter(x=>x.id!==movId);
-    closeModal();
-    toast('✓ CxP cerrado · ya estaba en el flujo (no se duplicó)');
-    render();
-    return;
-  }
-
   const fecha = document.getElementById('pagar-fecha').value;
   const monto = parseFloat(document.getElementById('pagar-monto').value);
   const doc = document.getElementById('pagar-doc').value;
@@ -1916,7 +1894,7 @@ function renderAdmin(){
     </div>
 
     <div style="text-align:center;padding:20px 0;color:var(--text-4);font-size:11px">
-      Tab Admin · v0.2.1 · ${new Date().toISOString().split('T')[0]}
+      Tab Admin · v0.2.2 · ${new Date().toISOString().split('T')[0]}
     </div>
   `;
 }
