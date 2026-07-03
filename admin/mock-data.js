@@ -141,8 +141,8 @@ function generarSemanales(viernes){
     items.push({ id: uuid(), fecha: d(dia), prov: 'ASISTENTE ADMIN', concepto: `Nómina semana ${semana}`, forma_pago: 'TRANSFERENCIA', aplicado: 'PROGRAMADO', factura: 'NA', tipo: 'GASTO', categoria: 'NOMINA', subcategoria: 'NOMINA', ingreso: 0, egreso: 2500, estado: 'programado', created_by: 'Claude', created_at: d('2026-06-29'), factura_at: null, bind_at: null, updated_by: 'Claude' });
     items.push({ id: uuid(), fecha: d(dia), prov: 'VENTAS JC', concepto: `Comisiones venta semana ${semana}`, forma_pago: 'TRANSFERENCIA', aplicado: 'PROGRAMADO', factura: 'NA', tipo: 'GASTO', categoria: 'NOMINA DIRECTOR', subcategoria: 'COMISIONES', ingreso: 0, egreso: 5000, estado: 'programado', created_by: 'Claude', created_at: d('2026-06-29'), factura_at: null, bind_at: null, updated_by: 'Claude' });
     // Compras viernes
-    items.push({ id: uuid(), fecha: d(dia), prov: 'ORGANICO MX', concepto: `Facturas vencidas semana ${semana} (vincular en Bind)`, forma_pago: 'TRANSFERENCIA', aplicado: 'PROGRAMADO·BIND', factura: 'PEND', tipo: 'COMPRA', categoria: 'PRODUCTO', subcategoria: 'PRODUCTO', ingreso: 0, egreso: 13800, estado: 'programado', created_by: 'Claude', created_at: d('2026-06-29'), factura_at: null, bind_at: null, updated_by: 'Claude' });
-    items.push({ id: uuid(), fecha: d(dia), prov: 'GEORGANICA', concepto: `Facturas vencidas semana ${semana} (vincular en Bind)`, forma_pago: 'TRANSFERENCIA', aplicado: 'PROGRAMADO·BIND', factura: 'PEND', tipo: 'COMPRA', categoria: 'PRODUCTO', subcategoria: 'PRODUCTO', ingreso: 0, egreso: 5400, estado: 'programado', created_by: 'Claude', created_at: d('2026-06-29'), factura_at: null, bind_at: null, updated_by: 'Claude' });
+    // ORGANICO MX (Josué) y GEORGANICA (Georgina) se removieron del mock —
+    // ya se jalan como CxP reales desde la hoja _cxp_bind (evita duplicados).
     // Presupuestos semanales
     // COSTCO y BODEGA 72 removidos de programados (JC 2-jul-2026):
     // se manejan como compras del día conforme surgen, no como presupuesto fijo semanal.
