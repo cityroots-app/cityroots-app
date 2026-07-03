@@ -1015,7 +1015,7 @@ function renderModal(){
       <button class="modal-close" onclick="closeModal()">${SVG.x}</button>
       <div class="modal-handle"></div>
       <div class="modal-title">Importar CxP desde Bind</div>
-      <div class="modal-sub">Pega las líneas copiadas de Bind, Excel o Google Sheets. Los CxP se guardan SOLO en este dispositivo (localStorage). NO se envían al Sheet.</div>
+      <div class="modal-sub">Pega las líneas copiadas de Bind, Excel o Google Sheets. Los CxP se guardan en el Sheet (hoja _cxp_bind). Dedup automático por folio Bind: existente = actualiza · nuevo = inserta.</div>
 
       <div class="help-card" style="margin:10px 0 14px">${SVG.info}<span><strong>Formato esperado</strong> (4 columnas separadas por tab o coma):<br>
       <code style="font-size:11px">Proveedor · Concepto · Fecha (YYYY-MM-DD o DD/MM/YYYY) · Monto</code><br>
@@ -1027,7 +1027,7 @@ function renderModal(){
       </div>
 
       <div style="font-size:11px;color:var(--text-3);text-align:center;margin:8px 0">
-        Actualmente hay <strong style="color:var(--text)">${totalCxP}</strong> CxP importados en este dispositivo.
+        Actualmente hay <strong style="color:var(--text)">${totalCxP}</strong> CxP en el Sheet.
       </div>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1422,12 +1422,15 @@ function renderProgramados(){
   `;
 }
 
-function borrarProgramado(movId){
+async function borrarProgramado(movId){
   const m = STATE.movs.find(x=>x.id===movId);
   if(!m) return;
   if(!confirm(`Borrar pago programado?\n\n${m.prov} · ${fmtMoney(m.egreso||m.ingreso)} · ${fmtDateShort(m.fecha)}`)) return;
+  if(m._cxp){
+    const res = await pushToSheet({row_id: m.id}, 'borrarCxP');
+    if(!res.ok){ toast('Error al borrar del Sheet: ' + res.error, false); return; }
+  }
   STATE.movs = STATE.movs.filter(x=>x.id!==movId);
-  if(m._cxp) saveCxPs(STATE.movs.filter(x => x._cxp));
   toast('Pago programado borrado');
   render();
 }
@@ -1441,18 +1444,22 @@ function editarProgramado(movId){
   setTimeout(()=>document.getElementById('ed-monto')?.focus(),80);
 }
 
-function guardarEdicionProgramado(movId){
+async function guardarEdicionProgramado(movId){
   const m = STATE.movs.find(x=>x.id===movId);
   const fecha = document.getElementById('ed-fecha').value;
   const monto = parseFloat(document.getElementById('ed-monto').value);
   const concepto = document.getElementById('ed-concepto').value.trim();
   if(!monto || isNaN(monto) || monto<=0){ toast('Monto inválido', false); return; }
-  m.fecha = new Date(fecha+'T12:00:00').toISOString();
+  const fechaISO = new Date(fecha+'T12:00:00').toISOString();
+  if(m._cxp){
+    const res = await pushToSheet({row_id: m.id, fecha: fechaISO, monto, concepto}, 'updateCxP');
+    if(!res.ok){ toast('Error al guardar en Sheet: ' + res.error, false); return; }
+  }
+  m.fecha = fechaISO;
   if(m.ingreso > 0) m.ingreso = monto;
   else m.egreso = monto;
   if(concepto) m.concepto = concepto;
   m.updated_by = 'Martha';
-  if(m._cxp) saveCxPs(STATE.movs.filter(x => x._cxp));
   closeModal();
   toast('Programado actualizado');
   render();
@@ -1467,7 +1474,7 @@ function marcarPagado(movId){
   setTimeout(()=>document.getElementById('pagar-monto')?.focus(),80);
 }
 
-function confirmarPagado(movId){
+async function confirmarPagado(movId){
   const m = STATE.movs.find(x=>x.id===movId);
   const fecha = document.getElementById('pagar-fecha').value;
   const monto = parseFloat(document.getElementById('pagar-monto').value);
@@ -1476,22 +1483,48 @@ function confirmarPagado(movId){
   if(!monto || isNaN(monto) || monto<=0){ toast('Monto inválido', false); return; }
 
   const wasIngreso = m.ingreso > 0;
-  m.fecha = new Date(fecha+'T12:00:00').toISOString();
+  const fechaISO = new Date(fecha+'T12:00:00').toISOString();
+  const facturaVal = doc === 'NO APLICA' ? 'NA' : (factura || (doc === 'FACTURA' ? 'PENDIENTE' : 'PEND'));
+  const estadoFinal = (doc === 'NO APLICA' || (factura && doc === 'FACTURA')) ? 'con-factura' : 'capturado';
+
+  // Si era CxP del Sheet: transición atómica (borra _cxp_bind + agrega FLUJO_2026)
+  if(m._cxp){
+    toast('Pagando CxP...', true, 2000);
+    const res = await pushToSheet({
+      row_id: m.id,
+      fecha: fechaISO,
+      monto,
+      prov: m.prov,
+      concepto: m.concepto,
+      forma_pago: m.forma_pago,
+      factura: facturaVal,
+      categoria: m.categoria,
+      subcategoria: m.subcategoria,
+      estado: estadoFinal,
+      created_by: document.getElementById('cap-registrado')?.value || 'Director'
+    }, 'pagarCxP');
+    if(!res.ok){ toast('Error al pagar CxP: ' + res.error, false); return; }
+    delete m._cxp;
+    m._row = res.addedToFlujo?.row; // rastrea la nueva fila del FLUJO_2026
+    m.fecha = fechaISO;
+    if(wasIngreso) m.ingreso = monto; else m.egreso = monto;
+    m.factura = facturaVal;
+    m.aplicado = '';
+    m.estado = estadoFinal;
+    m.updated_by = 'JC';
+    closeModal();
+    toast(`✓ CxP pagada · ${fmtMoney(monto)}`);
+    render();
+    return;
+  }
+
+  // Movimiento normal (no CxP)
+  m.fecha = fechaISO;
   if(wasIngreso) m.ingreso = monto; else m.egreso = monto;
-  m.factura = doc === 'NO APLICA' ? 'NA' : (factura || (doc === 'FACTURA' ? 'PENDIENTE' : 'PEND'));
+  m.factura = facturaVal;
   m.aplicado = '';
   m.updated_by = 'JC';
-  // Estado final
-  if(doc === 'NO APLICA') m.estado = 'con-factura'; // se considera cerrado
-  else if(factura && doc === 'FACTURA') m.estado = 'con-factura';
-  else m.estado = 'capturado'; // pasa a pendiente de factura
-
-  // Si era CxP local, al pagarse pasa a ser movimiento REAL y se envía al Sheet
-  if(m._cxp){
-    delete m._cxp; // ya no es CxP local
-    saveCxPs(STATE.movs.filter(x => x._cxp)); // persiste sin este
-    syncMovNuevo(m); // envía al Sheet como movimiento nuevo
-  }
+  m.estado = estadoFinal;
 
   closeModal();
   toast(`Pago ejecutado · ${fmtMoney(monto)}`);
@@ -1533,50 +1566,51 @@ function parsearCxP(texto){
     if(day === 0 || day === 6 || esProveedorViernes(provUpper)){
       fechaISO = viernesDeSemanaISO(fechaISO);
     }
+    // Extraer bind_folio del concepto: "CxP Bind #2115 (Costo)" → "2115"
+    const folioMatch = conceptoRaw.match(/#(\d+)/);
+    const bind_folio = folioMatch ? folioMatch[1] : '';
+    if(!bind_folio){ errores.push(`L${idx+1}: sin folio (concepto: "${conceptoRaw}")`); return; }
     items.push({
-      id: window.MOCK.uuid(),
-      _cxp: true,
+      bind_folio,
       fecha: fechaISO,
       prov: provUpper,
       concepto: conceptoRaw,
       forma_pago: 'TRANSFERENCIA',
-      aplicado: 'CxP Bind',
-      factura: 'PEND',
       tipo: 'COMPRA',
       categoria: 'PRODUCTO',
       subcategoria: 'PRODUCTO',
-      ingreso: 0,
-      egreso: monto,
-      estado: 'programado',
-      created_by: 'Claude',
-      created_at: new Date().toISOString(),
-      factura_at: null, bind_at: null, updated_by: 'JC'
+      monto,
+      updated_by: 'Import'
     });
   });
   return { items, errores };
 }
 
-function ejecutarImportarCxP(){
+async function ejecutarImportarCxP(){
   const texto = document.getElementById('cxp-textarea').value;
   if(!texto.trim()){ toast('Pega el texto primero', false); return; }
   const { items, errores } = parsearCxP(texto);
-  if(items.length === 0){ toast('Ninguna fila válida', false); return; }
-  // Agregar a STATE + persistir
-  const cxpsExistentes = STATE.movs.filter(m => m._cxp);
-  const nuevos = [...cxpsExistentes, ...items];
-  STATE.movs = [...STATE.movs.filter(m => !m._cxp), ...items];
-  saveCxPs(nuevos);
+  if(items.length === 0){ toast('Ninguna fila válida' + (errores.length?' · '+errores[0]:''), false); return; }
+  toast('Importando al Sheet...', true, 2000);
+  const res = await pushToSheet({items}, 'importarCxP');
+  if(!res.ok){ toast('Error: ' + res.error, false); return; }
+  const parts = [];
+  if(res.inserts) parts.push(`${res.inserts} nuevas`);
+  if(res.updates) parts.push(`${res.updates} actualizadas`);
+  if(res.skipped) parts.push(`${res.skipped} sin folio`);
   closeModal();
-  toast(`✓ Importados ${items.length} CxP${errores.length?' · '+errores.length+' errores':''}`);
+  toast(`✓ ${parts.join(' · ')}`);
+  await syncFromSheet();
   render();
 }
 
-function borrarTodosCxP(){
-  if(!confirm('¿Borrar TODOS los CxP importados de este dispositivo?\n\nEsta acción no se puede deshacer.')) return;
-  STATE.movs = STATE.movs.filter(m => !m._cxp);
-  saveCxPs([]);
+async function borrarTodosCxP(){
+  if(!confirm('¿Borrar TODOS los CxP del Sheet _cxp_bind?\n\nEsta acción no se puede deshacer.')) return;
+  const res = await pushToSheet({}, 'borrarTodosCxP');
+  if(!res.ok){ toast('Error: ' + res.error, false); return; }
   closeModal();
-  toast('Todos los CxP borrados');
+  toast(`✓ ${res.count} CxP borrados del Sheet`);
+  await syncFromSheet();
   render();
 }
 
@@ -1597,38 +1631,44 @@ function viernesDeSemanaISO(fechaISO){
   return viernes.toISOString();
 }
 
-// Ejecuta ajuste manual sobre los CxP existentes en localStorage.
+// Ejecuta ajuste manual sobre los CxP existentes. Envía updates al Sheet uno por uno.
 // Dos reglas:
 //   1. TODOS los CxP en sábado/domingo → viernes anterior (JC no paga fines de semana)
 //   2. CxP de Georgina/Horacio/Josué/nóminas → siempre viernes de esa semana ISO
-function alinearCxPAViernes(){
-  let sabdomMovidos = 0;
-  let provViernesMovidos = 0;
+async function alinearCxPAViernes(){
+  const cxpsAMover = [];
   STATE.movs.forEach(m => {
     if(!m._cxp) return;
     const d = new Date(m.fecha);
-    const dayOfWeek = d.getDay(); // 0=dom, 5=vie, 6=sáb
+    const dayOfWeek = d.getDay();
     const esSabDom = (dayOfWeek === 0 || dayOfWeek === 6);
-    const esProvViernes = esProveedorViernes(m.prov);
-    if(!esSabDom && !esProvViernes) return;
+    const esProvVie = esProveedorViernes(m.prov);
+    if(!esSabDom && !esProvVie) return;
     const nueva = viernesDeSemanaISO(m.fecha);
     if(nueva.slice(0,10) !== m.fecha.slice(0,10)){
+      cxpsAMover.push({m, nueva, esSabDom, esProvVie});
+    }
+  });
+  if(cxpsAMover.length === 0){
+    toast('Todos los CxP ya están en día hábil / viernes', true);
+    return;
+  }
+  toast(`Ajustando ${cxpsAMover.length} CxP al Sheet...`, true, 3000);
+  let ok = 0, sabdomMovidos = 0, provViernesMovidos = 0;
+  for(const {m, nueva, esSabDom} of cxpsAMover){
+    const res = await pushToSheet({row_id: m.id, fecha: nueva}, 'updateCxP');
+    if(res.ok){
       m.fecha = nueva;
+      ok++;
       if(esSabDom) sabdomMovidos++;
       else provViernesMovidos++;
     }
-  });
-  const total = sabdomMovidos + provViernesMovidos;
-  if(total > 0){
-    saveCxPs(STATE.movs.filter(m => m._cxp));
-    const partes = [];
-    if(sabdomMovidos) partes.push(`${sabdomMovidos} de fin de semana`);
-    if(provViernesMovidos) partes.push(`${provViernesMovidos} de proveedores viernes`);
-    toast(`✓ ${total} CxP movidas (${partes.join(' + ')})`);
-    render();
-  } else {
-    toast('Todos los CxP ya están en día hábil / viernes', true);
   }
+  const partes = [];
+  if(sabdomMovidos) partes.push(`${sabdomMovidos} de fin de semana`);
+  if(provViernesMovidos) partes.push(`${provViernesMovidos} de proveedores viernes`);
+  toast(`✓ ${ok} CxP movidas (${partes.join(' + ')})`);
+  render();
 }
 
 // =========================================================================

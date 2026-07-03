@@ -47,6 +47,8 @@ function doGet(e) {
       result = getSaldoSummary();
     } else if (action === 'getcontrapartes') {
       result = getContrapartes();
+    } else if (action === 'getcxp') {
+      result = getCxP();
     } else {
       result = { ok: false, error: 'Acción no reconocida: ' + action };
     }
@@ -66,6 +68,11 @@ function doPost(e) {
     else if (action === 'markenbind') result = markEnBind(body.data);
     else if (action === 'marcarpagado') result = marcarPagado(body.data);
     else if (action === 'reordenarbloqueados') result = reordenarBloqueados();
+    else if (action === 'importarcxp') result = importarCxPBatch(body.data);
+    else if (action === 'borrarcxp') result = borrarCxP(body.data);
+    else if (action === 'borrartodoscxp') result = borrarTodosCxP();
+    else if (action === 'updatecxp') result = updateCxP(body.data);
+    else if (action === 'pagarcxp') result = pagarCxP(body.data);
     else result = { ok: false, error: 'Acción no reconocida: ' + action };
     return json(result);
   } catch (err) {
@@ -549,4 +556,201 @@ function inicializarHeaders() {
   const headers = ['row_id', 'estado', 'created_by', 'created_at', 'factura_at', 'bind_at', 'updated_by'];
   sh.getRange(HEADER_ROW, COL.ROW_ID, 1, headers.length).setValues([headers]);
   Logger.log('Headers M-S agregados');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CxP BIND · Hoja "_cxp_bind" para cuentas por pagar (persistente, sin duplicados)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CXP_SHEET = '_cxp_bind';
+const CXP_HEADERS = ['bind_folio', 'prov', 'concepto', 'fecha', 'monto', 'forma_pago',
+                     'categoria', 'subcategoria', 'tipo', 'row_id', 'created_at',
+                     'last_imported', 'updated_by'];
+const CXP = {
+  BIND_FOLIO: 1, PROV: 2, CONCEPTO: 3, FECHA: 4, MONTO: 5, FORMA_PAGO: 6,
+  CATEGORIA: 7, SUBCATEGORIA: 8, TIPO: 9, ROW_ID: 10, CREATED_AT: 11,
+  LAST_IMPORTED: 12, UPDATED_BY: 13
+};
+
+// Crea la hoja _cxp_bind con headers si no existe. Correr 1 vez (idempotente).
+function crearHojaCxP() {
+  const ss = SpreadsheetApp.getActive();
+  let sh = ss.getSheetByName(CXP_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(CXP_SHEET);
+    sh.getRange(1, 1, 1, CXP_HEADERS.length).setValues([CXP_HEADERS]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+    Logger.log('Hoja _cxp_bind creada con headers');
+  } else {
+    Logger.log('Hoja _cxp_bind ya existe');
+  }
+  return sh;
+}
+
+function getCxP() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(CXP_SHEET);
+  if (!sh) return { ok: true, movs: [] }; // hoja no existe aún
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) return { ok: true, movs: [] };
+  const data = sh.getRange(2, 1, lastRow - 1, CXP_HEADERS.length).getValues();
+  const movs = data.filter(r => r[CXP.ROW_ID - 1]).map(r => ({
+    bind_folio: String(r[CXP.BIND_FOLIO - 1] || ''),
+    prov: String(r[CXP.PROV - 1] || ''),
+    concepto: String(r[CXP.CONCEPTO - 1] || ''),
+    fecha: r[CXP.FECHA - 1] instanceof Date ? r[CXP.FECHA - 1].toISOString() : String(r[CXP.FECHA - 1] || ''),
+    monto: Number(r[CXP.MONTO - 1]) || 0,
+    forma_pago: String(r[CXP.FORMA_PAGO - 1] || 'TRANSFERENCIA'),
+    categoria: String(r[CXP.CATEGORIA - 1] || 'PRODUCTO'),
+    subcategoria: String(r[CXP.SUBCATEGORIA - 1] || 'PRODUCTO'),
+    tipo: String(r[CXP.TIPO - 1] || 'COMPRA'),
+    id: String(r[CXP.ROW_ID - 1] || ''),
+    created_at: r[CXP.CREATED_AT - 1] instanceof Date ? r[CXP.CREATED_AT - 1].toISOString() : '',
+    last_imported: r[CXP.LAST_IMPORTED - 1] instanceof Date ? r[CXP.LAST_IMPORTED - 1].toISOString() : '',
+    updated_by: String(r[CXP.UPDATED_BY - 1] || '')
+  }));
+  return { ok: true, movs: movs, count: movs.length };
+}
+
+// Importa/actualiza CxP masivo. Dedup por bind_folio: existe = UPDATE, no existe = INSERT.
+// data = { items: [{bind_folio, prov, concepto, fecha, monto, ...}, ...] }
+function importarCxPBatch(data) {
+  const items = data.items || [];
+  const sh = crearHojaCxP(); // asegura que existe
+  const now = new Date();
+  const lastRow = sh.getLastRow();
+
+  // Índice existente: bind_folio → rowNum
+  const existentes = {};
+  if (lastRow >= 2) {
+    const folios = sh.getRange(2, CXP.BIND_FOLIO, lastRow - 1, 1).getValues();
+    for (let i = 0; i < folios.length; i++) {
+      const f = String(folios[i][0] || '').trim();
+      if (f) existentes[f] = i + 2; // rowNum absoluto
+    }
+  }
+
+  let inserts = 0, updates = 0, skipped = 0;
+  items.forEach(it => {
+    const folio = String(it.bind_folio || '').trim();
+    if (!folio) { skipped++; return; }
+    const fecha = it.fecha ? new Date(it.fecha) : now;
+    const row = [
+      folio,
+      String(it.prov || '').toUpperCase(),
+      it.concepto || '',
+      fecha,
+      Number(it.monto) || 0,
+      it.forma_pago || 'TRANSFERENCIA',
+      it.categoria || 'PRODUCTO',
+      it.subcategoria || 'PRODUCTO',
+      it.tipo || 'COMPRA',
+      it.id || 'cxp_' + Utilities.getUuid().replace(/-/g,'').slice(0,16),
+      now, // created_at (se sobreescribe si es update)
+      now, // last_imported
+      it.updated_by || 'Import'
+    ];
+    if (existentes[folio]) {
+      // UPDATE: mantener created_at original
+      const rowNum = existentes[folio];
+      const created_orig = sh.getRange(rowNum, CXP.CREATED_AT).getValue();
+      const row_id_orig = sh.getRange(rowNum, CXP.ROW_ID).getValue();
+      row[CXP.CREATED_AT - 1] = created_orig || now;
+      row[CXP.ROW_ID - 1] = row_id_orig || row[CXP.ROW_ID - 1];
+      sh.getRange(rowNum, 1, 1, CXP_HEADERS.length).setValues([row]);
+      updates++;
+    } else {
+      // INSERT
+      sh.appendRow(row);
+      inserts++;
+    }
+  });
+
+  return { ok: true, inserts, updates, skipped, total: inserts + updates };
+}
+
+function borrarCxP(data) {
+  if (!data.row_id) return { ok: false, error: 'row_id requerido' };
+  const sh = SpreadsheetApp.getActive().getSheetByName(CXP_SHEET);
+  if (!sh) return { ok: false, error: 'Hoja _cxp_bind no existe' };
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) return { ok: false, error: 'Sin CxP' };
+  const ids = sh.getRange(2, CXP.ROW_ID, lastRow - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]) === String(data.row_id)) {
+      sh.deleteRow(i + 2);
+      return { ok: true, row: i + 2 };
+    }
+  }
+  return { ok: false, error: 'row_id no encontrado' };
+}
+
+function borrarTodosCxP() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(CXP_SHEET);
+  if (!sh) return { ok: true, count: 0 };
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) return { ok: true, count: 0 };
+  const rangoBorrar = lastRow - 1;
+  sh.getRange(2, 1, rangoBorrar, CXP_HEADERS.length).clearContent();
+  return { ok: true, count: rangoBorrar };
+}
+
+function updateCxP(data) {
+  if (!data.row_id) return { ok: false, error: 'row_id requerido' };
+  const sh = SpreadsheetApp.getActive().getSheetByName(CXP_SHEET);
+  if (!sh) return { ok: false, error: 'Hoja _cxp_bind no existe' };
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) return { ok: false, error: 'Sin CxP' };
+  const ids = sh.getRange(2, CXP.ROW_ID, lastRow - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]) === String(data.row_id)) {
+      const rowNum = i + 2;
+      if (data.fecha !== undefined) sh.getRange(rowNum, CXP.FECHA).setValue(new Date(data.fecha));
+      if (data.monto !== undefined) sh.getRange(rowNum, CXP.MONTO).setValue(Number(data.monto));
+      if (data.concepto !== undefined) sh.getRange(rowNum, CXP.CONCEPTO).setValue(data.concepto);
+      if (data.prov !== undefined) sh.getRange(rowNum, CXP.PROV).setValue(String(data.prov).toUpperCase());
+      if (data.categoria !== undefined) sh.getRange(rowNum, CXP.CATEGORIA).setValue(data.categoria);
+      if (data.subcategoria !== undefined) sh.getRange(rowNum, CXP.SUBCATEGORIA).setValue(data.subcategoria);
+      sh.getRange(rowNum, CXP.UPDATED_BY).setValue(data.updated_by || 'Web');
+      return { ok: true, row: rowNum };
+    }
+  }
+  return { ok: false, error: 'row_id no encontrado' };
+}
+
+// Pagar CxP: borra de _cxp_bind y agrega movimiento REAL a FLUJO_2026.
+// data = { row_id, fecha, monto, forma_pago, factura, categoria, subcategoria, estado }
+function pagarCxP(data) {
+  if (!data.row_id) return { ok: false, error: 'row_id requerido' };
+  const sh = SpreadsheetApp.getActive().getSheetByName(CXP_SHEET);
+  if (!sh) return { ok: false, error: 'Hoja _cxp_bind no existe' };
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) return { ok: false, error: 'Sin CxP' };
+  const ids = sh.getRange(2, CXP.ROW_ID, lastRow - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]) === String(data.row_id)) {
+      const rowNum = i + 2;
+      const cxpData = sh.getRange(rowNum, 1, 1, CXP_HEADERS.length).getValues()[0];
+      // Insertar en FLUJO_2026 como movimiento real
+      const addRes = addMovimiento({
+        fecha: data.fecha || new Date(),
+        prov: data.prov || cxpData[CXP.PROV - 1],
+        concepto: data.concepto || cxpData[CXP.CONCEPTO - 1],
+        forma_pago: data.forma_pago || cxpData[CXP.FORMA_PAGO - 1],
+        aplicado: '',
+        factura: data.factura || 'PENDIENTE',
+        tipo: cxpData[CXP.TIPO - 1] || 'COMPRA',
+        categoria: data.categoria || cxpData[CXP.CATEGORIA - 1],
+        subcategoria: data.subcategoria || cxpData[CXP.SUBCATEGORIA - 1],
+        ingreso: 0,
+        egreso: Number(data.monto) || Number(cxpData[CXP.MONTO - 1]) || 0,
+        estado: data.estado || 'capturado',
+        created_by: data.created_by || 'CxP Bind',
+        id: cxpData[CXP.ROW_ID - 1] // reusa el mismo UUID para trazabilidad
+      });
+      // Borrar de _cxp_bind
+      sh.deleteRow(rowNum);
+      return { ok: true, addedToFlujo: addRes, deletedRow: rowNum };
+    }
+  }
+  return { ok: false, error: 'row_id no encontrado' };
 }
