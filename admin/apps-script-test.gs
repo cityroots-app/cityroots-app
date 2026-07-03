@@ -65,6 +65,7 @@ function doPost(e) {
     else if (action === 'updatemovimiento') result = updateMovimiento(body.data);
     else if (action === 'markenbind') result = markEnBind(body.data);
     else if (action === 'marcarpagado') result = marcarPagado(body.data);
+    else if (action === 'reordenarbloqueados') result = reordenarBloqueados();
     else result = { ok: false, error: 'Acción no reconocida: ' + action };
     return json(result);
   } catch (err) {
@@ -189,23 +190,36 @@ function getContrapartes() {
 function addMovimiento(data) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME);
   const lastRow = sh.getLastRow();
-  const newRow = lastRow + 1;
   const id = data.id || uuid();
   const now = new Date();
 
   // Estado inicial: si trae estado='programado', no afecta saldo. Si no, capturado.
   const estado = data.estado || (data.categoria ? 'capturado' : 'sin-categoria');
+  const esBloqueado = (estado === 'bloqueado');
 
   const fechaStr = data.fecha ? new Date(data.fecha) : now;
   const ingreso = Number(data.ingreso) || 0;
   const egreso = Number(data.egreso) || 0;
+
+  // Posición de inserción: los BLOQ SIEMPRE viven al final de la hoja.
+  //  - Bloqueado nuevo      → append al final (zona BLOQ).
+  //  - Movimiento con fecha → se inserta ANTES del primer BLOQ, para que la
+  //    zona de bloqueados quede siempre hasta abajo del registro.
+  const firstBloq = esBloqueado ? 0 : findFirstBloqueadoRow(sh);
+  let newRow;
+  if (firstBloq > 0) {
+    sh.insertRowBefore(firstBloq);
+    newRow = firstBloq;
+  } else {
+    newRow = lastRow + 1;
+  }
 
   // Estados que NO afectan saldo (programado, sin-categoria, por-pagar, bloqueado).
   // Los bloqueados NO tienen fecha real → col A = "BLOQ".
   const estadosNoAfectan = ['programado', 'sin-categoria', 'por-pagar', 'bloqueado'];
   const prevTotal = getLastValidTotal(sh, newRow);
   const total = estadosNoAfectan.indexOf(estado) >= 0 ? prevTotal : prevTotal + ingreso - egreso;
-  const fechaCol = (estado === 'bloqueado') ? 'BLOQ' : fechaStr;
+  const fechaCol = esBloqueado ? 'BLOQ' : fechaStr;
 
   const row = [
     fechaCol,
@@ -229,8 +243,82 @@ function addMovimiento(data) {
     data.created_by || 'Web'
   ];
   sh.getRange(newRow, 1, 1, row.length).setValues([row]);
+
+  // Si insertamos un movimiento con fecha ARRIBA de la zona BLOQ, el saldo
+  // cambió → los BLOQ de abajo muestran total = saldo, hay que refrescarlos.
+  if (firstBloq > 0 && estadosNoAfectan.indexOf(estado) < 0) {
+    actualizarTotalBloqueados(sh, total);
+  }
   return { ok: true, id, row: newRow, total };
 }
+
+// Primera fila de datos (>= HEADER_ROW+1) cuyo ESTADO es 'bloqueado'. 0 si no hay.
+function findFirstBloqueadoRow(sh) {
+  const last = sh.getLastRow();
+  if (last <= HEADER_ROW) return 0;
+  const estados = sh.getRange(HEADER_ROW + 1, COL.ESTADO, last - HEADER_ROW, 1).getValues();
+  for (let i = 0; i < estados.length; i++) {
+    if (String(estados[i][0]).trim() === 'bloqueado') return HEADER_ROW + 1 + i;
+  }
+  return 0;
+}
+
+// Los BLOQ no afectan el saldo → su col TOTAL debe mostrar el saldo vigente.
+function actualizarTotalBloqueados(sh, nuevoSaldo) {
+  const last = sh.getLastRow();
+  if (last <= HEADER_ROW) return;
+  const estados = sh.getRange(HEADER_ROW + 1, COL.ESTADO, last - HEADER_ROW, 1).getValues();
+  for (let i = 0; i < estados.length; i++) {
+    if (String(estados[i][0]).trim() === 'bloqueado') {
+      sh.getRange(HEADER_ROW + 1 + i, COL.TOTAL).setValue(nuevoSaldo);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reordenar: mueve TODOS los BLOQ existentes al final de la hoja (one-shot).
+// Primero las filas con fecha (en su orden actual), al final los BLOQ.
+// Preserva los totales de las filas con fecha (NO recalcula → el saldo no cambia);
+// a los BLOQ les asigna el saldo final. Respalda la hoja antes de tocar nada.
+// ─────────────────────────────────────────────────────────────────────────────
+function reordenarBloqueados() {
+  const ss = SpreadsheetApp.getActive();
+  const sh = ss.getSheetByName(SHEET_NAME);
+  const last = sh.getLastRow();
+  if (last <= HEADER_ROW) return { ok: true, conFecha: 0, bloqueados: 0, nota: 'hoja vacía' };
+
+  const nCols = sh.getLastColumn();
+  const data = sh.getRange(HEADER_ROW + 1, 1, last - HEADER_ROW, nCols).getValues();
+  const cEstado = COL.ESTADO - 1, cTotal = COL.TOTAL - 1;
+
+  const conFecha = [], bloqueados = [];
+  data.forEach(function (r) {
+    (String(r[cEstado]).trim() === 'bloqueado' ? bloqueados : conFecha).push(r);
+  });
+
+  if (bloqueados.length === 0) return { ok: true, conFecha: conFecha.length, bloqueados: 0, nota: 'sin BLOQ que mover' };
+
+  // Backup ANTES de reescribir.
+  const tz = ss.getSpreadsheetTimeZone() || 'America/Monterrey';
+  const stamp = Utilities.formatDate(now_(), tz, 'yyyyMMdd_HHmmss');
+  sh.copyTo(ss).setName('FLUJO_backup_' + stamp);
+
+  // Saldo final = último TOTAL numérico de las filas con fecha que afectan saldo.
+  let saldoFinal = 0;
+  for (let i = conFecha.length - 1; i >= 0; i--) {
+    const est = String(conFecha[i][cEstado]).trim();
+    const t = Number(conFecha[i][cTotal]);
+    if (!isNaN(t) && est !== 'programado' && est !== 'sin-categoria' && est !== 'por-pagar') { saldoFinal = t; break; }
+  }
+  bloqueados.forEach(function (r) { r[cTotal] = saldoFinal; });
+
+  const nuevo = conFecha.concat(bloqueados);
+  sh.getRange(HEADER_ROW + 1, 1, nuevo.length, nCols).setValues(nuevo);
+
+  return { ok: true, conFecha: conFecha.length, bloqueados: bloqueados.length, saldoFinal, backup: 'FLUJO_backup_' + stamp };
+}
+
+function now_() { return new Date(); }
 
 function updateMovimiento(data) {
   if (!data.row_id) return { ok: false, error: 'row_id requerido' };
