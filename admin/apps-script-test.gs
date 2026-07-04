@@ -34,6 +34,8 @@ const COL = {
   FACTURA_AT: 17, BIND_AT: 18, UPDATED_BY: 19
 };
 const HEADER_ROW = 2; // Fila 1 es título, fila 2 son headers (ajustar si master usa otra estructura)
+// Saldo inicial del año 2026 al 1-Ene (base del running). Ajustar cada año.
+const SALDO_INICIAL_YEAR = 48655.21;
 
 function doGet(e) {
   const action = (e.parameter.action || 'ping').toLowerCase();
@@ -414,14 +416,16 @@ function findByRowId(sh, rowId) {
 }
 
 function getLastValidTotal(sh, beforeRow) {
-  // Busca el TOTAL más reciente de una fila con estado != programado/sin-categoria
+  // Busca el TOTAL más reciente de una fila con estado != programado/sin-categoria.
+  // Si llega hasta arriba sin encontrar, retorna el SALDO_INICIAL_YEAR (constante
+  // del arranque del año, ya que la fila SALDO INICIAL se eliminó del Sheet).
   for (let r = beforeRow - 1; r > HEADER_ROW; r--) {
     const estado = sh.getRange(r, COL.ESTADO).getValue();
     if (estado === 'programado' || estado === 'sin-categoria') continue;
     const total = Number(sh.getRange(r, COL.TOTAL).getValue());
     if (!isNaN(total)) return total;
   }
-  return 0;
+  return SALDO_INICIAL_YEAR;
 }
 
 function recalcSaldoDesde(sh, fromRow) {
@@ -450,12 +454,12 @@ function recalcSaldoDesde(sh, fromRow) {
 }
 
 // Recalcula toda la columna L (saldo running) desde la primera fila operativa.
-// La fila 2 es SALDO INICIAL del año (col L hardcoded) y NO se toca — el saldo
-// arranca desde ese valor. Correr desde el editor tras reordenar o desincronizar.
+// Usa SALDO_INICIAL_YEAR como base (definido arriba). Correr tras reordenar
+// o cuando el saldo running quede desincronizado.
 function recalcTodo() {
   const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME);
-  recalcSaldoDesde(sh, HEADER_ROW + 2);
-  Logger.log('✓ Saldo running recalculado desde fila ' + (HEADER_ROW + 2) + ' hasta ' + sh.getLastRow() + ' (respeta SALDO INICIAL fila 2)');
+  recalcSaldoDesde(sh, HEADER_ROW + 1);
+  Logger.log('✓ Saldo running recalculado desde fila ' + (HEADER_ROW + 1) + ' hasta ' + sh.getLastRow() + ' · base SALDO_INICIAL_YEAR = $' + SALDO_INICIAL_YEAR);
 }
 
 function sum(arr, key) { return arr.reduce((s, x) => s + (Number(x[key]) || 0), 0); }
