@@ -449,12 +449,13 @@ function recalcSaldoDesde(sh, fromRow) {
   sh.getRange(fromRow, COL.TOTAL, numRows, 1).setValues(totales);
 }
 
-// Recalcula toda la columna L (saldo running) desde la primera fila.
-// Correr desde el editor DESPUÉS de reordenar filas manualmente en el Sheet.
+// Recalcula toda la columna L (saldo running) desde la primera fila operativa.
+// La fila 2 es SALDO INICIAL del año (col L hardcoded) y NO se toca — el saldo
+// arranca desde ese valor. Correr desde el editor tras reordenar o desincronizar.
 function recalcTodo() {
   const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME);
-  recalcSaldoDesde(sh, HEADER_ROW + 1);
-  Logger.log('✓ Saldo running recalculado desde fila ' + (HEADER_ROW + 1) + ' hasta ' + sh.getLastRow());
+  recalcSaldoDesde(sh, HEADER_ROW + 2);
+  Logger.log('✓ Saldo running recalculado desde fila ' + (HEADER_ROW + 2) + ' hasta ' + sh.getLastRow() + ' (respeta SALDO INICIAL fila 2)');
 }
 
 function sum(arr, key) { return arr.reduce((s, x) => s + (Number(x[key]) || 0), 0); }
