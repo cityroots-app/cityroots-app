@@ -428,6 +428,14 @@ function recalcSaldoDesde(sh, fromRow) {
   }
 }
 
+// Recalcula toda la columna L (saldo running) desde la primera fila.
+// Correr desde el editor DESPUÉS de reordenar filas manualmente en el Sheet.
+function recalcTodo() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME);
+  recalcSaldoDesde(sh, HEADER_ROW + 1);
+  Logger.log('✓ Saldo running recalculado desde fila ' + (HEADER_ROW + 1) + ' hasta ' + sh.getLastRow());
+}
+
 function sum(arr, key) { return arr.reduce((s, x) => s + (Number(x[key]) || 0), 0); }
 
 function uuid() {
