@@ -1558,8 +1558,30 @@ async function confirmarPagado(movId){
   m.updated_by = 'JC';
   m.estado = estadoFinal;
 
+  // Si el programado NO existía en el Sheet (nóminas mock, etc.) → addMovimiento.
+  // Si sí existía (_row presente) → updateMovimiento con nuevo estado/fecha/monto.
+  if(!m.historico){
+    toast('Registrando en Sheet...', true, 1500);
+    if(!m._row){
+      const res = await pushToSheet(m, 'addMovimiento');
+      if(!res.ok){ toast('Error al registrar en Sheet: ' + res.error, false); return; }
+      m._row = res.row;
+      m.id = res.id || m.id;
+    } else {
+      const res = await pushToSheet({
+        row_id: m.id,
+        fecha: fechaISO,
+        egreso: m.egreso, ingreso: m.ingreso,
+        factura: facturaVal,
+        estado: estadoFinal,
+        aplicado: ''
+      }, 'updateMovimiento');
+      if(!res.ok){ toast('Error al actualizar Sheet: ' + res.error, false); return; }
+    }
+  }
+
   closeModal();
-  toast(`Pago ejecutado · ${fmtMoney(monto)}`);
+  toast(`✓ Pago registrado · ${fmtMoney(monto)}`);
   render();
 }
 
@@ -1894,7 +1916,7 @@ function renderAdmin(){
     </div>
 
     <div style="text-align:center;padding:20px 0;color:var(--text-4);font-size:11px">
-      Tab Admin · v0.2.2 · ${new Date().toISOString().split('T')[0]}
+      Tab Admin · v0.2.3 · ${new Date().toISOString().split('T')[0]}
     </div>
   `;
 }
