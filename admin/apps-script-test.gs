@@ -348,6 +348,11 @@ function updateMovimiento(data) {
   }
   if (data.concepto !== undefined) set(COL.CONCEPTO, data.concepto);
   if (data.updated_by) set(COL.UPDATED_BY, data.updated_by);
+  // Fecha y montos: importantes para bloqueado→asentado (fecha real ≠ 'BLOQ')
+  // y para ajustes de monto al pagar programados.
+  if (data.fecha !== undefined) set(COL.FECHA, new Date(data.fecha));
+  if (data.egreso !== undefined && data.egreso !== null) set(COL.EGRESO, Number(data.egreso));
+  if (data.ingreso !== undefined && data.ingreso !== null) set(COL.INGRESO, Number(data.ingreso));
 
   updates.forEach(u => sh.getRange(rowNum, u.col).setValue(u.val));
   // Si cambió el estado de programado a capturado, recalcular saldo desde esta fila.
