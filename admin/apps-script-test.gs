@@ -65,6 +65,7 @@ function doPost(e) {
     let result;
     if (action === 'addmovimiento') result = addMovimiento(body.data);
     else if (action === 'updatemovimiento') result = updateMovimiento(body.data);
+    else if (action === 'borrarmovimiento') result = borrarMovimiento(body.data);
     else if (action === 'markenbind') result = markEnBind(body.data);
     else if (action === 'marcarpagado') result = marcarPagado(body.data);
     else if (action === 'reordenarbloqueados') result = reordenarBloqueados();
@@ -364,6 +365,18 @@ function updateMovimiento(data) {
 
 function markEnBind(data) {
   return updateMovimiento({ row_id: data.row_id, estado: 'en-bind', factura: data.factura, updated_by: data.userId || 'Martha' });
+}
+
+// Borra una fila del FLUJO_2026 por row_id. Recalcula saldo desde esa fila hacia abajo.
+function borrarMovimiento(data) {
+  if (!data.row_id) return { ok: false, error: 'row_id requerido' };
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME);
+  const found = findByRowId(sh, data.row_id);
+  if (!found) return { ok: false, error: 'row_id no encontrado: ' + data.row_id };
+  const { rowNum } = found;
+  sh.deleteRow(rowNum);
+  recalcSaldoDesde(sh, rowNum);
+  return { ok: true, deletedRow: rowNum };
 }
 
 function marcarPagado(data) {

@@ -886,7 +886,7 @@ function renderPendRow(m){
     actionBtn = `<button class="btn-action primary" onclick="marcarPagado('${m.id}')">${SVG.check}Marcar pagado</button>`;
   } else if(m.estado === 'bloqueado'){
     facturaCell = `<div class="pt-factura" style="background:rgba(245,166,35,.14);border:1px dashed rgba(245,166,35,.55);color:#c07a00;font-weight:600" title="Dinero apartado en banco, aún no asentado">🔒 BLOQUEADO</div>`;
-    actionBtn = `<button class="btn-action primary" onclick="marcarPagado('${m.id}')">${SVG.check}Marcar asentado</button>`;
+    actionBtn = `<div style="display:flex;gap:5px"><button class="btn-action primary" style="flex:1" onclick="marcarPagado('${m.id}')">${SVG.check}Marcar asentado</button><button class="btn-action neutral" style="flex:0;padding:6px 8px" onclick="borrarBloqueado('${m.id}')" title="Borrar (duplicado)">${SVG.x}</button></div>`;
   } else if(m.estado === 'sin-categoria'){
     facturaCell = `<div class="pt-factura sin-categ">SIN CATEG.</div>`;
     actionBtn = `<button class="btn-action neutral" onclick="categorizarMov('${m.id}')">${SVG.edit}Categorizar</button>`;
@@ -1505,6 +1505,20 @@ function marcarPagado(movId){
   setTimeout(()=>document.getElementById('pagar-monto')?.focus(),80);
 }
 
+// Borra un bloqueado del Sheet (para casos donde se registró duplicado y hay que quitar el bloqueado).
+async function borrarBloqueado(movId){
+  const m = STATE.movs.find(x=>x.id===movId);
+  if(!m) return;
+  if(m.estado !== 'bloqueado'){ toast('Solo se pueden borrar los bloqueados', false); return; }
+  if(!confirm(`¿Borrar este bloqueado?\n\n${m.prov} · ${fmtMoney(m.egreso||m.ingreso)} · ${m.concepto||'—'}\n\nÚsalo solo si ya lo registraste manualmente en otro lado.`)) return;
+  toast('Borrando bloqueado del Sheet...', true, 1500);
+  const res = await pushToSheet({row_id: m.id}, 'borrarMovimiento');
+  if(!res.ok){ toast('Error al borrar: ' + res.error, false); return; }
+  STATE.movs = STATE.movs.filter(x=>x.id!==movId);
+  toast('✓ Bloqueado borrado del Sheet');
+  render();
+}
+
 async function confirmarPagado(movId){
   const m = STATE.movs.find(x=>x.id===movId);
 
@@ -1916,7 +1930,7 @@ function renderAdmin(){
     </div>
 
     <div style="text-align:center;padding:20px 0;color:var(--text-4);font-size:11px">
-      Tab Admin · v0.2.3 · ${new Date().toISOString().split('T')[0]}
+      Tab Admin · v0.2.4 · ${new Date().toISOString().split('T')[0]}
     </div>
   `;
 }
