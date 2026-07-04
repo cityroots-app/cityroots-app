@@ -829,7 +829,15 @@ function renderPendientes(){
     );
   }
 
-  filtered.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  // Orden: ingresos → egresos → bloqueados · dentro de cada grupo por fecha desc
+  const grupo = m => m.estado==='bloqueado' ? 2 : ((m.ingreso||0)>0 ? 0 : 1);
+  filtered.sort((a,b)=>{
+    const g = grupo(a) - grupo(b);
+    if(g !== 0) return g;
+    const fa = a.fecha==='BLOQ' ? 0 : new Date(a.fecha).getTime();
+    const fb = b.fecha==='BLOQ' ? 0 : new Date(b.fecha).getTime();
+    return fb - fa;
+  });
 
   return `
     <div class="pendientes-header">
@@ -1930,7 +1938,7 @@ function renderAdmin(){
     </div>
 
     <div style="text-align:center;padding:20px 0;color:var(--text-4);font-size:11px">
-      Tab Admin · v0.2.4 · ${new Date().toISOString().split('T')[0]}
+      Tab Admin · v0.2.5 · ${new Date().toISOString().split('T')[0]}
     </div>
   `;
 }
