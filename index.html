@@ -674,7 +674,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.22.0';
+var APP_VERSION='2.22.1';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1918,7 +1918,7 @@ async function guardarCosecha(id){
   if(perdido){lotes[idx].cancelado=true;lotes[idx].motivo_cancelado='perdido en cosecha';}
   setLotes(lotes);
   // Guardar como registro de cosecha semanal
-  const rec={id:Date.now().toString(),tipo:'cosecha',fecha:new Date().toISOString(),datos:{variedad:lotes[idx].variedad,lote:lotes[idx].lote,charolas:charolas,gramos_real:gramos,promedio:lotes[idx].promedio_cosecha,contenedores_50g:lotes[idx].contenedores_50g,responsable:resp,comentarios:lotes[idx].comentarios_cosecha}};
+  const rec={id:Date.now().toString(),tipo:'cosecha',fecha:new Date().toISOString(),datos:{variedad:lotes[idx].variedad,lote:lotes[idx].lote,charolas:ch,gramos_real:gr,promedio:lotes[idx].promedio_cosecha,contenedores_50g:lotes[idx].contenedores_50g,responsable:resp,comentarios:lotes[idx].comentarios_cosecha}};
   const recs=getRecs();recs.unshift(rec);setRecs(recs);
   const syncedC=await pushToSheet(rec,'cosecha_semanal');
   if(!syncedC&&getURL()){const p=getPend();p.push(rec);setPend(p);updatePendBadge();}
