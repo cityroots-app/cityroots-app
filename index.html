@@ -176,6 +176,21 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .banner-warn{background:var(--warn-bg);border:1px solid rgba(212,133,10,0.25);color:#7a4f06}
 .banner-ok{background:var(--ok-bg);border:1px solid rgba(45,90,39,0.2);color:#1a3a1a}
 .banner-amber{background:var(--amber-bg);border:1px solid rgba(212,133,10,0.2);color:#633806}
+/* Alertas de vencimiento (CAL/REC-CAP/MTO) */
+.banner-venc{border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;font-size:12px;line-height:1.4;box-shadow:var(--shadow-sm);cursor:default}
+.banner-venc.rojo{background:#fdecea;border:1px solid rgba(192,57,43,.35);color:#6b1e14}
+.banner-venc.amarillo{background:var(--warn-bg);border:1px solid rgba(212,133,10,.3);color:#7a4f06}
+.banner-venc-title{font-weight:600;font-size:13px;margin-bottom:6px}
+.banner-venc-list{display:flex;flex-wrap:wrap;gap:6px}
+.venc-chip{background:rgba(255,255,255,.6);padding:3px 8px;border-radius:8px;font-size:11px;font-weight:500;white-space:nowrap;border:1px solid rgba(0,0,0,.06)}
+@media(prefers-color-scheme:dark){
+  .banner-venc.rojo{background:rgba(192,57,43,.15);border-color:rgba(192,57,43,.5);color:#f5b0a5}
+  .banner-venc.amarillo{background:rgba(212,133,10,.12);border-color:rgba(212,133,10,.45);color:#f0c874}
+  .venc-chip{background:rgba(0,0,0,.35);border-color:rgba(255,255,255,.08);color:inherit}
+}
+body:is(.role-logistica,.role-almacen,.role-produccion) .banner-venc.rojo{background:rgba(192,57,43,.14)!important;border-color:rgba(192,57,43,.5)!important;color:#f5b0a5!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .banner-venc.amarillo{background:rgba(245,200,66,.10)!important;border-color:rgba(245,200,66,.4)!important;color:#f5c842!important}
+body:is(.role-logistica,.role-almacen,.role-produccion) .venc-chip{background:rgba(0,0,0,.35)!important;border-color:rgba(255,255,255,.08)!important}
 
 /* MODALS */
 .modal-ov{position:fixed;inset:0;background:rgba(26,58,26,0.45);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s ease}
@@ -674,7 +689,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.22.1';
+var APP_VERSION='2.23.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -740,6 +755,62 @@ const REGS = [
     {id:'estado_limpieza',label:'Estado de limpieza',type:'select',req:true,opts:['Conforme — limpio y sanitizado','No conforme — se realizó limpieza adicional']},
     {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Chofer asignado']},
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Sin novedad...'}
+  ]},
+  // ══ REGISTROS NOM-251 + FSDP (agregados 16-jul-2026) ═══════════════════════
+  {id:'cloro',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7z"/></svg>`,name:'Cloro residual agua',code:'REG-CLORO',freq:'Diario',fields:[
+    {id:'hora_medicion',label:'Hora de medición',type:'time',req:true},
+    {id:'punto_muestreo',label:'Punto de muestreo',type:'select',req:true,opts:['Llave producción','Llave riego','Otro']},
+    {id:'cloro_mg_l',label:'Cloro residual (mg/L)',type:'number',req:true,step:'0.01',ph:'Rango aceptable: 0.2 – 1.5',hint:'CCP-1 · NOM-251 exige diario'},
+    {id:'accion_correctiva',label:'Acción correctiva',type:'textarea',req:true,showIf:{field:'cloro_mg_l',op:'outOfRange',min:0.2,max:1.5},ph:'Fuera de rango — describir acción tomada'},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción','Personal de producción']},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Sin novedad...'}
+  ]},
+  {id:'plagas',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/></svg>`,name:'Monitoreo de plagas',code:'MIP-01',freq:'Semanal',fields:[
+    {id:'estacion',label:'Estación',type:'select',req:true,opts:['E-01 · adhesiva interior · entrada','E-02 · adhesiva interior · racks','E-03 · adhesiva interior · empaque','E-04 · cebo exterior · puerta trasera','E-05 · cebo exterior · costado bodega']},
+    {id:'hallazgo',label:'Hallazgo',type:'select',req:true,opts:['Sin actividad','Insectos atrapados','Cebo consumido','Evidencia de roedores','Otro']},
+    {id:'cantidad',label:'Cantidad (si aplica)',type:'number',ph:'Ej: 3 mosquitos'},
+    {id:'accion_tomada',label:'Acción tomada',type:'textarea',req:true,showIf:{field:'hallazgo',op:'notEq',value:'Sin actividad'},ph:'Describir acción'},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
+  ]},
+  {id:'calibracion',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,name:'Calibración de equipos',code:'CAL-01',freq:'Trimestral',fields:[
+    {id:'equipo',label:'Equipo',type:'select',req:true,opts:['TERM-01 · termómetro refrigerador','TERM-02 · termómetro transporte','BAS-01 · báscula empaque','BAS-02 · báscula semillas']},
+    {id:'tipo_verificacion',label:'Tipo de verificación',type:'select',req:true,opts:['Interna','Externa (laboratorio)']},
+    {id:'metodo',label:'Método',type:'select',req:true,opts:['Punto de hielo','Pesa patrón','Certificado laboratorio']},
+    {id:'lectura_obtenida',label:'Lectura obtenida',type:'number',req:true,step:'0.01',ph:'Lo que marcó el equipo'},
+    {id:'lectura_esperada',label:'Lectura esperada',type:'number',req:true,step:'0.01',ph:'0.0 hielo · valor patrón báscula'},
+    {id:'dentro_tolerancia',label:'¿Dentro de tolerancia?',type:'select',req:true,opts:['Sí','No'],hint:'TERM ±1°C · BAS ±2g'},
+    {id:'accion_tomada',label:'Acción tomada',type:'textarea',req:true,showIf:{field:'dentro_tolerancia',op:'eq',value:'No'},ph:'Recalibrar / reemplazar / mandar a lab...'},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']},
+    {id:'proxima_verificacion',label:'Próxima verificación',type:'date',req:true},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
+  ]},
+  {id:'capacitacion',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`,name:'Capacitación personal',code:'REC-CAP',freq:'Anual · por evento',fields:[
+    {id:'tema',label:'Tema',type:'select',req:true,opts:['BPM','POES','Lavado de manos','Producto no conforme','Control de alérgenos','HACCP','Food defense','NOM-251','Otro']},
+    {id:'descripcion',label:'Descripción',type:'textarea',ph:'Detalle del tema, sobre todo si es "Otro"'},
+    {id:'instructor',label:'Instructor',type:'text',req:true,ph:'Nombre de quien dio la capacitación'},
+    {id:'participante',label:'Participante',type:'select',req:true,opts:['Carlos Pérez','Rogelio Isaac Elosegui','José Carlos Gómez','Martha Eugenia Pérez','Otro'],hint:'Un registro por participante'},
+    {id:'duracion_min',label:'Duración (minutos)',type:'number',req:true,ph:'60'},
+    {id:'evaluacion_aprobada',label:'Evaluación aprobada',type:'select',opts:['Sí','No','N/A']},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
+  ]},
+  {id:'visitantes',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/><path d="M19 8v6"/></svg>`,name:'Visitantes',code:'REG-VIS',freq:'Por evento',fields:[
+    {id:'nombre_visitante',label:'Nombre del visitante',type:'text',req:true},
+    {id:'empresa_motivo',label:'Empresa / motivo',type:'text',req:true,ph:'Ej: Fumiplus — fumigación mensual'},
+    {id:'hora_entrada',label:'Hora de entrada',type:'time',req:true},
+    {id:'hora_salida',label:'Hora de salida',type:'time',hint:'Puede llenarse después'},
+    {id:'cumplio_higiene',label:'¿Cumplió medidas de higiene?',type:'select',req:true,opts:['Sí','No'],hint:'Cofia, lavado manos, sin joyería'},
+    {id:'autorizado_por',label:'Autorizado por',type:'select',req:true,opts:['José Carlos','Encargado de producción']},
+    {id:'observaciones',label:'Observaciones',type:'textarea',req:true,showIf:{field:'cumplio_higiene',op:'eq',value:'No'},ph:'Documentar qué faltó'}
+  ]},
+  {id:'mantenimiento',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,name:'Mantenimiento equipos',code:'MTO-01',freq:'Mensual · por evento',fields:[
+    {id:'equipo',label:'Equipo',type:'select',req:true,opts:['AC-01 · aire acondicionado','EXT-01 · extractor','OZ-01 · ozono','LED · lámparas','REF-01 · refrigerador','RACK · racks cultivo','MESA-01 · mesa empaque','Drenajes','Pisos-Paredes','Otro']},
+    {id:'actividad',label:'Actividad',type:'text',req:true,ph:'Ej: Limpieza de filtros'},
+    {id:'tipo',label:'Tipo',type:'select',req:true,opts:['Preventivo','Correctivo']},
+    {id:'realizado_por',label:'Realizado por',type:'text',req:true,ph:'Carlos, técnico externo...'},
+    {id:'hallazgos',label:'Hallazgos',type:'textarea',req:true,showIf:{field:'tipo',op:'eq',value:'Correctivo'},ph:'Describir qué se descompuso'},
+    {id:'proximo_mantenimiento',label:'Próximo mantenimiento',type:'date'},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
   ]}
 ];
 
@@ -1128,6 +1199,39 @@ function render(p){
 }
 
 // ══ INICIO ══════════════════════════════════════════════════════════════════════
+// ══ ALERTAS DE VENCIMIENTO — CAL-01 · REC-CAP · MTO-01 ═══════════════════════
+// Reglas: monitorean el último registro por entidad (equipo/persona) y comparan
+// contra un período. Si días transcurridos ≥ período - alerta_previa, "próximo
+// a vencer" (amarillo). Si ≥ período, "vencido" (rojo).
+const VENC_RULES = [
+  {tipo:'calibracion',entidades:['TERM-01','TERM-02','BAS-01','BAS-02'],periodo:90,alerta:7,label:'Calibración'},
+  {tipo:'capacitacion',entidades:['Carlos Pérez','Rogelio Isaac Elosegui','José Carlos Gómez','Martha Eugenia Pérez'],periodo:365,alerta:30,label:'Capacitación',campo:'participante'},
+  {tipo:'mantenimiento',entidades:['AC-01','OZ-01','REF-01','Drenajes'],periodo:30,alerta:5,label:'Mant. mensual'},
+  {tipo:'mantenimiento',entidades:['EXT-01','LED','RACK','MESA-01'],periodo:90,alerta:7,label:'Mant. trimestral'},
+  {tipo:'mantenimiento',entidades:['Pisos-Paredes'],periodo:180,alerta:14,label:'Mant. semestral'},
+];
+function computeVencimientos(){
+  const recs = getRecs();
+  const now = Date.now();
+  const alertas = [];
+  for(const rule of VENC_RULES){
+    const campo = rule.campo || 'equipo';
+    const del = recs.filter(r=>r.tipo===rule.tipo).map(r=>({
+      fecha: r.fecha,
+      ent: String((r.datos||{})[campo]||'').split(' · ')[0].trim()
+    }));
+    for(const ent of rule.entidades){
+      const found = del.filter(x=>x.ent===ent).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+      const dias = found ? Math.floor((now - new Date(found.fecha).getTime())/86400000) : Infinity;
+      if(dias >= rule.periodo){
+        alertas.push({tipo:rule.tipo,ent,label:rule.label,dias:isFinite(dias)?dias:null,estado:'vencido'});
+      } else if(dias >= rule.periodo - rule.alerta){
+        alertas.push({tipo:rule.tipo,ent,label:rule.label,dias,estado:'proximo',diasRestantes:rule.periodo-dias});
+      }
+    }
+  }
+  return alertas;
+}
 function renderInicio(el){
   const recs=getRecs(),pend=getPend(),lotes=getLotes();
   const today=todayKey();
@@ -1142,12 +1246,19 @@ function renderInicio(el){
   const sembrarHoy=lotes.filter(l=>l.fecha_siembra&&l.fecha_siembra.split('T')[0]===today&&!l.sembrado_confirmado);
   const cosecharHoy=lotes.filter(l=>l.fecha_cosecha&&l.fecha_cosecha.split('T')[0]===today&&l.sembrado_confirmado&&!l.cosecha_real&&!l.cancelado);
 
+  // Alertas de vencimiento
+  const vencs = computeVencimientos();
+  const vencidos = vencs.filter(v=>v.estado==='vencido');
+  const proximos = vencs.filter(v=>v.estado==='proximo');
+
   el.innerHTML=`<div class="pad">
     <div class="greeting">${gr}</div>
     <div class="dateline">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</div>
     ${pend.length?`<div class="banner banner-warn">📡 ${pend.length} registro${pend.length>1?'s':''} sin sincronizar. <span style="text-decoration:underline;cursor:pointer;font-weight:600" onclick="flushPending().then(()=>render('inicio'))">Sincronizar</span></div>`:''}
     ${sembrarHoy.length?`<div class="banner-pend" onclick="goTo('produccion')"><span class="banner-pend-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg></span>${sembrarHoy.length} variedad${sembrarHoy.length>1?'es':''} por sembrar hoy</div>`:''}
     ${cosecharHoy.length?`<div class="banner-pend" onclick="goTo('produccion')"><span class="banner-pend-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></span>${cosecharHoy.length} variedad${cosecharHoy.length>1?'es':''} por cosechar hoy</div>`:''}
+    ${vencidos.length?`<div class="banner-venc rojo"><div class="banner-venc-title">🔴 ${vencidos.length} registro${vencidos.length>1?'s':''} vencido${vencidos.length>1?'s':''}</div><div class="banner-venc-list">${vencidos.slice(0,5).map(v=>`<span class="venc-chip">${v.label}: ${v.ent}${v.dias?` (${v.dias}d)`:''}</span>`).join('')}${vencidos.length>5?`<span class="venc-chip">+${vencidos.length-5} más</span>`:''}</div></div>`:''}
+    ${proximos.length?`<div class="banner-venc amarillo"><div class="banner-venc-title">🟡 ${proximos.length} próximo${proximos.length>1?'s':''} a vencer</div><div class="banner-venc-list">${proximos.slice(0,5).map(v=>`<span class="venc-chip">${v.label}: ${v.ent} (${v.diasRestantes}d)</span>`).join('')}${proximos.length>5?`<span class="venc-chip">+${proximos.length-5} más</span>`:''}</div></div>`:''}
     <div class="stats">
       <div class="stat"><div class="stat-n n-ok">${doneC}</div><div class="stat-l">Registros ✓</div></div>
       <div class="stat"><div class="stat-n n-warn">${pendC}</div><div class="stat-l">Pendientes</div></div>
@@ -2201,6 +2312,30 @@ function sheetToArray(ss,name){
 }
 
 // ══ FORMS (inocuidad) ════════════════════════════════════════════════════════
+// Evalúa una regla showIf sobre los valores actuales del form.
+// Op: 'eq' | 'notEq' | 'outOfRange' (con min/max)
+function evalShowIf(showIf){
+  if(!showIf)return true;
+  const el=document.getElementById('f_'+showIf.field);
+  if(!el)return true;
+  const v=el.value;
+  if(showIf.op==='eq') return v===showIf.value;
+  if(showIf.op==='notEq') return v!=='' && v!==showIf.value;
+  if(showIf.op==='outOfRange'){
+    if(v==='') return false;
+    const n=parseFloat(v); if(isNaN(n)) return false;
+    return n<showIf.min || n>showIf.max;
+  }
+  return true;
+}
+function refreshShowIf(regId){
+  const reg=REGS.find(r=>r.id===regId);if(!reg)return;
+  reg.fields.forEach(f=>{
+    if(!f.showIf)return;
+    const wrap=document.getElementById('fw_'+f.id);
+    if(wrap) wrap.style.display=evalShowIf(f.showIf)?'block':'none';
+  });
+}
 function openForm(id){
   const reg=REGS.find(r=>r.id===id);if(!reg)return;
   const body=document.getElementById('modal-body');
@@ -2210,18 +2345,26 @@ function openForm(id){
     <div class="modal-sub">${reg.code} · ${new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})}</div>
     ${reg.fields.map(f=>{
       const defaultOpt = f.id==='responsable' && (f.opts||[]).includes('Encargado de producción') ? 'Encargado de producción' : '';
-      return `<div class="field">
-      <label>${f.label}${f.req?` <span style="color:var(--danger)">*</span>`:''}</label>
-      ${f.type==='select'?`<select id="f_${f.id}"><option value="">Seleccionar...</option>${(f.opts||[]).map(o=>`<option${o===defaultOpt?' selected':''}>${o}</option>`).join('')}</select>`:
+      const step = f.step?` step="${f.step}"`:'';
+      const hidden = f.showIf?' style="display:none"':'';
+      const hint = f.hint?`<div class="field-hint">${f.hint}</div>`:'';
+      const onch = `onchange="refreshShowIf('${id}')" oninput="refreshShowIf('${id}')"`;
+      const input = f.type==='select'?`<select id="f_${f.id}" ${onch}><option value="">Seleccionar...</option>${(f.opts||[]).map(o=>`<option${o===defaultOpt?' selected':''}>${o}</option>`).join('')}</select>`:
         f.type==='textarea'?`<textarea id="f_${f.id}" placeholder="${f.ph||''}"></textarea>`:
-        f.type==='time'?`<input type="time" id="f_${f.id}" value="${nowTime()}">`:
-        `<input type="${f.type}" id="f_${f.id}" placeholder="${f.ph||''}">`}
+        f.type==='time'?`<input type="time" id="f_${f.id}" value="${nowTime()}" ${onch}>`:
+        f.type==='date'?`<input type="date" id="f_${f.id}" ${onch}>`:
+        `<input type="${f.type}" id="f_${f.id}"${step} placeholder="${f.ph||''}" ${onch}>`;
+      return `<div class="field" id="fw_${f.id}"${hidden}>
+      <label>${f.label}${f.req?` <span style="color:var(--danger)">*</span>`:''}</label>
+      ${input}
+      ${hint}
     </div>`;}).join('')}
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-primary" id="save-btn" onclick="submitForm('${id}')">Guardar registro</button>
     </div>`;
   document.getElementById('modal-ov').style.display='flex';
+  refreshShowIf(id);
 }
 
 let _savingForm=false;
@@ -2230,9 +2373,11 @@ async function submitForm(id){
   const reg=REGS.find(r=>r.id===id);
   const datos={};let missing=[];
   reg.fields.forEach(f=>{
+    // Campos ocultos por showIf no cuentan como obligatorios ni se envían con valor
+    const visible = !f.showIf || evalShowIf(f.showIf);
     const el=document.getElementById('f_'+f.id);
-    if(el)datos[f.id]=el.value;
-    if(f.req&&el&&!el.value)missing.push(f.label);
+    if(el && visible) datos[f.id]=el.value;
+    if(f.req && visible && el && !el.value) missing.push(f.label);
   });
   if(missing.length){toast('Completa: '+missing[0]);return;}
   _savingForm=true;
