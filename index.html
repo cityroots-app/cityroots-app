@@ -689,7 +689,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.23.0';
+var APP_VERSION='2.23.1';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1222,9 +1222,12 @@ function computeVencimientos(){
     }));
     for(const ent of rule.entidades){
       const found = del.filter(x=>x.ent===ent).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
-      const dias = found ? Math.floor((now - new Date(found.fecha).getTime())/86400000) : Infinity;
+      // Sin registro histórico → NO alertar. La primera vez marca el baseline;
+      // desde ahí se cuentan los días. Evita falsos positivos al deployar.
+      if(!found) continue;
+      const dias = Math.floor((now - new Date(found.fecha).getTime())/86400000);
       if(dias >= rule.periodo){
-        alertas.push({tipo:rule.tipo,ent,label:rule.label,dias:isFinite(dias)?dias:null,estado:'vencido'});
+        alertas.push({tipo:rule.tipo,ent,label:rule.label,dias,estado:'vencido'});
       } else if(dias >= rule.periodo - rule.alerta){
         alertas.push({tipo:rule.tipo,ent,label:rule.label,dias,estado:'proximo',diasRestantes:rule.periodo-dias});
       }
