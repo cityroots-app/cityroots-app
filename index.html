@@ -757,7 +757,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
           Cliente
         </button>
         <img src="hade-logo.png" alt="HADE — The Harvest Dealers" class="role-logo">
-        <h1>Área interna</h1>
+        <h1>Sistema operativo</h1>
         <p>Selecciona tu rol</p>
 
         <div class="role-card" onclick="selectRole('produccion')">
@@ -824,7 +824,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.25.2';
+var APP_VERSION='2.25.3';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
