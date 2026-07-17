@@ -73,7 +73,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 
 /* ROLE SELECTOR */
 /* ── ROLE SCREEN (rediseñado v2.16.6 — texture noise + cards compactas) ── */
-.role-screen{position:fixed;inset:0;z-index:9999;background-color:#070707;background-image:radial-gradient(ellipse at 50% -10%,rgba(74,140,63,.06) 0%,transparent 55%),radial-gradient(ellipse at 50% 110%,rgba(74,140,63,.05) 0%,transparent 55%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:28px 22px;overflow-y:auto;overflow-x:hidden}
+.role-screen{position:fixed;inset:0;z-index:9999;background-color:#070707;overflow:hidden}
 .role-screen::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.42 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:240px 240px;opacity:.32;pointer-events:none;mix-blend-mode:overlay;z-index:0}
 .role-screen > *{position:relative;z-index:1}
 .role-logo{width:auto;height:300px;max-width:92vw;margin-top:32px;margin-bottom:-48px;filter:drop-shadow(0 6px 24px rgba(0,0,0,.6))}
@@ -231,6 +231,66 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .venc-chip{background:rg
 
 body.role-cliente{background:var(--warm-white,#fdfcf8)}
 body.role-cliente .content{padding-bottom:100px}
+
+/* ══ CAROUSEL role-screen v2.25.0 · Slide 0 Cliente · Slide 1 Empleados ═══ */
+.carousel-viewport{position:absolute;inset:0;overflow:hidden;touch-action:pan-y}
+.carousel-track{display:flex;width:200%;height:100%;transition:transform .35s cubic-bezier(.22,.9,.28,1)}
+.carousel-track.dragging{transition:none}
+.carousel-slide{width:50%;height:100%;overflow-y:auto;overflow-x:hidden;position:relative;padding:32px 22px;display:flex;flex-direction:column;align-items:center;box-sizing:border-box}
+.slide-cliente{background:radial-gradient(ellipse at 50% -10%,rgba(74,140,63,.10) 0%,transparent 60%),radial-gradient(ellipse at 50% 110%,rgba(212,133,10,.05) 0%,transparent 55%),var(--warm-white,#fdfcf8);justify-content:center;padding:20px 22px 90px}
+.slide-empleados{background:#070707;background-image:radial-gradient(ellipse at 50% -10%,rgba(74,140,63,.06) 0%,transparent 55%),radial-gradient(ellipse at 50% 110%,rgba(74,140,63,.05) 0%,transparent 55%);justify-content:flex-start;padding-top:34px;padding-bottom:90px}
+.hero-logo-cliente{width:78px;height:78px;object-fit:contain;margin-bottom:8px}
+.hero-brand-cliente{font-family:'Josefin Sans','Outfit',sans-serif;font-size:11px;letter-spacing:.35em;color:var(--green-mid,#2d5a27);font-weight:500;margin-bottom:18px}
+.hero-title-cliente{font-family:'Cormorant Garamond','Playfair Display',Georgia,serif;font-size:34px;font-weight:500;font-style:italic;text-align:center;line-height:1.1;color:var(--green-deep,#1a3a1a);margin:0 0 10px}
+.hero-sub-cliente{font-family:var(--font-body);font-size:13px;color:var(--text-3);text-align:center;margin:0 0 32px;max-width:280px}
+.cliente-actions{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px}
+.hero-btn{width:100%;padding:16px 20px;border-radius:14px;font-size:15px;font-weight:600;letter-spacing:.01em;cursor:pointer;transition:transform .12s,box-shadow .2s,background .2s;font-family:var(--font-body);border:1.5px solid transparent}
+.hero-btn:active{transform:scale(.98)}
+.hero-btn-primary{background:var(--green-deep,#1a3a1a);color:#fff;border-color:var(--green-deep,#1a3a1a);box-shadow:0 4px 14px rgba(26,58,26,.18)}
+.hero-btn-primary:hover{background:var(--green-mid,#2d5a27)}
+.hero-btn-secondary{background:transparent;color:var(--green-deep,#1a3a1a);border-color:var(--green-deep,#1a3a1a)}
+.hero-btn-secondary:hover{background:rgba(26,58,26,.06)}
+.carousel-hint{position:absolute;top:22px;font-size:11px;color:var(--text-3);opacity:.55;display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:20px;background:rgba(0,0,0,.03);letter-spacing:.02em;pointer-events:none}
+.hint-right{right:20px}
+.hint-left{left:20px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.05)}
+.slide-empleados .carousel-hint svg,.slide-cliente .carousel-hint svg{stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.carousel-dots{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:5}
+.carousel-dots .dot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,.18);cursor:pointer;transition:background .2s,transform .2s}
+.carousel-dots .dot.active{background:var(--green-mid,#2d5a27);transform:scale(1.15)}
+/* Cuando el slide activo es empleados, los dots deben verse blancos */
+.role-screen[data-slide="1"] .carousel-dots .dot{background:rgba(255,255,255,.22)}
+.role-screen[data-slide="1"] .carousel-dots .dot.active{background:var(--green-light,#a8d5a2)}
+@media (prefers-color-scheme:dark){
+  .slide-cliente{background:radial-gradient(ellipse at 50% -10%,rgba(168,213,162,.10) 0%,transparent 60%),#0f1210}
+  .hero-title-cliente{color:var(--green-light,#a8d5a2)}
+  .hero-brand-cliente{color:var(--green-bright,#4a8c3f)}
+  .hero-sub-cliente{color:rgba(255,255,255,.55)}
+  .hero-btn-primary{background:var(--green-light,#a8d5a2);color:#0a1a05;border-color:var(--green-light,#a8d5a2);box-shadow:0 4px 14px rgba(168,213,162,.20)}
+  .hero-btn-secondary{background:transparent;color:var(--green-light,#a8d5a2);border-color:rgba(168,213,162,.4)}
+  .hero-btn-secondary:hover{background:rgba(168,213,162,.08)}
+  .carousel-hint{background:rgba(255,255,255,.05);color:rgba(255,255,255,.5)}
+  .hint-right{background:rgba(255,255,255,.05);color:rgba(255,255,255,.5)}
+  .role-screen:not([data-slide="1"]) .carousel-dots .dot{background:rgba(255,255,255,.22)}
+  .role-screen:not([data-slide="1"]) .carousel-dots .dot.active{background:var(--green-light,#a8d5a2)}
+}
+
+/* Vista Showroom (público, sin login) */
+.showroom-screen{position:fixed;inset:0;background:var(--warm-white,#fdfcf8);overflow-y:auto;z-index:200;padding:14px 16px 92px}
+.showroom-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.showroom-back{background:transparent;border:none;color:var(--text);padding:6px 10px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.showroom-back svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.showroom-title{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;color:var(--green-deep,#1a3a1a);margin:0}
+.showroom-hint{font-size:12px;color:var(--text-3);margin:0 0 16px;text-align:center;background:rgba(74,140,63,.06);padding:10px 14px;border-radius:10px;border:1px solid rgba(74,140,63,.15)}
+.showroom-cta-row{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:460px;display:flex;gap:10px;z-index:210}
+.showroom-cta-row button,.showroom-cta-row a{flex:1;padding:14px;border-radius:12px;font-weight:600;font-size:13px;border:none;cursor:pointer;text-decoration:none;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.14)}
+.showroom-cta-primary{background:var(--green-deep,#1a3a1a);color:#fff}
+.showroom-cta-secondary{background:#25d366;color:#fff}
+@media (prefers-color-scheme:dark){
+  .showroom-screen{background:#0f1210}
+  .showroom-title{color:var(--green-light,#a8d5a2)}
+  .showroom-hint{background:rgba(168,213,162,.06);border-color:rgba(168,213,162,.15);color:rgba(255,255,255,.7)}
+  .showroom-cta-primary{background:var(--green-light,#a8d5a2);color:#0a1a05}
+}
 
 /* MODALS */
 .modal-ov{position:fixed;inset:0;background:rgba(26,58,26,0.45);backdrop-filter:blur(4px);z-index:10000;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s ease}
@@ -677,71 +737,94 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
   </nav>
 </div>
 
-<!-- SELECTOR DE ROL (v2.16.2 — branding HADE + Cormorant + iconos Lucide) -->
+<!-- SELECTOR DE ROL v2.25.0 — Carousel: Slide 0 Cliente · Slide 1 Empleados -->
 <div class="role-screen" id="role-screen" style="display:none">
-  <div id="role-version-badge" style="position:absolute;top:14px;right:16px;background:rgba(168,213,162,.12);color:#a8d5a2;padding:5px 12px;border-radius:14px;font-size:11px;font-weight:600;letter-spacing:.5px;border:1px solid rgba(168,213,162,.2)">v2.5.0</div>
-  <img src="hade-logo.png" alt="HADE — The Harvest Dealers" class="role-logo">
-  <h1>Bienvenido</h1>
-  <p>Selecciona tu área de trabajo</p>
+  <div id="role-version-badge" style="position:absolute;top:14px;right:16px;z-index:5;background:rgba(168,213,162,.12);color:#a8d5a2;padding:5px 12px;border-radius:14px;font-size:11px;font-weight:600;letter-spacing:.5px;border:1px solid rgba(168,213,162,.2)">v2.5.0</div>
 
-  <div class="role-card" onclick="selectRole('produccion')">
-    <div class="role-icon">
-      <!-- Lucide: sprout -->
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>
+  <div class="carousel-viewport" id="carousel-viewport">
+    <div class="carousel-track" id="carousel-track">
+
+      <!-- SLIDE 0 · CLIENTE -->
+      <div class="carousel-slide slide-cliente">
+        <img src="hade-logo.png" alt="HADE" class="hero-logo-cliente">
+        <div class="hero-brand-cliente">THE HARVEST DEALERS</div>
+        <h1 class="hero-title-cliente">Verduras gourmet<br>a tu puerta</h1>
+        <p class="hero-sub-cliente">Microgreens · Hongos · Hortalizas · Hojas baby</p>
+        <div class="cliente-actions">
+          <button class="hero-btn hero-btn-primary" onclick="selectRole('cliente')">
+            <span>Ya soy cliente</span>
+          </button>
+          <button class="hero-btn hero-btn-secondary" onclick="openShowroom()">
+            <span>Ver catálogo digital</span>
+          </button>
+        </div>
+        <div class="carousel-hint hint-right">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+          Desliza para empleados
+        </div>
+      </div>
+
+      <!-- SLIDE 1 · EMPLEADOS -->
+      <div class="carousel-slide slide-empleados">
+        <div class="carousel-hint hint-left">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+          Volver a cliente
+        </div>
+        <img src="hade-logo.png" alt="HADE — The Harvest Dealers" class="role-logo">
+        <h1>Área interna</h1>
+        <p>Selecciona tu rol</p>
+
+        <div class="role-card" onclick="selectRole('produccion')">
+          <div class="role-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>
+          </div>
+          <div class="role-info">
+            <h3>Producción</h3>
+            <span>City Roots Farm — Siembras, cosechas e inocuidad</span>
+          </div>
+          <div class="role-dots" id="dots-produccion"></div>
+        </div>
+
+        <div class="role-card" onclick="selectRole('almacen')">
+          <div class="role-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
+          <div class="role-info">
+            <h3>Almacén</h3>
+            <span>HADE — Lista de preparación de pedidos e inventario</span>
+          </div>
+          <div class="role-dots" id="dots-almacen"></div>
+        </div>
+
+        <div class="role-card" onclick="selectRole('logistica')">
+          <div class="role-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><path d="M15 18H9"/><circle cx="17" cy="18" r="2"/></svg>
+          </div>
+          <div class="role-info">
+            <h3>Logística</h3>
+            <span>Chofer — Compras del día y ruta de entregas</span>
+          </div>
+          <div class="role-dots" id="dots-logistica"></div>
+        </div>
+
+        <div class="role-card" onclick="openAdminPWA()">
+          <div class="role-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>
+          </div>
+          <div class="role-info">
+            <h3>Administración</h3>
+            <span>HADE — Flujo de efectivo, pendientes y proyección</span>
+          </div>
+        </div>
+      </div>
+
     </div>
-    <div class="role-info">
-      <h3>Producción</h3>
-      <span>City Roots Farm — Siembras, cosechas e inocuidad</span>
-    </div>
-    <div class="role-dots" id="dots-produccion"></div>
   </div>
 
-  <div class="role-card" onclick="selectRole('almacen')">
-    <div class="role-icon">
-      <!-- Lucide: package -->
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-    </div>
-    <div class="role-info">
-      <h3>Almacén</h3>
-      <span>HADE — Lista de preparación de pedidos e inventario</span>
-    </div>
-    <div class="role-dots" id="dots-almacen"></div>
+  <div class="carousel-dots">
+    <span class="dot active" data-idx="0" onclick="goToSlide(0)"></span>
+    <span class="dot" data-idx="1" onclick="goToSlide(1)"></span>
   </div>
-
-  <div class="role-card" onclick="selectRole('logistica')">
-    <div class="role-icon">
-      <!-- Lucide: truck -->
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><path d="M15 18H9"/><circle cx="17" cy="18" r="2"/></svg>
-    </div>
-    <div class="role-info">
-      <h3>Logística</h3>
-      <span>Chofer — Compras del día y ruta de entregas</span>
-    </div>
-    <div class="role-dots" id="dots-logistica"></div>
-  </div>
-
-  <div class="role-card" onclick="selectRole('cliente')">
-    <div class="role-icon">
-      <!-- Lucide: shopping-cart -->
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-    </div>
-    <div class="role-info">
-      <h3>Cliente</h3>
-      <span>HADE — Catálogo y pedidos directos</span>
-    </div>
-  </div>
-
-  <div class="role-card" onclick="openAdminPWA()">
-    <div class="role-icon">
-      <!-- Lucide: receipt -->
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>
-    </div>
-    <div class="role-info">
-      <h3>Administración</h3>
-      <span>HADE — Flujo de efectivo, pendientes y proyección</span>
-    </div>
-  </div>
-
 </div>
 
 <div id="modal-ov" class="modal-ov" style="display:none" onclick="closeOut(event)">
@@ -755,7 +838,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.25.0';
+var APP_VERSION='2.25.1';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1359,15 +1442,128 @@ function logoutCliente(){
 }
 
 function showRoleSelector(){
-  document.getElementById('role-screen').style.display='flex';
+  const rs=document.getElementById('role-screen');
+  rs.style.display='block';
   document.getElementById('nav-produccion').style.display='none';
   document.getElementById('nav-almacen').style.display='none';
   const nl=document.getElementById('nav-logistica');if(nl)nl.style.display='none';
+  const nc=document.getElementById('nav-cliente');if(nc)nc.style.display='none';
+  // Reset carousel al slide 0 (Cliente = default público)
+  goToSlide(0, true);
+  initCarouselSwipe();
   updateRoleDots();
   // Refresh en background si hay URLs configuradas (no bloquea la UI)
   if(getURLProd())fetchPedidosProduccion().then(updateRoleDots).catch(()=>{});
   if(getURLLog()) fetchLogistica().then(updateRoleDots).catch(()=>{});
   if(getURLProd())syncLotesFromSheet().then(updateRoleDots).catch(()=>{});
+}
+
+// ══ CAROUSEL DEL SELECTOR ══════════════════════════════════════════════════════
+// 2 slides: 0=Cliente (default público), 1=Empleados.
+// Swipe táctil + tap en dots. Persistencia: recuerda última slide vista.
+var _carouselSlide = 0;
+function goToSlide(idx, silent){
+  _carouselSlide = Math.max(0, Math.min(1, idx));
+  const track = document.getElementById('carousel-track');
+  const rs = document.getElementById('role-screen');
+  if(track) track.style.transform = 'translateX(-'+(_carouselSlide*50)+'%)';
+  if(rs) rs.setAttribute('data-slide', String(_carouselSlide));
+  document.querySelectorAll('.carousel-dots .dot').forEach((d,i)=>{
+    d.classList.toggle('active', i===_carouselSlide);
+  });
+  if(!silent) try{ localStorage.setItem('crf_last_slide', String(_carouselSlide)); }catch{}
+}
+let _carouselInited = false;
+function initCarouselSwipe(){
+  if(_carouselInited) return;
+  const viewport = document.getElementById('carousel-viewport');
+  const track = document.getElementById('carousel-track');
+  if(!viewport || !track) return;
+  _carouselInited = true;
+  let startX=0, startY=0, dx=0, dragging=false, vertical=false;
+  viewport.addEventListener('touchstart', e=>{
+    const t=e.touches[0];
+    startX=t.clientX; startY=t.clientY; dx=0; dragging=true; vertical=false;
+    track.classList.add('dragging');
+  }, {passive:true});
+  viewport.addEventListener('touchmove', e=>{
+    if(!dragging) return;
+    const t=e.touches[0];
+    const mvX = t.clientX - startX;
+    const mvY = t.clientY - startY;
+    if(!vertical && Math.abs(mvY) > Math.abs(mvX) + 6){ vertical=true; return; }
+    if(vertical) return;
+    dx = mvX;
+    const pctBase = -_carouselSlide*50;
+    const pctDelta = (dx / viewport.clientWidth) * 50;
+    track.style.transform = 'translateX('+(pctBase + pctDelta)+'%)';
+  }, {passive:true});
+  viewport.addEventListener('touchend', ()=>{
+    if(!dragging) return;
+    dragging=false;
+    track.classList.remove('dragging');
+    if(vertical){ goToSlide(_carouselSlide, true); return; }
+    const threshold = viewport.clientWidth * 0.18;
+    if(dx < -threshold && _carouselSlide < 1) goToSlide(_carouselSlide+1);
+    else if(dx > threshold && _carouselSlide > 0) goToSlide(_carouselSlide-1);
+    else goToSlide(_carouselSlide, true);
+  });
+}
+
+// ══ SHOWROOM (público sin login) ═════════════════════════════════════════════
+// Vista simplificada del catálogo público: productos activos con nombre + imagen,
+// SIN precios. CTAs: contactar WhatsApp o registrarse como cliente.
+async function openShowroom(){
+  const overlay = document.createElement('div');
+  overlay.className = 'showroom-screen';
+  overlay.id = 'showroom-screen';
+  overlay.innerHTML = `
+    <div class="showroom-top">
+      <button class="showroom-back" onclick="closeShowroom()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="15 18 9 12 15 6"/></svg>
+        Volver
+      </button>
+      <h2 class="showroom-title">Catálogo digital</h2>
+    </div>
+    <p class="showroom-hint">Explora nuestro catálogo. Para ver <strong>precios personalizados</strong> y hacer pedidos, contacta a ventas o regístrate.</p>
+    <div id="showroom-content" style="display:flex;justify-content:center;padding:40px 0"><div class="spin" style="width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--green-mid);border-radius:50%;animation:spin 1s linear infinite"></div></div>
+    <div class="showroom-cta-row">
+      <a class="showroom-cta-secondary" href="wa.me/528117789996" target="_blank">💬 Contactar ventas</a>
+      <button class="showroom-cta-primary" onclick="selectRole('cliente')">Ya soy cliente</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  // Cargar productos
+  try {
+    const r = await fetch(CLIENTE_URL+'?action=getShowroom', {redirect:'follow'});
+    const d = await r.json();
+    const content = document.getElementById('showroom-content');
+    if(!d.ok || !d.productos?.length){
+      content.innerHTML = '<div class="empty">Catálogo próximamente. Contacta a ventas para ver disponibilidad.</div>';
+      return;
+    }
+    // Agrupar por categoría
+    const grouped={};
+    d.productos.forEach(p=>{ (grouped[p.categoria||'Otros'] = grouped[p.categoria||'Otros']||[]).push(p); });
+    content.innerHTML = Object.keys(grouped).sort().map(c=>`
+      <div class="cli-cat-title">${c}</div>
+      <div class="cli-grid">
+        ${grouped[c].map(p=>`<div class="cli-card">
+          <div class="cli-img">${p.imagen_url ? `<img src="${p.imagen_url}" alt="${p.nombre}" onerror="this.style.display='none';this.parentElement.classList.add('no-img')">` : ''}</div>
+          <div class="cli-body">
+            <div class="cli-name">${p.nombre}</div>
+            <div class="cli-unit" style="font-size:11px;color:var(--text-3);margin-top:2px">${p.presentacion||p.unidad||''}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+    `).join('');
+  } catch(err) {
+    document.getElementById('showroom-content').innerHTML = '<div class="empty">Error al cargar catálogo. Intenta más tarde.</div>';
+  }
+}
+function closeShowroom(){
+  const el = document.getElementById('showroom-screen');
+  if(el) el.remove();
 }
 
 // Cuenta pendientes por tab y pinta esferas de color en cada role-card.
