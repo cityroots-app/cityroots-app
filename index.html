@@ -76,7 +76,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--bg3);color:v
 .role-screen{position:fixed;inset:0;z-index:9999;background-color:#070707;overflow:hidden}
 .role-screen::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.42 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:240px 240px;opacity:.32;pointer-events:none;mix-blend-mode:overlay;z-index:0}
 .role-screen > *{position:relative;z-index:1}
-.role-logo{width:auto;height:300px;max-width:92vw;margin-top:32px;margin-bottom:-48px;filter:drop-shadow(0 6px 24px rgba(0,0,0,.6))}
+.role-logo{width:auto;height:300px;max-width:92vw;margin-top:0;margin-bottom:-72px;filter:drop-shadow(0 6px 24px rgba(0,0,0,.6))}
 .role-screen h1{font-family:'Outfit',sans-serif;font-size:18px;font-weight:300;color:#c8e2c3;text-align:center;margin:0;letter-spacing:.1em;text-transform:lowercase}
 .role-screen p{font-family:'Outfit',sans-serif;font-size:11px;font-weight:300;color:rgba(168,213,162,.6);text-align:center;margin:2px 0 16px;letter-spacing:.14em;text-transform:lowercase}
 /* Color de marca del logo HADE (verde lima) */
@@ -242,9 +242,9 @@ body.role-cliente .content{padding-bottom:100px}
 .slide-cliente::before,.slide-empleados::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:240px 240px;opacity:.22;pointer-events:none;mix-blend-mode:overlay}
 .slide-cliente > *,.slide-empleados > *{position:relative;z-index:1}
 .slide-cliente{justify-content:center;padding:20px 22px 90px}
-.slide-empleados{justify-content:flex-start;padding-top:34px;padding-bottom:90px}
-.hero-logo-cliente{width:min(280px,60vw);height:auto;object-fit:contain;margin-bottom:22px;filter:drop-shadow(0 8px 30px rgba(74,140,63,.20))}
-.hero-sub-cliente{font-family:'Cormorant Garamond','Playfair Display',Georgia,serif;font-style:italic;font-size:16px;color:rgba(255,255,255,.72);text-align:center;margin:0 0 34px;max-width:320px;letter-spacing:.02em}
+.slide-empleados{justify-content:flex-start;padding-top:8px;padding-bottom:90px}
+.hero-logo-cliente{width:auto;height:300px;max-width:92vw;object-fit:contain;margin-bottom:14px;filter:drop-shadow(0 8px 30px rgba(74,140,63,.20))}
+.hero-sub-cliente{font-family:'Cormorant Garamond','Playfair Display',Georgia,serif;font-style:italic;font-size:17px;color:rgba(255,255,255,.78);text-align:center;margin:0 0 34px;max-width:340px;letter-spacing:.02em;line-height:1.35}
 .cliente-actions{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px}
 .hero-btn{width:100%;padding:16px 20px;border-radius:14px;font-size:15px;font-weight:600;letter-spacing:.01em;cursor:pointer;transition:transform .12s,box-shadow .2s,background .2s;font-family:var(--font-body);border:1.5px solid transparent}
 .hero-btn:active{transform:scale(.98)}
@@ -735,7 +735,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
       <!-- SLIDE 0 · CLIENTE -->
       <div class="carousel-slide slide-cliente">
         <img src="hade-logo.png" alt="HADE — The Harvest Dealers" class="hero-logo-cliente">
-        <p class="hero-sub-cliente">Microgreens · Hongos · Hortalizas · Hojas baby</p>
+        <p class="hero-sub-cliente">Empezamos donde termina el mercado de abastos.</p>
         <div class="cliente-actions">
           <button class="hero-btn hero-btn-primary" onclick="selectRole('cliente')">
             <span>Ya soy cliente</span>
@@ -824,7 +824,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.25.3';
+var APP_VERSION='2.25.4';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
