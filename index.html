@@ -229,6 +229,48 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .venc-chip{background:rg
 .cli-account-row span{color:var(--text-3)}
 .cli-account-row strong{color:var(--text);font-weight:500;text-align:right;max-width:60%;overflow:hidden;text-overflow:ellipsis}
 
+/* Fecha de entrega + alerta 11am */
+.cli-fecha-card{background:var(--bg-card,var(--bg));border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cli-fecha-label{font-size:13px;font-weight:500;color:var(--text)}
+.cli-fecha-input{border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:14px;background:var(--bg-input,#f4f2ea);color:var(--text);font-family:var(--font-body);cursor:pointer;min-width:150px}
+.cli-alert-tarde{background:rgba(212,133,10,.10);border:1px solid rgba(212,133,10,.35);border-radius:12px;padding:12px 14px;margin-top:12px;color:#7a4f06}
+.cli-alert-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.cli-alert-body{font-size:12px;line-height:1.4;color:#8a5806}
+@media (prefers-color-scheme:dark){
+  .cli-alert-tarde{background:rgba(245,200,66,.10);border-color:rgba(245,200,66,.35);color:#f5c842}
+  .cli-alert-body{color:rgba(245,200,66,.85)}
+}
+body.role-cliente .cli-alert-tarde{background:rgba(245,200,66,.10)!important;border-color:rgba(245,200,66,.35)!important;color:#f5c842!important}
+body.role-cliente .cli-alert-body{color:rgba(245,200,66,.85)!important}
+
+/* Botón confirmar pedido */
+.cli-btn-confirmar{width:100%;margin-top:16px;padding:16px 20px;background:var(--hade-green,var(--green-mid));color:#0a1a05;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(168,213,106,.25);transition:transform .12s,box-shadow .2s;font-family:var(--font-body)}
+.cli-btn-confirmar:active{transform:scale(.98)}
+.cli-btn-confirmar:disabled{opacity:.6;cursor:not-allowed}
+
+/* Modal confirmación pedido */
+.cli-pedido-id{background:var(--bg-input,#f4f2ea);border:1px dashed var(--border);border-radius:12px;padding:12px 16px;display:inline-block;min-width:220px}
+
+/* Tab Mis pedidos — cards */
+.cli-pedido-card{background:var(--bg-card,var(--bg));border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.cli-pedido-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
+.cli-pedido-fecha{font-size:13px;font-weight:600;color:var(--text)}
+.cli-pedido-folio{font-family:monospace;font-size:10px;color:var(--text-3);margin-top:2px}
+.cli-pedido-badge{font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;white-space:nowrap}
+.st-recibido{background:rgba(74,140,63,.12);color:var(--green-mid,#2d5a27);border:1px solid rgba(74,140,63,.25)}
+.st-confirmado{background:rgba(24,95,165,.12);color:var(--info,#185FA5);border:1px solid rgba(24,95,165,.25)}
+.st-entregado{background:rgba(45,90,39,.15);color:#1a3a1a;border:1px solid rgba(45,90,39,.30)}
+@media (prefers-color-scheme:dark){
+  .st-recibido{background:rgba(168,213,106,.12);color:var(--green-light,#a8d5a2);border-color:rgba(168,213,106,.25)}
+  .st-confirmado{background:rgba(107,168,224,.15);color:#8fc6f5;border-color:rgba(107,168,224,.25)}
+  .st-entregado{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.15)}
+}
+body.role-cliente .st-recibido{background:rgba(168,213,106,.12)!important;color:var(--green-light,#a8d5a2)!important;border-color:rgba(168,213,106,.25)!important}
+body.role-cliente .st-confirmado{background:rgba(107,168,224,.15)!important;color:#8fc6f5!important;border-color:rgba(107,168,224,.25)!important}
+body.role-cliente .st-entregado{background:rgba(255,255,255,.06)!important;color:rgba(255,255,255,.85)!important;border-color:rgba(255,255,255,.15)!important}
+.cli-pedido-items{font-size:12px;color:var(--text-3);margin-bottom:6px}
+.cli-pedido-total{font-size:15px;font-weight:600;color:var(--hade-green,var(--green-mid));font-family:'Outfit',sans-serif}
+
 body.role-cliente{background:var(--warm-white,#fdfcf8)}
 body.role-cliente .content{padding-bottom:100px}
 
@@ -718,6 +760,10 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
       <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
       Carrito <span id="cli-badge" style="display:none;background:var(--hade-green);color:#0a1a05;border-radius:9px;padding:1px 6px;font-size:10px;font-weight:600;margin-left:4px">0</span>
     </button>
+    <button class="nav-btn" id="nb-cli_pedidos" onclick="goTo('cli_pedidos')">
+      <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 7 9 18l-5-5"/></svg></span>
+      Pedidos
+    </button>
     <button class="nav-btn" id="nb-cli_cuenta" onclick="goTo('cli_cuenta')">
       <span class="ni"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
       Cuenta
@@ -823,7 +869,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.25.5';
+var APP_VERSION='2.26.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1688,6 +1734,7 @@ function render(p){
   else if(p==='notas')renderNotas(el);
   else if(p==='cli_catalogo')renderCliCatalogo(el);
   else if(p==='cli_carrito')renderCliCarrito(el);
+  else if(p==='cli_pedidos')renderCliPedidos(el);
   else if(p==='cli_cuenta')renderCliCuenta(el);
   updatePendBadge();
   setSyncUI((getURLProd()||getURLLog())?'ok':'off');
@@ -5852,11 +5899,31 @@ function cliAdd(code, delta){
   render(page); // re-render
 }
 
+// Formato YYYY-MM-DD en zona local
+function todayISO(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+// Storage de fecha de entrega seleccionada (por cliente)
+function getCliFecha(){
+  const k = cliCartKey(); if(!k) return todayISO();
+  return localStorage.getItem(k+':fecha') || todayISO();
+}
+function setCliFecha(f){ const k = cliCartKey(); if(k) localStorage.setItem(k+':fecha', f); }
+function onCliFechaChange(v){ setCliFecha(v); render(page); }
+
 function renderCliCarrito(el){
   const cart = getCliCart();
+  const fecha = getCliFecha();
+  const hoy = todayISO();
+  const now = new Date();
+  const hora = now.getHours();
+  const total = cart.reduce((s,it)=>s+(it.qty*it.precio),0);
+  const alertaTarde = (fecha === hoy) && hora >= 11;
+
   el.innerHTML = `<div class="pad">
     <div class="cli-hello">Carrito</div>
-    <div class="cli-hint">Fase 3 · en desarrollo. Por ahora solo ver.</div>
+    <div class="cli-hint">${cart.length ? 'Revisa y confirma tu pedido' : 'Aún no has agregado productos'}</div>
     ${cart.length===0
       ? `<div class="empty" style="margin-top:24px">Tu carrito está vacío.<br><button class="btn btn-primary" style="margin-top:14px" onclick="goTo('cli_catalogo')">Ver catálogo</button></div>`
       : `<div class="cli-cart-list">
@@ -5874,13 +5941,146 @@ function renderCliCarrito(el){
         </div>`).join('')}
         <div class="cli-cart-total-row">
           <span>Total</span>
-          <span>$${cart.reduce((s,it)=>s+(it.qty*it.precio),0).toFixed(2)}</span>
+          <span>$${total.toFixed(2)}</span>
         </div>
       </div>
-      <div class="help-card" style="margin-top:14px"><span style="font-size:12px;color:var(--text-3)">📌 En Fase 3 podrás elegir fecha de entrega y confirmar el pedido.</span></div>
+
+      <div class="cli-fecha-card">
+        <div class="cli-fecha-label">📅 Fecha de entrega</div>
+        <input type="date" class="cli-fecha-input" value="${fecha}" min="${hoy}" onchange="onCliFechaChange(this.value)">
+      </div>
+
+      ${alertaTarde ? `<div class="cli-alert-tarde">
+        <div class="cli-alert-title">⚠️ Ruta de la mañana ya salió</div>
+        <div class="cli-alert-body">Personal de ventas te confirmará si se incluye en la ruta de la tarde o se programa para mañana.</div>
+      </div>` : ''}
+
+      <button class="cli-btn-confirmar" onclick="confirmarPedidoCliente()">
+        Confirmar pedido · $${total.toFixed(2)}
+      </button>
       `
     }
   </div>`;
+}
+
+let _confirmandoPedido = false;
+async function confirmarPedidoCliente(){
+  if(_confirmandoPedido) return;
+  const cart = getCliCart();
+  if(!cart.length){ toast('Carrito vacío'); return; }
+  const auth = getClienteAuth();
+  if(!auth) { toast('Sesión expirada'); return; }
+  const fecha = getCliFecha();
+  _confirmandoPedido = true;
+
+  const btn = document.querySelector('.cli-btn-confirmar');
+  if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Enviando...'; }
+
+  try {
+    const res = await fetch(CLIENTE_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action: 'crearPedido',
+        data: {
+          password: auth.password,
+          items: cart.map(it => ({code:it.code, bindProductID:it.bindProductID, nombre:it.nombre, qty:it.qty, unidad:it.unidad, precio:it.precio})),
+          fecha_entrega: fecha
+        }
+      }),
+      redirect: 'follow'
+    });
+    const d = await res.json();
+    if(!d.ok){
+      _confirmandoPedido = false;
+      if(btn){ btn.disabled = false; btn.innerHTML = 'Confirmar pedido'; }
+      toast('Error: '+(d.error||'no se pudo enviar'), false);
+      return;
+    }
+    // Guardar en historial local
+    const historial = getCliHistorial();
+    historial.unshift({
+      id: d.id,
+      fecha_pedido: new Date().toISOString(),
+      fecha_entrega: d.fecha_entrega,
+      items: cart,
+      total: cart.reduce((s,it)=>s+(it.qty*it.precio),0),
+      status: d.status || 'PENDIENTE'
+    });
+    setCliHistorial(historial);
+    // Limpiar carrito
+    setCliCart([]);
+    _confirmandoPedido = false;
+    mostrarConfirmacionPedido(d.id, d.status);
+  } catch(err){
+    _confirmandoPedido = false;
+    if(btn){ btn.disabled = false; btn.innerHTML = 'Confirmar pedido'; }
+    toast('Error de conexión', false);
+  }
+}
+
+function mostrarConfirmacionPedido(id, status){
+  const body = document.getElementById('modal-body');
+  body.innerHTML = `
+    <div class="modal-handle"></div>
+    <div style="text-align:center;padding:20px 12px">
+      <div style="font-size:56px;line-height:1;margin-bottom:14px">✓</div>
+      <div class="modal-title" style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:24px">Pedido recibido</div>
+      <p style="color:var(--text-3);font-size:13px;margin:12px 0 20px;line-height:1.5">
+        Personal de ventas te contactará si hay algún faltante en inventario.
+      </p>
+      <div class="cli-pedido-id">
+        <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.1em">Folio</div>
+        <div style="font-family:monospace;font-size:13px;color:var(--text);margin-top:2px">${id}</div>
+      </div>
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn btn-secondary" onclick="closeModal();goTo('cli_catalogo')">Seguir comprando</button>
+        <button class="btn btn-primary" onclick="closeModal();goTo('cli_pedidos')">Ver mis pedidos</button>
+      </div>
+    </div>`;
+  document.getElementById('modal-ov').style.display='flex';
+}
+
+// ── HISTORIAL DE PEDIDOS (local) ─────────────────────────────────────────────
+const CLI_HISTORIAL_KEY = 'crf_cliente_pedidos';
+function cliHistorialKey(){ const a=getClienteAuth(); return a?.password ? CLI_HISTORIAL_KEY+':'+a.password : null; }
+function getCliHistorial(){ const k=cliHistorialKey(); if(!k) return []; try{return JSON.parse(localStorage.getItem(k))||[];}catch{return [];} }
+function setCliHistorial(items){ const k=cliHistorialKey(); if(k) localStorage.setItem(k, JSON.stringify(items)); }
+
+function renderCliPedidos(el){
+  const historial = getCliHistorial();
+  el.innerHTML = `<div class="pad">
+    <div class="cli-hello">Mis pedidos</div>
+    <div class="cli-hint">Historial y estado de tus pedidos</div>
+    ${historial.length===0
+      ? `<div class="empty" style="margin-top:24px">Aún no tienes pedidos.<br><button class="btn btn-primary" style="margin-top:14px" onclick="goTo('cli_catalogo')">Hacer mi primer pedido</button></div>`
+      : historial.map(p => {
+          const items = p.items || [];
+          const statusInfo = getStatusInfo(p.status);
+          return `<div class="cli-pedido-card">
+            <div class="cli-pedido-header">
+              <div>
+                <div class="cli-pedido-fecha">${new Date(p.fecha_pedido).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})}</div>
+                <div class="cli-pedido-folio">${p.id}</div>
+              </div>
+              <div class="cli-pedido-badge ${statusInfo.cls}">${statusInfo.icon} ${statusInfo.label}</div>
+            </div>
+            <div class="cli-pedido-items">${items.length} producto${items.length>1?'s':''} · Entrega ${new Date(p.fecha_entrega+'T12:00:00').toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'})}</div>
+            <div class="cli-pedido-total">$${(p.total||0).toFixed(2)}</div>
+          </div>`;
+        }).join('')
+    }
+  </div>`;
+}
+
+function getStatusInfo(status){
+  // Estados automáticos:
+  // - PENDIENTE / PENDIENTE_ALTA_BIND → Recibido
+  // - ENVIADO_BIND → Confirmado (cron ya lo procesó a Bind — Fase 4)
+  // - ENTREGADO → Entregado (chofer marcó en logística — Fase 5)
+  if(status === 'ENTREGADO') return {icon:'🚚', label:'Entregado', cls:'st-entregado'};
+  if(status === 'ENVIADO_BIND') return {icon:'📦', label:'Confirmado', cls:'st-confirmado'};
+  return {icon:'✓', label:'Recibido', cls:'st-recibido'};
 }
 
 function renderCliCuenta(el){
