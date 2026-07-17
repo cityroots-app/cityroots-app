@@ -665,7 +665,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
     <div class="role-dots" id="dots-logistica"></div>
   </div>
 
-  <div class="role-card" onclick="window.location.href='./admin/'">
+  <div class="role-card" onclick="openAdminPWA()">
     <div class="role-icon">
       <!-- Lucide: receipt -->
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>
@@ -689,7 +689,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.23.1';
+var APP_VERSION='2.24.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1069,24 +1069,126 @@ function updatePendBadge(){
   if(b)b.style.display=getPend().length?'block':'none';
 }
 
+// ══ AUTH (passwords por rol · v2.24.0) ═══════════════════════════════════════
+// Hashes SHA-256 de las passwords. Cambiar hash + bumpar v revoca acceso de
+// todos los dispositivos de ese rol al siguiente refresh. La password admin
+// (crf2026) actúa como superuser — desbloquea cualquier rol y permite
+// switchear después sin re-teclear.
+const ROLE_AUTH = {
+  produccion: {hash:'c6476833ca38cc1b67250fd2a1e38aee79be4ff3be5c279ea26e2910aca199b2', v:1}, // produccion2026
+  almacen:    {hash:'cd0fa40de425609ed6d15c5f3fc8f3aee50f01336b0eda3f9a20386b9d71a960', v:1}, // almacen2026
+  logistica:  {hash:'e17f4767a0e2d2d46ec691de2e7a02cf55c6d5c40981367e9b27f9bba88f5b19', v:1}, // logistica2026
+  admin:      {hash:'6c9addc39d75ff6dc6defc24afb8aeb11f233cd29afc3dbecb4539c7f0bb981a', v:1}, // crf2026
+};
+async function sha256Hex(text){
+  const buf=new TextEncoder().encode(text);
+  const hash=await crypto.subtle.digest('SHA-256',buf);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+const AUTH_KEY='crf_role_auth';
+function getAuth(){try{return JSON.parse(localStorage.getItem(AUTH_KEY))||null;}catch{return null;}}
+function setAuth(a){localStorage.setItem(AUTH_KEY,JSON.stringify(a));}
+function clearAuth(){localStorage.removeItem(AUTH_KEY);}
+// Valid si: (a) es superuser con versión admin vigente, o
+//           (b) auth guardado para ese rol específico + versión vigente
+function isAuthValid(rol){
+  const a=getAuth();if(!a)return false;
+  if(a.superuser && a.adminV===ROLE_AUTH.admin.v)return true;
+  return a.rol===rol && ROLE_AUTH[rol]?.v===a.v;
+}
+// Modal password. Acepta la password del rol O la de admin (superuser).
+function promptPasswordForRole(rol){
+  return new Promise((resolve)=>{
+    const body=document.getElementById('modal-body');
+    const nombreRol={produccion:'Producción',almacen:'Almacén',logistica:'Logística',admin:'Administración'}[rol]||rol;
+    body.innerHTML=`
+      <div class="modal-handle"></div>
+      <div class="modal-title">🔒 Acceso · ${nombreRol}</div>
+      <div class="modal-sub">Ingresa la contraseña de este rol</div>
+      <div class="field">
+        <input id="pwd-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Contraseña" style="font-size:16px;padding:12px">
+        <div id="pwd-err" style="color:var(--danger);font-size:12px;margin-top:6px;display:none">Contraseña incorrecta</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="__pwdCancel()">Cancelar</button>
+        <button class="btn btn-primary" onclick="__pwdSubmit()">Entrar</button>
+      </div>`;
+    document.getElementById('modal-ov').style.display='flex';
+    setTimeout(()=>document.getElementById('pwd-input')?.focus(),100);
+    document.getElementById('pwd-input').addEventListener('keydown',e=>{if(e.key==='Enter')__pwdSubmit();});
+    window.__pwdCancel=()=>{closeModal();delete window.__pwdSubmit;delete window.__pwdCancel;resolve({ok:false});};
+    window.__pwdSubmit=async()=>{
+      const pwd=document.getElementById('pwd-input').value;
+      if(!pwd)return;
+      const h=await sha256Hex(pwd);
+      // Acepta la password del rol O la admin (superuser)
+      const isRolePass = h===ROLE_AUTH[rol]?.hash;
+      const isAdminPass = h===ROLE_AUTH.admin.hash;
+      if(isRolePass || isAdminPass){
+        closeModal();
+        delete window.__pwdSubmit;delete window.__pwdCancel;
+        resolve({ok:true,superuser:isAdminPass});
+      } else {
+        document.getElementById('pwd-err').style.display='block';
+        document.getElementById('pwd-input').value='';
+        document.getElementById('pwd-input').focus();
+      }
+    };
+  });
+}
+// Wrap: si el rol ya está autenticado o hay superuser, resuelve inmediato.
+// Si no, muestra el modal.
+async function ensureAuth(rol){
+  if(isAuthValid(rol))return true;
+  const res=await promptPasswordForRole(rol);
+  if(!res.ok)return false;
+  // Construir el auth object
+  const auth={rol,v:ROLE_AUTH[rol].v,unlockedAt:new Date().toISOString()};
+  // Preservar superuser si venía (JC ya autenticado como admin cambia de rol)
+  const prev=getAuth();
+  if(res.superuser || (prev?.superuser && prev.adminV===ROLE_AUTH.admin.v)){
+    auth.superuser=true;
+    auth.adminV=ROLE_AUTH.admin.v;
+  }
+  setAuth(auth);
+  return true;
+}
+function logoutRole(){
+  if(!confirm('Cerrar sesión de este rol?\n\nTendrás que volver a ingresar la contraseña.'))return;
+  clearAuth();
+  localStorage.removeItem(ROLE_KEY);
+  location.reload();
+}
+
 // ══ ROLES ═════════════════════════════════════════════════════════════════════
 const ROLE_KEY='crf_user_role';
 function getRole(){return localStorage.getItem(ROLE_KEY)||'';}
 function setRole(r){localStorage.setItem(ROLE_KEY,r);}
 
-function selectRole(role){
+async function selectRole(role){
+  const ok=await ensureAuth(role);
+  if(!ok)return;
   setRole(role);
   document.getElementById('role-screen').style.display='none';
   initApp();
 }
 
 // Atajo: tap en una esfera del role-card lleva directo al tab correspondiente
-function selectRoleAndGoTo(role, tab, ev){
+async function selectRoleAndGoTo(role, tab, ev){
   if(ev)ev.stopPropagation();
+  const ok=await ensureAuth(role);
+  if(!ok)return;
   setRole(role);
   document.getElementById('role-screen').style.display='none';
   initApp();
   setTimeout(()=>{ if(typeof goTo==='function') goTo(tab); }, 60);
+}
+
+// Wrap del link a la PWA de Administración (protege con password admin)
+async function openAdminPWA(){
+  const ok=await ensureAuth('admin');
+  if(!ok)return;
+  window.location.href='./admin/';
 }
 
 function showRoleSelector(){
@@ -1140,6 +1242,13 @@ function initApp(){
   // (theme dark+green-lime solo aplica al rol que ya tiene rediseño)
   document.body.classList.remove('role-produccion','role-almacen','role-logistica');
   if(role)document.body.classList.add('role-'+role);
+  // v2.24.0 — si hay rol guardado pero el auth ya no es válido (password
+  // cambió/versión bumpeada), forzar el selector y limpiar el rol.
+  if(role && !isAuthValid(role)){
+    clearAuth();
+    localStorage.removeItem(ROLE_KEY);
+    showRoleSelector();if(sw)sw.style.display='none';return;
+  }
   if(!role){showRoleSelector();if(sw)sw.style.display='none';return;}
   document.getElementById('role-screen').style.display='none';
   if(sw)sw.style.display='flex';
@@ -3280,6 +3389,11 @@ function renderAlmAdmin(el){
 }
 
 function changeRole(){
+  // Superuser (admin) puede switchear sin re-teclear password.
+  // Usuarios normales: al cambiar de rol pierden auth y deben re-teclear.
+  const a=getAuth();
+  const esSuperuser=a?.superuser && a?.adminV===ROLE_AUTH.admin.v;
+  if(!esSuperuser)clearAuth();
   localStorage.removeItem(ROLE_KEY);
   showRoleSelector();
 }
