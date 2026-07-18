@@ -930,7 +930,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.26.7';
+var APP_VERSION='2.26.8';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -5917,7 +5917,7 @@ function getCliListaHtml(){
   const cart = getCliCart();
   const cartByCode = {};
   cart.forEach(it=>{ cartByCode[String(it.code)] = it.qty; });
-  const ultimoPedido = getUltimoPedido();
+  const historial = getHistorialProductos();
   const q = _cliSearch;
   const filtered = q ? cat.filter(p =>
     String(p.nombre||'').toLowerCase().includes(q) ||
@@ -5937,16 +5937,31 @@ function getCliListaHtml(){
     if(ib >= 0) return 1;
     return a.localeCompare(b);
   });
-  const ultimoBlock = !q && ultimoPedido && ultimoPedido.items?.length ? `
-    <div class="cli-ultimo-block">
-      <div class="cli-ultimo-header">
-        <div>
-          <div class="cli-ultimo-title">Último pedido</div>
-          <div class="cli-ultimo-sub">${new Date(ultimoPedido.fecha_pedido).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})} · ${ultimoPedido.items.length} productos · $${(ultimoPedido.total||0).toFixed(2)}</div>
-        </div>
-        <button class="cli-reorder-btn" onclick="reordenarUltimo()">Reordenar</button>
-      </div>
-    </div>` : '';
+  const historialBlock = !q && historial.length ? `
+    <div class="cli-cat-title" style="margin-top:8px">MI HISTORIAL DE PRODUCTOS</div>
+    <div class="cli-list">
+      ${historial.map(p => {
+        const qty = cartByCode[String(p.code)] || 0;
+        const actionHtml = qty>0
+          ? `<div class="cli-qty">
+               <button class="cli-qty-btn" onclick="cliAdd('${p.code}',-1)">−</button>
+               <span class="cli-qty-val">${qty}</span>
+               <button class="cli-qty-btn" onclick="cliAdd('${p.code}',1)">+</button>
+             </div>`
+          : `<button class="cli-add-mini" onclick="cliAdd('${p.code}',1)" title="Agregar">+</button>`;
+        return `<div class="cli-row">
+          <button class="cli-cam-btn ${p.imagen_url?'has-img':''}" onclick="cliOpenProduct('${p.code}')" title="Ver detalle">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </button>
+          <div class="cli-row-info" onclick="cliOpenProduct('${p.code}')">
+            <div class="cli-row-name">${p.nombre}</div>
+            <div class="cli-row-meta">${p.presentacion || p.unidad || ''} · $${Number(p.precio).toFixed(2)}</div>
+          </div>
+          <div class="cli-row-action">${actionHtml}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  ` : '';
   const listaHtml = cat.length===0
     ? `<div class="empty" style="margin-top:24px">Aún no hay productos activos para tu cuenta.<br>Contacta a ventas por WhatsApp.</div>`
     : filtered.length===0
@@ -5985,7 +6000,7 @@ function getCliListaHtml(){
           }).join('')}
         </div>
       `).join('');
-  return ultimoBlock + listaHtml;
+  return historialBlock + listaHtml;
 }
 
 function renderCliCatalogo(el){
@@ -6078,42 +6093,43 @@ function cliSolicitarProducto(nombre){
   window.open(`https://wa.me/528117789996?text=${texto}`, '_blank');
 }
 
-// ── ÚLTIMO PEDIDO (para reordenar rápido) ────────────────────────────────────
+// ── HISTORIAL DE PRODUCTOS (para reordenar rápido) ───────────────────────────
+// Consolida TODOS los productos únicos que el cliente ha pedido en el pasado.
 // Se hidrata desde el Sheet vía getMisPedidos al login.
-function getUltimoPedido(){
+// Filtra productos que ya no están activos en el catálogo actual.
+function getHistorialProductos(){
   const historial = getCliHistorial();
-  return historial[0] || null;
-}
-function reordenarUltimo(){
-  const ultimo = getUltimoPedido();
-  if(!ultimo?.items?.length){ toast('No hay pedidos previos'); return; }
-  // Cargar items del último pedido al carrito
-  const cart = getCliCart();
-  const cartByCode = {};
-  cart.forEach(it => { cartByCode[String(it.code)] = it; });
+  if(!historial.length) return [];
   const auth = getClienteAuth();
   const catByCode = {};
   (auth?.catalogo || []).forEach(p => { catByCode[String(p.code)] = p; });
-  ultimo.items.forEach(it => {
-    // Verificar que el producto siga activo en el catálogo (con precio del cliente)
-    const catProd = catByCode[String(it.code)];
-    if(!catProd) return; // Producto ya no disponible
-    if(cartByCode[String(it.code)]){
-      cartByCode[String(it.code)].qty += Number(it.qty) || 0;
-    } else {
-      cart.push({
-        code: it.code,
-        bindProductID: it.bindProductID || catProd.bindProductID,
-        nombre: catProd.nombre, // usa nombre actual del catálogo
-        unidad: catProd.unidad,
-        precio: Number(catProd.precio), // precio actual, no el del pedido viejo
-        qty: Number(it.qty) || 0
-      });
-    }
+  // Mapa por code → {producto info + última qty pedida + veces pedido}
+  const bycode = {};
+  historial.forEach(pedido => {
+    (pedido.items || []).forEach(it => {
+      const code = String(it.code);
+      const catProd = catByCode[code];
+      if(!catProd) return; // Producto ya no disponible o requiere programación
+      if(catProd.requiere_programacion) return; // No se pueden reordenar (van por WhatsApp)
+      if(!bycode[code]){
+        bycode[code] = {
+          code: catProd.code,
+          bindProductID: catProd.bindProductID,
+          nombre: catProd.nombre,
+          categoria: catProd.categoria,
+          unidad: catProd.unidad,
+          presentacion: catProd.presentacion,
+          precio: Number(catProd.precio),
+          ultimaQty: Number(it.qty) || 0,
+          vecesOrdenado: 1
+        };
+      } else {
+        bycode[code].vecesOrdenado++;
+      }
+    });
   });
-  setCliCart(cart);
-  toast('✓ Productos agregados al carrito');
-  goTo('cli_carrito');
+  // Ordenar por veces ordenado desc (los más pedidos primero)
+  return Object.values(bycode).sort((a,b) => b.vecesOrdenado - a.vecesOrdenado);
 }
 
 // Sincronizar historial de pedidos desde el Sheet (fuente de verdad)
@@ -6332,12 +6348,28 @@ function renderCliPedidos(el){
               </div>
               <div class="cli-pedido-badge ${statusInfo.cls}">${statusInfo.icon} ${statusInfo.label}</div>
             </div>
-            <div class="cli-pedido-items">${items.length} producto${items.length>1?'s':''} · Entrega ${new Date(p.fecha_entrega+'T12:00:00').toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'})}</div>
+            <div class="cli-pedido-items">${items.length} producto${items.length>1?'s':''} · Entrega ${formatFechaEntrega(p.fecha_entrega)}</div>
             <div class="cli-pedido-total">$${(p.total||0).toFixed(2)}</div>
           </div>`;
         }).join('')
     }
   </div>`;
+}
+
+// Formatea la fecha de entrega manejando ISO string, YYYY-MM-DD, o Date object
+function formatFechaEntrega(f){
+  if(!f) return '—';
+  let d;
+  if(typeof f === 'string'){
+    // Si viene como YYYY-MM-DD (10 chars), agregar mediodía local para evitar
+    // shift de timezone. Si viene como ISO con T o Z, usar directo.
+    if(/^\d{4}-\d{2}-\d{2}$/.test(f)) d = new Date(f + 'T12:00:00');
+    else d = new Date(f);
+  } else {
+    d = new Date(f);
+  }
+  if(isNaN(d.getTime())) return String(f);
+  return d.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'});
 }
 
 function getStatusInfo(status){
