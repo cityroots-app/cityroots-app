@@ -299,6 +299,12 @@ body.role-cliente .cli-search-input::placeholder{color:rgba(255,255,255,.4)}
 .cli-row-name{font-size:13.5px;font-weight:500;color:var(--text);line-height:1.25;margin-bottom:3px}
 .cli-row-meta{font-size:11.5px;color:var(--text-3)}
 .cli-row-action{flex-shrink:0}
+.cli-cam-btn{width:34px;height:34px;background:var(--bg-input,#f4f2ea);border:1px solid var(--border);border-radius:9px;color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;transition:background .12s}
+.cli-cam-btn svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.cli-cam-btn.has-img{background:rgba(168,213,106,.14);border-color:rgba(168,213,106,.35);color:var(--hade-green,var(--green-mid))}
+.cli-cam-btn:active{transform:scale(.92)}
+body.role-cliente .cli-cam-btn{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:rgba(255,255,255,.5)}
+body.role-cliente .cli-cam-btn.has-img{background:rgba(168,213,106,.14);border-color:rgba(168,213,106,.35);color:var(--green-light,#a8d5a2)}
 .cli-add-mini{width:36px;height:36px;background:var(--hade-green,var(--green-mid));color:#0a1a05;border:none;border-radius:10px;font-size:20px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;transition:transform .12s}
 .cli-add-mini:active{transform:scale(.9)}
 body.role-cliente .cli-list{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.08)}
@@ -916,7 +922,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.26.1';
+var APP_VERSION='2.26.2';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -5900,7 +5906,15 @@ function renderCliCatalogo(el){
     const g = p.categoria || 'Otros';
     (grouped[g] = grouped[g] || []).push(p);
   });
-  const cats = Object.keys(grouped).sort();
+  // Orden fijo de categorías comerciales (el que ve el cliente en el PDF)
+  const CAT_ORDER = ['MICROGREENS FRESCOS','MICROGREENS VIVOS','FLORES COMESTIBLES','HORTALIZAS Y VEGETALES','HOJAS BABY Y HIERBAS','PRODUCTOS ESPECIALES'];
+  const cats = Object.keys(grouped).sort((a,b)=>{
+    const ia = CAT_ORDER.indexOf(a), ib = CAT_ORDER.indexOf(b);
+    if(ia >= 0 && ib >= 0) return ia - ib;
+    if(ia >= 0) return -1;
+    if(ib >= 0) return 1;
+    return a.localeCompare(b);
+  });
   el.innerHTML = `<div class="pad">
     <div class="cli-hello">Hola, ${a?.cliente?.nombre_comercial || ''} 👋</div>
 
@@ -5931,12 +5945,16 @@ function renderCliCatalogo(el){
         <div class="cli-list">
           ${grouped[c].map(p=>{
             const qty = cartByCode[String(p.code)] || 0;
-            return `<div class="cli-row" onclick="cliOpenProduct('${p.code}')">
-              <div class="cli-row-info">
+            const hasImg = !!p.imagen_url;
+            return `<div class="cli-row">
+              <button class="cli-cam-btn ${hasImg?'has-img':''}" onclick="cliOpenProduct('${p.code}')" title="Ver imagen">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </button>
+              <div class="cli-row-info" onclick="cliOpenProduct('${p.code}')">
                 <div class="cli-row-name">${p.nombre}</div>
                 <div class="cli-row-meta">${p.presentacion || p.unidad || ''} · $${Number(p.precio).toFixed(2)}</div>
               </div>
-              <div class="cli-row-action" onclick="event.stopPropagation()">
+              <div class="cli-row-action">
                 ${qty>0
                   ? `<div class="cli-qty">
                        <button class="cli-qty-btn" onclick="cliAdd('${p.code}',-1)">−</button>
