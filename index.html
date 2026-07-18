@@ -929,7 +929,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.26.5';
+var APP_VERSION='2.26.6';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -6202,7 +6202,6 @@ function renderCliCarrito(el){
         <div class="cli-fecha-label">📅 Fecha de entrega</div>
         <input type="date" id="cli-fecha-input" class="cli-fecha-input" value="${fecha}" min="${hoy}" onchange="onCliFechaChange(this.value)">
       </div>
-      <script>setTimeout(()=>{const d=document.getElementById('cli-fecha-input');if(d&&!d.value)d.value='${fecha}';},50);</script>
 
       ${alertaTarde ? `<div class="cli-alert-tarde">
         <div class="cli-alert-title">⚠️ Ruta de la mañana ya salió</div>
@@ -6215,6 +6214,12 @@ function renderCliCarrito(el){
       `
     }
   </div>`;
+  // Fallback: asegura que el input date muestre la fecha default (algunos
+  // navegadores móviles ignoran el value en el HTML si viene por innerHTML)
+  setTimeout(()=>{
+    const d = document.getElementById('cli-fecha-input');
+    if(d && !d.value) d.value = fecha;
+  }, 50);
 }
 
 let _confirmandoPedido = false;
