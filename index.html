@@ -252,6 +252,7 @@ body.role-cliente .cli-alert-body{color:rgba(245,200,66,.85)!important}
 
 /* Modal confirmación pedido */
 .cli-pedido-id{background:var(--bg-input,#f4f2ea);border:1px dashed var(--border);border-radius:12px;padding:12px 16px;display:inline-block;min-width:220px}
+body.role-cliente .cli-pedido-id{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.15)!important}
 
 /* Tab Mis pedidos — cards */
 .cli-pedido-card{background:var(--bg-card,var(--bg));border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px}
@@ -929,7 +930,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.26.6';
+var APP_VERSION='2.26.7';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -6289,11 +6290,11 @@ function mostrarConfirmacionPedido(id, status){
         Personal de ventas te contactará si hay algún faltante en inventario.
       </p>
       <div class="cli-pedido-id">
-        <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.1em">Folio</div>
-        <div style="font-family:monospace;font-size:13px;color:var(--text);margin-top:2px">${id}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.1em">Folio</div>
+        <div style="font-family:monospace;font-size:13px;color:#fff;margin-top:2px">${id}</div>
       </div>
       <div class="btn-row" style="margin-top:20px">
-        <button class="btn btn-secondary" onclick="closeModal();goTo('cli_catalogo')">Seguir comprando</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Salir</button>
         <button class="btn btn-primary" onclick="closeModal();goTo('cli_pedidos')">Ver mis pedidos</button>
       </div>
     </div>`;
