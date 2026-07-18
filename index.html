@@ -930,7 +930,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.26.8';
+var APP_VERSION='2.26.9';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -6310,8 +6310,7 @@ function mostrarConfirmacionPedido(id, status){
         <div style="font-family:monospace;font-size:13px;color:#fff;margin-top:2px">${id}</div>
       </div>
       <div class="btn-row" style="margin-top:20px">
-        <button class="btn btn-secondary" onclick="closeModal()">Salir</button>
-        <button class="btn btn-primary" onclick="closeModal();goTo('cli_pedidos')">Ver mis pedidos</button>
+        <button class="btn btn-primary" onclick="closeModal();goTo('cli_pedidos')" style="width:100%">Salir</button>
       </div>
     </div>`;
   document.getElementById('modal-ov').style.display='flex';
