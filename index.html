@@ -927,7 +927,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.26.3';
+var APP_VERSION='2.26.4';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -5886,32 +5886,46 @@ function updateCliBadge(){
   badge.style.display = n>0 ? 'inline-block' : 'none';
 }
 
-// Búsqueda en el catálogo (persistida en memoria por sesión)
+// Búsqueda en el catálogo — actualiza SOLO la lista, no el input (para preservar
+// foco y cursor mientras el cliente escribe).
 let _cliSearch = '';
-function cliOnSearch(v){ _cliSearch = String(v||'').toLowerCase(); render(page); setTimeout(()=>{ const s=document.getElementById('cli-search-input'); if(s){s.focus();s.value=_cliSearch;} }, 20); }
-function cliClearSearch(){ _cliSearch=''; render(page); }
+function cliOnSearch(v){
+  _cliSearch = String(v||'').toLowerCase();
+  const lista = document.getElementById('cli-catalogo-lista');
+  if(lista) lista.innerHTML = getCliListaHtml();
+  const clear = document.getElementById('cli-search-clear');
+  if(clear) clear.style.display = _cliSearch ? 'flex' : 'none';
+}
+function cliClearSearch(){
+  _cliSearch='';
+  const inp = document.getElementById('cli-search-input');
+  if(inp){ inp.value=''; inp.focus(); }
+  const lista = document.getElementById('cli-catalogo-lista');
+  if(lista) lista.innerHTML = getCliListaHtml();
+  const clear = document.getElementById('cli-search-clear');
+  if(clear) clear.style.display = 'none';
+}
 
-function renderCliCatalogo(el){
+// HTML de la lista de productos + último pedido (extraído del render completo
+// para poder actualizar solo esta parte durante la búsqueda live)
+function getCliListaHtml(){
   const a = getClienteAuth();
   const cat = a?.catalogo || [];
   const cart = getCliCart();
   const cartByCode = {};
   cart.forEach(it=>{ cartByCode[String(it.code)] = it.qty; });
   const ultimoPedido = getUltimoPedido();
-  // Aplicar filtro búsqueda
   const q = _cliSearch;
   const filtered = q ? cat.filter(p =>
     String(p.nombre||'').toLowerCase().includes(q) ||
     String(p.categoria||'').toLowerCase().includes(q) ||
     String(p.code||'').toLowerCase().includes(q)
   ) : cat;
-  // Agrupar por categoría
   const grouped = {};
   filtered.forEach(p=>{
     const g = p.categoria || 'Otros';
     (grouped[g] = grouped[g] || []).push(p);
   });
-  // Orden fijo de categorías comerciales (el que ve el cliente en el PDF)
   const CAT_ORDER = ['MICROGREENS FRESCOS','MICROGREENS VIVOS','FLORES COMESTIBLES','HORTALIZAS Y VEGETALES','HOJAS BABY Y HIERBAS','PRODUCTOS ESPECIALES'];
   const cats = Object.keys(grouped).sort((a,b)=>{
     const ia = CAT_ORDER.indexOf(a), ib = CAT_ORDER.indexOf(b);
@@ -5920,32 +5934,21 @@ function renderCliCatalogo(el){
     if(ib >= 0) return 1;
     return a.localeCompare(b);
   });
-  el.innerHTML = `<div class="pad">
-    <div class="cli-hello">Hola, ${a?.cliente?.nombre_comercial || ''} 👋</div>
-
-    <div class="cli-search-wrap">
-      <svg class="cli-search-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="cli-search-input" class="cli-search-input" type="search" placeholder="Buscar producto..." value="${_cliSearch}" oninput="cliOnSearch(this.value)">
-      ${_cliSearch ? `<button class="cli-search-clear" onclick="cliClearSearch()">✕</button>` : ''}
-    </div>
-
-    ${!q && ultimoPedido && ultimoPedido.items?.length ? `
-      <div class="cli-ultimo-block">
-        <div class="cli-ultimo-header">
-          <div>
-            <div class="cli-ultimo-title">Último pedido</div>
-            <div class="cli-ultimo-sub">${new Date(ultimoPedido.fecha_pedido).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})} · ${ultimoPedido.items.length} productos · $${(ultimoPedido.total||0).toFixed(2)}</div>
-          </div>
-          <button class="cli-reorder-btn" onclick="reordenarUltimo()">Reordenar</button>
+  const ultimoBlock = !q && ultimoPedido && ultimoPedido.items?.length ? `
+    <div class="cli-ultimo-block">
+      <div class="cli-ultimo-header">
+        <div>
+          <div class="cli-ultimo-title">Último pedido</div>
+          <div class="cli-ultimo-sub">${new Date(ultimoPedido.fecha_pedido).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})} · ${ultimoPedido.items.length} productos · $${(ultimoPedido.total||0).toFixed(2)}</div>
         </div>
+        <button class="cli-reorder-btn" onclick="reordenarUltimo()">Reordenar</button>
       </div>
-    ` : ''}
-
-    ${cat.length===0
-      ? `<div class="empty" style="margin-top:24px">Aún no hay productos activos para tu cuenta.<br>Contacta a ventas por WhatsApp.</div>`
-      : filtered.length===0
-      ? `<div class="empty" style="margin-top:24px">Sin resultados para "${_cliSearch}"</div>`
-      : cats.map(c=>`
+    </div>` : '';
+  const listaHtml = cat.length===0
+    ? `<div class="empty" style="margin-top:24px">Aún no hay productos activos para tu cuenta.<br>Contacta a ventas por WhatsApp.</div>`
+    : filtered.length===0
+    ? `<div class="empty" style="margin-top:24px">Sin resultados para "${_cliSearch}"</div>`
+    : cats.map(c=>`
         <div class="cli-cat-title">${c}</div>
         <div class="cli-list">
           ${grouped[c].map(p=>{
@@ -5978,8 +5981,24 @@ function renderCliCatalogo(el){
             </div>`;
           }).join('')}
         </div>
-      `).join('')
-    }
+      `).join('');
+  return ultimoBlock + listaHtml;
+}
+
+function renderCliCatalogo(el){
+  const a = getClienteAuth();
+  const cart = getCliCart();
+  el.innerHTML = `<div class="pad">
+    <div class="cli-hello">Hola, ${a?.cliente?.nombre_comercial || ''} 👋</div>
+
+    <div class="cli-search-wrap">
+      <svg class="cli-search-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="cli-search-input" class="cli-search-input" type="search" placeholder="Buscar producto..." value="${_cliSearch}" oninput="cliOnSearch(this.value)" autocomplete="off">
+      <button id="cli-search-clear" class="cli-search-clear" onclick="cliClearSearch()" style="display:${_cliSearch?'flex':'none'}">✕</button>
+    </div>
+
+    <div id="cli-catalogo-lista">${getCliListaHtml()}</div>
+
     ${cart.length ? `<button class="cli-fab-cart" onclick="goTo('cli_carrito')">Ir al carrito · ${cart.reduce((s,it)=>s+it.qty,0)} items →</button>` : ''}
   </div>
   <a class="cli-fab-wa" href="wa.me/528117789996" target="_blank" title="Escribir a ventas">
