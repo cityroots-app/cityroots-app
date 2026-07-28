@@ -189,19 +189,35 @@ function afectaSaldo(m) {
   return true;
 }
 
+// Saldo bancario = TOTAL (columna L) del último movimiento SINCRONIZADO que afecta el
+// saldo. La columna L es el saldo running que el Sheet ya recalcula = fuente de verdad.
+// Usarla elimina el drift del método viejo (SALDO_INICIAL + ROW_CUTOFF), que se
+// desalineaba al insertar/reordenar filas (reorg BLOQ, capturas diarias) y hacía que
+// la app mostrara un saldo distinto al del flujo (bug 27-jul-2026).
+// A ese TOTAL se le suman los movimientos locales aún SIN sincronizar (sin _row) para
+// que la captura en la PWA se refleje de inmediato, antes del próximo sync.
 function getSaldo() {
-  return movsBase()
-    .filter(afectaSaldo)
-    .reduce((sum, m) => sum + (m.ingreso || 0) - (m.egreso || 0), SALDO_INICIAL);
+  const movs = movsBase();
+  let base = null;
+  for (let i = movs.length - 1; i >= 0; i--) {
+    const m = movs[i];
+    if (m.historico || ESTADOS_NO_AFECTAN_SALDO.includes(m.estado)) continue;
+    if (typeof m.total === 'number' && !isNaN(m.total) && m.total !== 0) { base = m.total; break; }
+    // afectante sin columna L (captura local sin sync): no rompe, sigue buscando la base sincronizada
+  }
+  if (base === null) {
+    // Fallback (modo mock / sin columna L): reconstrucción desde SALDO_INICIAL
+    return movs.filter(afectaSaldo).reduce((sum, m) => sum + (m.ingreso || 0) - (m.egreso || 0), SALDO_INICIAL);
+  }
+  const locales = movs.filter(m => !m._row && afectaSaldo(m)); // capturas locales sin sync
+  return base + locales.reduce((sum, m) => sum + (m.ingreso || 0) - (m.egreso || 0), 0);
 }
 
 function getSaldoProyectado() {
-  return movsBase()
-    .reduce((sum, m) => {
-      if (m.historico || m.estado === 'sin-categoria') return sum;
-      if (m._row && m._row <= ROW_CUTOFF) return sum;
-      return sum + (m.ingreso || 0) - (m.egreso || 0);
-    }, SALDO_INICIAL);
+  // Saldo real + los pendientes que aún no tocan la columna L (programado/por-pagar/bloqueado).
+  const pendientes = movsBase().filter(m =>
+    !m.historico && m.estado !== 'sin-categoria' && ESTADOS_NO_AFECTAN_SALDO.includes(m.estado));
+  return getSaldo() + pendientes.reduce((sum, m) => sum + (m.ingreso || 0) - (m.egreso || 0), 0);
 }
 
 if (typeof window !== 'undefined') {

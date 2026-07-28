@@ -362,6 +362,7 @@ async function syncFromSheet(){
       subcategoria: s(m.subcategoria),
       ingreso: Number(m.ingreso)||0,
       egreso: Number(m.egreso)||0,
+      total: Number(m.total)||0, // columna L = saldo running del Sheet (fuente de verdad del saldo)
       estado: s(m.estado) || inferirEstado(m),
       historico: !s(m.id), // sin row_id = registro histórico pre-PWA
       created_by: s(m.created_by),
