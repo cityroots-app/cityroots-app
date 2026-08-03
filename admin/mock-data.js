@@ -4,7 +4,10 @@
 
 // URL del Apps Script del Sheet FlujoEfectivo_2026_TEST (clon del master)
 // Deploy 2-jul-2026: conecta la PWA al Sheet para lectura/escritura real.
-const TEST_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxrt2_smxjCMrNXh65ltFOxlaRsWuAzY9odeGr5D8ApsXNWMh8qqnSR9Gxw7ynxiR7v1w/exec';
+// 3-ago-2026: implementación nueva (v8) — la URL anterior (AKfycbxrt2...) quedó
+// devolviendo HTML/404 desde la capa de serving de Google y ni el redeploy con
+// misma URL la destrabó; se creó deployment nuevo con URL fresca.
+const TEST_SHEET_URL = 'https://script.google.com/macros/s/AKfycbys4B672AeX5EqemZtJ5_9Ce7jZPwohRwuC4ei31yiM5STJcUg6NgW_wMV7JCflxKvVkw/exec';
 
 // Saldo bancario al cierre real del 30-jun-2026 (fila 1441 del Sheet TEST)
 const SALDO_INICIAL = 199271.61;
