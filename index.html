@@ -930,7 +930,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.26.9';
+var APP_VERSION='2.27.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1027,10 +1027,11 @@ const REGS = [
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
   ]},
   {id:'capacitacion',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`,name:'Capacitación personal',code:'REC-CAP',freq:'Anual · por evento',fields:[
-    {id:'tema',label:'Tema',type:'select',req:true,opts:['BPM','POES','Lavado de manos','Producto no conforme','Control de alérgenos','HACCP','Food defense','NOM-251','Otro']},
+    {id:'tema',label:'Tema',type:'select',req:true,opts:['CAP-01 · Inducción general','CAP-02 · Siembra de microgreens','CAP-03 · Riego y monitoreo','CAP-04 · Cosecha y pesaje','CAP-05 · Empaque y pedidos','CAP-06 · Lavado de charolas','CAP-07 · Higiene e inocuidad','CAP-08 · Control de temperaturas','CAP-09 · Limpieza del cuarto','CAP-10 · Control de plagas','CAP-11 · Mermas y producto no conforme','CAP-12 · Uso de la app PWA','CAP-13 · Operación de equipo','Otro']},
     {id:'descripcion',label:'Descripción',type:'textarea',ph:'Detalle del tema, sobre todo si es "Otro"'},
     {id:'instructor',label:'Instructor',type:'text',req:true,ph:'Nombre de quien dio la capacitación'},
-    {id:'participante',label:'Participante',type:'select',req:true,opts:['Carlos Pérez','Rogelio Isaac Elosegui','José Carlos Gómez','Martha Eugenia Pérez','Otro'],hint:'Un registro por participante'},
+    {id:'puesto_participante',label:'Puesto',type:'select',req:true,opts:['Director General','Encargado de producción','Chofer','Asistente administrativa','Almacenista','Otro'],hint:'Un registro por participante'},
+    {id:'nombre_participante',label:'Nombre del participante',type:'text',req:true,ph:'Nombre completo de la persona'},
     {id:'duracion_min',label:'Duración (minutos)',type:'number',req:true,ph:'60'},
     {id:'evaluacion_aprobada',label:'Evaluación aprobada',type:'select',opts:['Sí','No','N/A']},
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
@@ -1810,7 +1811,7 @@ function render(p){
 // a vencer" (amarillo). Si ≥ período, "vencido" (rojo).
 const VENC_RULES = [
   {tipo:'calibracion',entidades:['TERM-01','TERM-02','BAS-01','BAS-02'],periodo:90,alerta:7,label:'Calibración'},
-  {tipo:'capacitacion',entidades:['Carlos Pérez','Rogelio Isaac Elosegui','José Carlos Gómez','Martha Eugenia Pérez'],periodo:365,alerta:30,label:'Capacitación',campo:'participante'},
+  {tipo:'capacitacion',entidades:['Director General','Encargado de producción','Chofer','Asistente administrativa'],periodo:365,alerta:30,label:'Capacitación',campo:'puesto_participante'},
   {tipo:'mantenimiento',entidades:['AC-01','OZ-01','REF-01','Drenajes'],periodo:30,alerta:5,label:'Mant. mensual'},
   {tipo:'mantenimiento',entidades:['EXT-01','LED','RACK','MESA-01'],periodo:90,alerta:7,label:'Mant. trimestral'},
   {tipo:'mantenimiento',entidades:['Pisos-Paredes'],periodo:180,alerta:14,label:'Mant. semestral'},
