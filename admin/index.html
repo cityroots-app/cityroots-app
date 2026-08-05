@@ -333,8 +333,13 @@ async function syncFromSheet(){
     // Dos llamadas separadas porque Apps Script puede truncar en respuestas grandes:
     // 1) Movimientos con estado asentado/pendiente (últimos 30 días)
     // 2) TODOS los programados (independiente de fecha)
+    // periodo=mes (no 'all'): la app solo muestra/necesita movimientos recientes (filtra a
+    // últimos 30 días abajo). Pedir 'all' traía ~1700 movimientos y la capa de serving de
+    // Apps Script (googleusercontent) falla con 404/HTML en respuestas grandes → "Offline".
+    // El bug recurría porque el Sheet crece cada día; 'mes' mantiene la respuesta chica y
+    // acotada (se reinicia cada mes). El saldo se calcula del último movimiento, que 'mes' sí trae.
     const [rAll, rProg] = await Promise.all([
-      fetch(url + '?action=getFlujo&periodo=all&filtro=todos', {redirect:'follow'}).then(r => r.json()),
+      fetch(url + '?action=getFlujo&periodo=mes&filtro=todos', {redirect:'follow'}).then(r => r.json()),
       fetch(url + '?action=getFlujo&periodo=all&filtro=programados', {redirect:'follow'}).then(r => r.json())
     ]);
     if(!rAll.ok || !rProg.ok) throw new Error((rAll.error||rProg.error) || 'getFlujo failed');
