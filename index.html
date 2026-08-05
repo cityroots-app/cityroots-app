@@ -930,7 +930,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.28.0';
+var APP_VERSION='2.29.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1054,15 +1054,34 @@ const REGS = [
     {id:'proximo_mantenimiento',label:'Próximo mantenimiento',type:'date'},
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
   ]},
-  {id:'shiso_cosecha',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 17 3.5s1.5 2.5 1.5 6c0 3.5-2 5-2 5"/><path d="M11.2 13.5c1.5-1 2.2-2.5 2.2-4.5"/><path d="M12 20v-9"/></svg>`,name:'Cosecha Shiso',code:'SHISO',freq:'Semanal',fields:[
-    {id:'fecha_cosecha',label:'Fecha de cosecha',type:'date',req:true},
-    {id:'lote',label:'Lote',type:'select',req:true,opts:['L1 — Plantas originales (abr-2026)','L2 — Plantas nuevas (ago-2026)']},
-    {id:'macetas_activas',label:'Macetas activas',type:'number',req:true,ph:'Ej. 44'},
-    {id:'hojas_cosechadas',label:'Hojas cosechadas',type:'number',req:true,ph:'Ej. 350'},
-    {id:'nutricion',label:'Nutrición aplicada',type:'select',req:true,opts:['Ninguna','Ocean Solution','Flora Gro','Flora Series completa','Otro']},
-    {id:'calidad',label:'Calidad de hojas',type:'select',req:true,opts:['Buena — hojas grandes, color intenso','Regular — tamaño normal, aceptable','Baja — hojas pequeñas o estiradas']},
+  {id:'shiso_lote_inicio',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`,name:'Inicio de lote Shiso',code:'SHISO-INI',freq:'Por evento',fields:[
+    {id:'fecha_inicio',label:'Fecha de inicio (bajo la luz)',type:'date',req:true},
+    {id:'macetas',label:'Número de macetas',type:'number',req:true,ph:'Ej. 10'},
+    {id:'rack',label:'Rack',type:'select',req:true,opts:['R1','R2','R3','R4','R5','R6']},
+    {id:'lampara',label:'Lámpara instalada en el rack',type:'select',req:true,opts:['LED Barrina T5 24W','LED Barrina T5 42W','LED Mars Hydro TS600','LED Spider Farmer SF-1000','Fluorescente T5 54W','Otro']},
+    {id:'origen',label:'Origen del material',type:'select',req:true,opts:['Semilla','Esqueje','Trasplante desde germinador','División de planta madre']},
     {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']},
-    {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Ej. Plantas estiradas, primer corte del lote 2...'}
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Ej. Esquejes de planta madre lote L1, primera generación...'}
+  ]},
+  {id:'shiso_riego',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,name:'Riego / Nutrición Shiso',code:'SHISO-RIE',freq:'2-3× semana por lote',fields:[
+    {id:'fecha_riego',label:'Fecha de riego',type:'date',req:true},
+    {id:'lote_id',label:'Lote',type:'select_async',source:'getShisoLotesActivos',req:true,ph:'Cargando lotes activos...'},
+    {id:'nutricion',label:'Nutrición aplicada',type:'select',req:true,opts:['Solo agua','Ocean Solution','Flora Gro','Flora Micro','Flora Bloom','Flora Series completa (Gro+Micro+Bloom)','Otro']},
+    {id:'dosis_ml_l',label:'Dosis (ml por litro)',type:'number',step:'0.1',ph:'Ej. 5.0'},
+    {id:'ph',label:'pH (opcional)',type:'number',step:'0.1',ph:'6.0-6.5'},
+    {id:'ec',label:'EC / conductividad (opcional)',type:'number',step:'0.1',ph:'ms/cm'},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
+  ]},
+  {id:'shiso_cosecha',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 17 3.5s1.5 2.5 1.5 6c0 3.5-2 5-2 5"/><path d="M11.2 13.5c1.5-1 2.2-2.5 2.2-4.5"/><path d="M12 20v-9"/></svg>`,name:'Cosecha Shiso',code:'SHISO-COS',freq:'Semanal · varios cortes por lote',fields:[
+    {id:'fecha_cosecha',label:'Fecha de cosecha',type:'date',req:true},
+    {id:'lote_id',label:'Lote',type:'select_async',source:'getShisoLotesActivos',req:true,ph:'Cargando lotes activos...'},
+    {id:'hojas_cosechadas',label:'Hojas cosechadas',type:'number',req:true,ph:'Ej. 350'},
+    {id:'calidad',label:'Calidad de hojas',type:'select',req:true,opts:['Buena — hojas grandes, color intenso','Regular — tamaño normal, aceptable','Baja — hojas pequeñas o estiradas']},
+    {id:'es_corte_final',label:'¿Es el corte final del lote?',type:'select',req:true,opts:['No — el lote sigue activo','Sí — cierra el lote']},
+    {id:'motivo_cierre',label:'Motivo del cierre',type:'select',req:true,showIf:{field:'es_corte_final',op:'eq',value:'Sí — cierra el lote'},opts:['Fin de ciclo productivo','Enfermedad / plaga','Bajo rendimiento','Rotación programada','Otro']},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
   ]}
 ];
 
@@ -1140,6 +1159,16 @@ const setLotes= v  => LS.set(SK.lotes,v);
 // ══ UTILS ══════════════════════════════════════════════════════════════════════
 const todayKey = () => new Date().toISOString().split('T')[0];
 const nowTime  = () => new Date().toTimeString().slice(0,5);
+// ISO 8601 week: retorna "YYWW" (ej. "2632" para semana 32 de 2026)
+function isoWeekYYWW(d){
+  const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const dayNum=(t.getUTCDay()+6)%7; // lunes=0
+  t.setUTCDate(t.getUTCDate()-dayNum+3);
+  const firstThursday=new Date(Date.UTC(t.getUTCFullYear(),0,4));
+  const weekNum=1+Math.round(((t-firstThursday)/86400000-3+((firstThursday.getUTCDay()+6)%7))/7);
+  const yy=String(t.getUTCFullYear()).slice(-2);
+  return yy+String(weekNum).padStart(2,'0');
+}
 const fmtDate  = iso => new Date(iso).toLocaleDateString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
 const fmtDateShort = iso => {
   if(!iso) return '';
@@ -2969,6 +2998,7 @@ function openForm(id){
       const hint = f.hint?`<div class="field-hint">${f.hint}</div>`:'';
       const onch = `onchange="refreshShowIf('${id}')" oninput="refreshShowIf('${id}')"`;
       const input = f.type==='select'?`<select id="f_${f.id}" ${onch}><option value="">Seleccionar...</option>${(f.opts||[]).map(o=>`<option${o===defaultOpt?' selected':''}>${o}</option>`).join('')}</select>`:
+        f.type==='select_async'?`<select id="f_${f.id}" ${onch} data-async-source="${f.source}"><option value="">${f.ph||'Cargando...'}</option></select>`:
         f.type==='textarea'?`<textarea id="f_${f.id}" placeholder="${f.ph||''}"></textarea>`:
         f.type==='time'?`<input type="time" id="f_${f.id}" value="${nowTime()}" ${onch}>`:
         f.type==='date'?`<input type="date" id="f_${f.id}" ${onch}>`:
@@ -2984,6 +3014,45 @@ function openForm(id){
     </div>`;
   document.getElementById('modal-ov').style.display='flex';
   refreshShowIf(id);
+  // Cargar selects asíncronos (dropdowns que consultan al Sheet)
+  body.querySelectorAll('select[data-async-source]').forEach(sel=>{
+    const source=sel.getAttribute('data-async-source');
+    loadAsyncOptions(sel,source);
+  });
+}
+
+// Carga opciones para un <select data-async-source> desde el Apps Script vía JSONP.
+// Actualmente soporta 'getShisoLotesActivos' → array de {lote_id, fecha_inicio, rack}.
+function loadAsyncOptions(sel,source){
+  const url=getURLProd();
+  if(!url){sel.innerHTML='<option value="">Configura URL en Admin</option>';return;}
+  const cbName='_crf_asy_'+Date.now()+'_'+Math.floor(Math.random()*10000);
+  const script=document.createElement('script');
+  const done=(data)=>{
+    delete window[cbName];
+    try{document.body.removeChild(script);}catch(e){}
+    let opts=[];
+    if(source==='getShisoLotesActivos' && data && Array.isArray(data.activos)){
+      opts=data.activos.map(a=>{
+        const fi=a.fecha_inicio?String(a.fecha_inicio).substring(0,10):'';
+        return {value:a.lote_id, label:`${a.lote_id}${a.rack?' · '+a.rack:''}${fi?' · desde '+fi:''}`};
+      });
+    }
+    if(!opts.length){sel.innerHTML='<option value="">Sin lotes activos</option>';return;}
+    sel.innerHTML='<option value="">Seleccionar...</option>'+opts.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  };
+  window[cbName]=done;
+  script.onerror=()=>{
+    delete window[cbName];
+    try{document.body.removeChild(script);}catch(e){}
+    // Fallback fetch
+    fetch(url+'?action='+source).then(r=>r.json()).then(done).catch(()=>{
+      sel.innerHTML='<option value="">Error al cargar</option>';
+    });
+  };
+  script.src=url+'?action='+source+'&callback='+cbName+'&_='+Date.now();
+  document.body.appendChild(script);
+  setTimeout(()=>{if(window[cbName]){delete window[cbName];try{document.body.removeChild(script);}catch(e){}sel.innerHTML='<option value="">Timeout — reintenta</option>';}},6000);
 }
 
 let _savingForm=false;
@@ -2999,6 +3068,12 @@ async function submitForm(id){
     if(f.req && visible && el && !el.value) missing.push(f.label);
   });
   if(missing.length){toast('Completa: '+missing[0]);return;}
+  // Auto-generar lote_id para inicio de lote shiso: SHISO-YYWW-{RACK}
+  if(id==='shiso_lote_inicio' && datos.fecha_inicio && datos.rack){
+    const d=new Date(datos.fecha_inicio+'T12:00:00');
+    const yyww=isoWeekYYWW(d);
+    datos.lote_id=`SHISO-${yyww}-${datos.rack}`;
+  }
   _savingForm=true;
   const btn=document.getElementById('save-btn');
   if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span>';}
