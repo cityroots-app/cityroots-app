@@ -930,7 +930,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.27.0';
+var APP_VERSION='2.28.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1053,6 +1053,16 @@ const REGS = [
     {id:'hallazgos',label:'Hallazgos',type:'textarea',req:true,showIf:{field:'tipo',op:'eq',value:'Correctivo'},ph:'Describir qué se descompuso'},
     {id:'proximo_mantenimiento',label:'Próximo mantenimiento',type:'date'},
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
+  ]},
+  {id:'shiso_cosecha',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 17 3.5s1.5 2.5 1.5 6c0 3.5-2 5-2 5"/><path d="M11.2 13.5c1.5-1 2.2-2.5 2.2-4.5"/><path d="M12 20v-9"/></svg>`,name:'Cosecha Shiso',code:'SHISO',freq:'Semanal',fields:[
+    {id:'fecha_cosecha',label:'Fecha de cosecha',type:'date',req:true},
+    {id:'lote',label:'Lote',type:'select',req:true,opts:['L1 — Plantas originales (abr-2026)','L2 — Plantas nuevas (ago-2026)']},
+    {id:'macetas_activas',label:'Macetas activas',type:'number',req:true,ph:'Ej. 44'},
+    {id:'hojas_cosechadas',label:'Hojas cosechadas',type:'number',req:true,ph:'Ej. 350'},
+    {id:'nutricion',label:'Nutrición aplicada',type:'select',req:true,opts:['Ninguna','Ocean Solution','Flora Gro','Flora Series completa','Otro']},
+    {id:'calidad',label:'Calidad de hojas',type:'select',req:true,opts:['Buena — hojas grandes, color intenso','Regular — tamaño normal, aceptable','Baja — hojas pequeñas o estiradas']},
+    {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']},
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Ej. Plantas estiradas, primer corte del lote 2...'}
   ]}
 ];
 
