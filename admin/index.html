@@ -337,12 +337,18 @@ async function syncFromSheet(){
     // últimos 30 días abajo). Pedir 'all' traía ~1700 movimientos y la capa de serving de
     // Apps Script (googleusercontent) falla con 404/HTML en respuestas grandes → "Offline".
     // El bug recurría porque el Sheet crece cada día; 'mes' mantiene la respuesta chica y
-    // acotada (se reinicia cada mes). El saldo se calcula del último movimiento, que 'mes' sí trae.
-    const [rAll, rProg] = await Promise.all([
+    // acotada (se reinicia cada mes).
+    // getSaldoSummary: da el SALDO por posición de fila (no por fecha) en respuesta chica.
+    // Necesario porque 'mes' excluye filas recientes del mes anterior (captura con retraso)
+    // y filas con fecha corrupta → el saldo calculado de 'mes' salía mal (bug 6-ago-2026).
+    const [rAll, rProg, rSaldo] = await Promise.all([
       fetch(url + '?action=getFlujo&periodo=mes&filtro=todos', {redirect:'follow'}).then(r => r.json()),
-      fetch(url + '?action=getFlujo&periodo=all&filtro=programados', {redirect:'follow'}).then(r => r.json())
+      fetch(url + '?action=getFlujo&periodo=all&filtro=programados', {redirect:'follow'}).then(r => r.json()),
+      fetch(url + '?action=getSaldoSummary', {redirect:'follow'}).then(r => r.json()).catch(() => ({}))
     ]);
     if(!rAll.ok || !rProg.ok) throw new Error((rAll.error||rProg.error) || 'getFlujo failed');
+    // Saldo autoritativo del backend (por posición de fila) — lo usa getSaldo() como base.
+    if(rSaldo && typeof rSaldo.saldo_actual === 'number') STATE.saldoActual = rSaldo.saldo_actual;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 30);
     // De la lista general: filtrar últimos 30 días. Fechas inválidas siempre pasan.

@@ -201,8 +201,15 @@ function afectaSaldo(m) {
 // que la captura en la PWA se refleje de inmediato, antes del próximo sync.
 function getSaldo() {
   const movs = movsBase();
-  let base = null;
-  for (let i = movs.length - 1; i >= 0; i--) {
+  // Base autoritativa = saldo que calcula el backend por POSICIÓN de fila
+  // (getSaldoSummary.saldo_actual, guardado en STATE.saldoActual). Es inmune a:
+  //  - filtro periodo=mes (que excluye filas recientes del mes anterior)
+  //  - filas con fecha corrupta (nº de factura en la columna FECHA)
+  // que hacían que la app mostrara un saldo distinto al del flujo (bug 6-ago-2026).
+  let base = (typeof STATE !== 'undefined' && typeof STATE.saldoActual === 'number' && !isNaN(STATE.saldoActual))
+    ? STATE.saldoActual : null;
+  // Fallback (sin backend / mock): último movimiento sincronizado con columna L.
+  for (let i = movs.length - 1; base === null && i >= 0; i--) {
     const m = movs[i];
     if (m.historico || ESTADOS_NO_AFECTAN_SALDO.includes(m.estado)) continue;
     if (typeof m.total === 'number' && !isNaN(m.total) && m.total !== 0) { base = m.total; break; }
