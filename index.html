@@ -930,7 +930,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.29.0';
+var APP_VERSION='2.30.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1055,16 +1055,16 @@ const REGS = [
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
   ]},
   {id:'shiso_lote_inicio',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`,name:'Inicio de lote Shiso',code:'SHISO-INI',freq:'Por evento',fields:[
-    {id:'fecha_inicio',label:'Fecha de inicio (bajo la luz)',type:'date',req:true},
+    {id:'fecha_inicio',label:'Fecha de inicio (bajo la luz)',type:'date',req:true,default:'today'},
+    {id:'lote_nombre',label:'Nombre corto del lote',type:'text',req:true,ph:'Ej. L1, L2, L3'},
     {id:'macetas',label:'Número de macetas',type:'number',req:true,ph:'Ej. 10'},
-    {id:'rack',label:'Rack',type:'select',req:true,opts:['R1','R2','R3','R4','R5','R6']},
-    {id:'lampara',label:'Lámpara instalada en el rack',type:'select',req:true,opts:['LED Barrina T5 24W','LED Barrina T5 42W','LED Mars Hydro TS600','LED Spider Farmer SF-1000','Fluorescente T5 54W','Otro']},
-    {id:'origen',label:'Origen del material',type:'select',req:true,opts:['Semilla','Esqueje','Trasplante desde germinador','División de planta madre']},
+    {id:'rack',label:'Rack / área',type:'select',req:true,opts:['R1','R1-2','R2','R2-2']},
+    {id:'lampara',label:'Lámpara instalada',type:'select',req:true,opts:['VIPAR SPECTRA 200W','VIPAR SPECTRA 300W','VIPAR SPECTRA 400W','Otro'],hint:'Se autocompleta según el rack — editable si cambió la lámpara'},
     {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']},
-    {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Ej. Esquejes de planta madre lote L1, primera generación...'}
+    {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Ej. Trasplante de germinador, primera generación...'}
   ]},
   {id:'shiso_riego',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,name:'Riego / Nutrición Shiso',code:'SHISO-RIE',freq:'2-3× semana por lote',fields:[
-    {id:'fecha_riego',label:'Fecha de riego',type:'date',req:true},
+    {id:'fecha_riego',label:'Fecha de riego',type:'date',req:true,default:'today'},
     {id:'lote_id',label:'Lote',type:'select_async',source:'getShisoLotesActivos',req:true,ph:'Cargando lotes activos...'},
     {id:'nutricion',label:'Nutrición aplicada',type:'select',req:true,opts:['Solo agua','Ocean Solution','Flora Gro','Flora Micro','Flora Bloom','Flora Series completa (Gro+Micro+Bloom)','Otro']},
     {id:'dosis_ml_l',label:'Dosis (ml por litro)',type:'number',step:'0.1',ph:'Ej. 5.0'},
@@ -1074,7 +1074,7 @@ const REGS = [
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
   ]},
   {id:'shiso_cosecha',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 17 3.5s1.5 2.5 1.5 6c0 3.5-2 5-2 5"/><path d="M11.2 13.5c1.5-1 2.2-2.5 2.2-4.5"/><path d="M12 20v-9"/></svg>`,name:'Cosecha Shiso',code:'SHISO-COS',freq:'Semanal · varios cortes por lote',fields:[
-    {id:'fecha_cosecha',label:'Fecha de cosecha',type:'date',req:true},
+    {id:'fecha_cosecha',label:'Fecha de cosecha',type:'date',req:true,default:'today'},
     {id:'lote_id',label:'Lote',type:'select_async',source:'getShisoLotesActivos',req:true,ph:'Cargando lotes activos...'},
     {id:'hojas_cosechadas',label:'Hojas cosechadas',type:'number',req:true,ph:'Ej. 350'},
     {id:'calidad',label:'Calidad de hojas',type:'select',req:true,opts:['Buena — hojas grandes, color intenso','Regular — tamaño normal, aceptable','Baja — hojas pequeñas o estiradas']},
@@ -3001,7 +3001,7 @@ function openForm(id){
         f.type==='select_async'?`<select id="f_${f.id}" ${onch} data-async-source="${f.source}"><option value="">${f.ph||'Cargando...'}</option></select>`:
         f.type==='textarea'?`<textarea id="f_${f.id}" placeholder="${f.ph||''}"></textarea>`:
         f.type==='time'?`<input type="time" id="f_${f.id}" value="${nowTime()}" ${onch}>`:
-        f.type==='date'?`<input type="date" id="f_${f.id}" ${onch}>`:
+        f.type==='date'?`<input type="date" id="f_${f.id}" ${f.default==='today'?`value="${todayKey()}"`:''} ${onch}>`:
         `<input type="${f.type}" id="f_${f.id}"${step} placeholder="${f.ph||''}" ${onch}>`;
       return `<div class="field" id="fw_${f.id}"${hidden}>
       <label>${f.label}${f.req?` <span style="color:var(--danger)">*</span>`:''}</label>
@@ -3019,7 +3019,31 @@ function openForm(id){
     const source=sel.getAttribute('data-async-source');
     loadAsyncOptions(sel,source);
   });
+  // Hooks específicos por form
+  if(id==='shiso_lote_inicio'){
+    const rackSel=document.getElementById('f_rack');
+    const lampSel=document.getElementById('f_lampara');
+    if(rackSel && lampSel){
+      const apply=()=>{
+        const l=SHISO_RACK_LAMPARAS[rackSel.value];
+        if(!l)return;
+        for(let i=0;i<lampSel.options.length;i++){
+          if(lampSel.options[i].value===l||lampSel.options[i].text===l){lampSel.selectedIndex=i;return;}
+        }
+      };
+      rackSel.addEventListener('change',apply);
+    }
+  }
 }
+
+// Mapa rack → lámpara para el registro Inicio de lote Shiso.
+// Actualiza aquí si se cambia una lámpara en un rack.
+const SHISO_RACK_LAMPARAS={
+  'R1':   'VIPAR SPECTRA 300W',
+  'R1-2': 'VIPAR SPECTRA 400W',
+  'R2':   'VIPAR SPECTRA 300W',
+  'R2-2': 'VIPAR SPECTRA 200W'
+};
 
 // Carga opciones para un <select data-async-source> desde el Apps Script vía JSONP.
 // Actualmente soporta 'getShisoLotesActivos' → array de {lote_id, fecha_inicio, rack}.
