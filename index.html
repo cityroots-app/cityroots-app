@@ -930,7 +930,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.30.0';
+var APP_VERSION='2.31.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -1058,8 +1058,7 @@ const REGS = [
     {id:'fecha_inicio',label:'Fecha de inicio (bajo la luz)',type:'date',req:true,default:'today'},
     {id:'lote_nombre',label:'Nombre corto del lote',type:'text',req:true,ph:'Ej. L1, L2, L3'},
     {id:'macetas',label:'Número de macetas',type:'number',req:true,ph:'Ej. 10'},
-    {id:'rack',label:'Rack / área',type:'select',req:true,opts:['R1','R1-2','R2','R2-2']},
-    {id:'lampara',label:'Lámpara instalada',type:'select',req:true,opts:['VIPAR SPECTRA 200W','VIPAR SPECTRA 300W','VIPAR SPECTRA 400W','Otro'],hint:'Se autocompleta según el rack — editable si cambió la lámpara'},
+    {id:'rack',label:'Rack / área (incluye lámpara)',type:'select',req:true,opts:['R1 - VE300W','R1-2 - VE400W','R2 - VE300W','R2-2 - VE200W']},
     {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']},
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Ej. Trasplante de germinador, primera generación...'}
   ]},
@@ -3019,31 +3018,15 @@ function openForm(id){
     const source=sel.getAttribute('data-async-source');
     loadAsyncOptions(sel,source);
   });
-  // Hooks específicos por form
-  if(id==='shiso_lote_inicio'){
-    const rackSel=document.getElementById('f_rack');
-    const lampSel=document.getElementById('f_lampara');
-    if(rackSel && lampSel){
-      const apply=()=>{
-        const l=SHISO_RACK_LAMPARAS[rackSel.value];
-        if(!l)return;
-        for(let i=0;i<lampSel.options.length;i++){
-          if(lampSel.options[i].value===l||lampSel.options[i].text===l){lampSel.selectedIndex=i;return;}
-        }
-      };
-      rackSel.addEventListener('change',apply);
-    }
-  }
 }
 
-// Mapa rack → lámpara para el registro Inicio de lote Shiso.
-// Actualiza aquí si se cambia una lámpara en un rack.
-const SHISO_RACK_LAMPARAS={
-  'R1':   'VIPAR SPECTRA 300W',
-  'R1-2': 'VIPAR SPECTRA 400W',
-  'R2':   'VIPAR SPECTRA 300W',
-  'R2-2': 'VIPAR SPECTRA 200W'
-};
+// Referencia rack → lámpara (info incorporada en las opts del select de rack
+// del registro Inicio de lote Shiso). Si se cambia la lámpara física en un
+// rack, actualizar las opts del field rack en REGS.
+//   R1   → VE300W (VIPAR SPECTRA 300W)
+//   R1-2 → VE400W (VIPAR SPECTRA 400W)
+//   R2   → VE300W (VIPAR SPECTRA 300W)
+//   R2-2 → VE200W (VIPAR SPECTRA 200W)
 
 // Carga opciones para un <select data-async-source> desde el Apps Script vía JSONP.
 // Actualmente soporta 'getShisoLotesActivos' → array de {lote_id, fecha_inicio, rack}.
@@ -3093,10 +3076,17 @@ async function submitForm(id){
   });
   if(missing.length){toast('Completa: '+missing[0]);return;}
   // Auto-generar lote_id para inicio de lote shiso: SHISO-YYWW-{RACK}
+  // El select de rack viene con formato "R1 - VE300W" — separar rack y lámpara
+  // en dos columnas del Sheet para permitir análisis futuro.
   if(id==='shiso_lote_inicio' && datos.fecha_inicio && datos.rack){
+    const parts=String(datos.rack).split(' - ');
+    const rackId=parts[0].trim();
+    const lampara=(parts[1]||'').trim();
+    datos.rack=rackId;
+    if(lampara) datos.lampara=lampara;
     const d=new Date(datos.fecha_inicio+'T12:00:00');
     const yyww=isoWeekYYWW(d);
-    datos.lote_id=`SHISO-${yyww}-${datos.rack}`;
+    datos.lote_id=`SHISO-${yyww}-${rackId}`;
   }
   _savingForm=true;
   const btn=document.getElementById('save-btn');
