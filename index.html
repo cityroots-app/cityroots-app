@@ -1071,13 +1071,11 @@ const REGS = [
     {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']},
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:'Si algún lote recibió nutrición distinta (experimento), anotar aquí qué lote y qué recibió'}
   ]},
-  {id:'shiso_cosecha',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 17 3.5s1.5 2.5 1.5 6c0 3.5-2 5-2 5"/><path d="M11.2 13.5c1.5-1 2.2-2.5 2.2-4.5"/><path d="M12 20v-9"/></svg>`,name:'Cosecha Shiso',code:'SHISO-COS',freq:'Semanal · varios cortes por lote',fields:[
+  {id:'shiso_cosecha',icon:`<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 17 3.5s1.5 2.5 1.5 6c0 3.5-2 5-2 5"/><path d="M11.2 13.5c1.5-1 2.2-2.5 2.2-4.5"/><path d="M12 20v-9"/></svg>`,name:'Cosecha Shiso',code:'SHISO-COS',freq:'Semanal · cosecha general',fields:[
     {id:'fecha_cosecha',label:'Fecha de cosecha',type:'date',req:true,default:'today'},
-    {id:'lote_id',label:'Lote',type:'select_async',source:'getShisoLotesActivos',req:true,ph:'Cargando lotes activos...'},
-    {id:'hojas_cosechadas',label:'Hojas cosechadas',type:'number',req:true,ph:'Ej. 350'},
+    {id:'hojas_cosechadas',label:'Hojas cosechadas (total)',type:'number',req:true,ph:'Ej. 50'},
     {id:'calidad',label:'Calidad de hojas',type:'select',req:true,opts:['Buena — hojas grandes, color intenso','Regular — tamaño normal, aceptable','Baja — hojas pequeñas o estiradas']},
-    {id:'es_corte_final',label:'¿Es el corte final del lote?',type:'select',req:true,opts:['No — el lote sigue activo','Sí — cierra el lote']},
-    {id:'motivo_cierre',label:'Motivo del cierre',type:'select',req:true,showIf:{field:'es_corte_final',op:'eq',value:'Sí — cierra el lote'},opts:['Fin de ciclo productivo','Enfermedad / plaga','Bajo rendimiento','Rotación programada','Otro']},
+    {id:'lote_id',label:'Lote (opcional)',type:'select_async',source:'getShisoLotesActivos',ph:'Dejar vacío = cosecha general'},
     {id:'responsable',label:'Responsable',type:'select',req:true,opts:['José Carlos','Encargado de producción']},
     {id:'observaciones',label:'Observaciones',type:'textarea',ph:''}
   ]}
