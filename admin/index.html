@@ -426,8 +426,8 @@ async function syncFromSheet(){
 }
 
 function inferirEstado(m){
-  const cat = (m.categoria||'').trim();
-  const fact = (m.factura||'').trim().toUpperCase();
+  const cat = String(m.categoria==null?'':m.categoria).trim();
+  const fact = String(m.factura==null?'':m.factura).trim().toUpperCase();
   if(!cat) return 'sin-categoria';
   if(fact === 'PENDIENTE' || fact === 'PEND' || fact === '') return 'capturado';
   if(fact === 'NA') return 'con-factura';
