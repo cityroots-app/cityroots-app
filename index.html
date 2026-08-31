@@ -4227,8 +4227,12 @@ function renderLogCompras(el){
       const hasOverride=qtyOv>0;
       const isManual=(item.manual===true||item.manual==='TRUE'||item.manual==='true');
       // Para items manuales no aplica la lógica de override vs calc — solo es qty pura.
-      // effective_qty = MAX(override, calculado) para items del cron.
-      const qtyEffective=isManual?qtyCalc:Math.max(qtyOv,qtyCalc);
+      // effective_qty: si el chofer puso un ajuste manual, ESE gana (sube o baja) —
+      // permite comprar MENOS que lo calculado cuando hay inventario que el sistema
+      // no conoce (ej. espinaca en stock: calc=7 lb, pero solo hay que comprar 1).
+      // El badge `calcSuperaOverride` sigue avisando cuando el cálculo del sistema
+      // supera el ajuste, para que el chofer verifique que sí tiene el stock restante.
+      const qtyEffective=isManual?qtyCalc:(hasOverride?qtyOv:qtyCalc);
       const calcSuperaOverride=!isManual&&hasOverride&&qtyCalc>qtyOv;
       const unit=item.unit||'';
       const name=item.name||item.producto||'';
@@ -4244,7 +4248,7 @@ function renderLogCompras(el){
               ${!isBought?`<span style="font-size:11px;opacity:.6">✎</span>`:''}
               ${isManual?`<span style="font-size:9px;background:var(--info);color:#fff;padding:1px 5px;border-radius:3px;font-weight:700" title="Compra agregada manualmente">MANUAL</span>`:''}
               ${hasOverride && !calcSuperaOverride && !isManual?`<span style="font-size:9px;background:#fff3e0;color:#7a4a00;padding:1px 5px;border-radius:3px;font-weight:700">AJUSTADO</span>`:''}
-              ${calcSuperaOverride?`<span style="font-size:9px;background:var(--danger);color:#fff;padding:1px 5px;border-radius:3px;font-weight:700" title="Pedido nuevo superó tu ajuste de ${qtyOv}">PEDIDO ↑</span>`:''}
+              ${calcSuperaOverride?`<span style="font-size:9px;background:var(--danger);color:#fff;padding:1px 5px;border-radius:3px;font-weight:700" title="El sistema calculó ${qtyCalc} ${unit} — tú ajustaste a ${qtyOv}. Verifica que tengas el resto en inventario.">CALC ${qtyCalc}</span>`:''}
             </div>
             <div class="pedido-name">${name}</div>
             ${hasOverride && !calcSuperaOverride && !isManual?`<div class="pedido-nota" style="color:var(--amber);font-size:11px">✎ Ajuste manual · calculado era ${qtyCalc}</div>`:''}
