@@ -6,7 +6,9 @@
  *
  * Endpoints expuestos via doGet/doPost:
  *   GET  ?action=ping
- *   GET  ?action=getFlujo&periodo=mes|all&filtro=todos|pendientes|programados
+ *   GET  ?action=getFlujo&periodo=mes|all|Nd&filtro=todos|pendientes|programados
+ *        (Nd = últimos N días — ej. 45d. Recomendado sobre 'mes' para evitar
+ *        bug de rollover: cuando cambia el mes, 'mes' oculta pendientes del anterior)
  *   GET  ?action=getSaldoSummary
  *   GET  ?action=getContrapartes
  *   POST {action:'addMovimiento', data:{...}}
@@ -93,6 +95,13 @@ function getFlujo(periodo, filtro) {
   const rows = [];
   const now = new Date();
   const startMes = new Date(now.getFullYear(), now.getMonth(), 1);
+  // Soporta periodo='Nd' (últimos N días — ej. 45d). Elimina el bug de rollover
+  // de 'mes' cuando pendientes del mes anterior desaparecen los primeros días.
+  let cutoffDays = null;
+  if (periodo && /^\d+d$/i.test(periodo)) {
+    const n = parseInt(periodo, 10);
+    cutoffDays = new Date(now.getFullYear(), now.getMonth(), now.getDate() - n);
+  }
 
   for (let i = HEADER_ROW; i < data.length; i++) {
     const r = data[i];
@@ -123,6 +132,10 @@ function getFlujo(periodo, filtro) {
     if (periodo === 'mes') {
       const f = new Date(mov.fecha);
       if (f < startMes) continue;
+    } else if (cutoffDays) {
+      const f = new Date(mov.fecha);
+      // Fechas inválidas siempre pasan (para no perder filas con fecha rota)
+      if (!isNaN(f.getTime()) && f < cutoffDays) continue;
     }
     if (filtro === 'pendientes' && !['capturado', 'con-factura', 'sin-categoria'].includes(mov.estado)) continue;
     if (filtro === 'programados' && mov.estado !== 'programado') continue;

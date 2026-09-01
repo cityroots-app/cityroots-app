@@ -331,18 +331,18 @@ async function syncFromSheet(){
   STATE.syncing = true;
   try {
     // Dos llamadas separadas porque Apps Script puede truncar en respuestas grandes:
-    // 1) Movimientos con estado asentado/pendiente (últimos 30 días)
+    // 1) Movimientos con estado asentado/pendiente (últimos 45 días)
     // 2) TODOS los programados (independiente de fecha)
-    // periodo=mes (no 'all'): la app solo muestra/necesita movimientos recientes (filtra a
-    // últimos 30 días abajo). Pedir 'all' traía ~1700 movimientos y la capa de serving de
-    // Apps Script (googleusercontent) falla con 404/HTML en respuestas grandes → "Offline".
-    // El bug recurría porque el Sheet crece cada día; 'mes' mantiene la respuesta chica y
-    // acotada (se reinicia cada mes).
+    // periodo=45d (v2.33 · antes 'mes'): últimos 45 días. Cubre el rollover mensual
+    // — si usábamos 'mes', al cambiar de mes los pendientes del anterior desaparecían
+    // (bug 1-sep-2026: Martha vio el total OK pero sin pendientes en día 1). 45d mantiene
+    // la respuesta chica (~600-800 filas) y cubre siempre el mes actual + anterior.
+    // Pedir 'all' traía ~1700 movimientos y la capa de serving de Apps Script
+    // (googleusercontent) falla con 404/HTML en respuestas grandes → "Offline".
     // getSaldoSummary: da el SALDO por posición de fila (no por fecha) en respuesta chica.
-    // Necesario porque 'mes' excluye filas recientes del mes anterior (captura con retraso)
-    // y filas con fecha corrupta → el saldo calculado de 'mes' salía mal (bug 6-ago-2026).
+    // Necesario porque el filtro por fecha excluye filas con fecha corrupta o histórica.
     const [rAll, rProg, rSaldo] = await Promise.all([
-      fetch(url + '?action=getFlujo&periodo=mes&filtro=todos', {redirect:'follow'}).then(r => r.json()),
+      fetch(url + '?action=getFlujo&periodo=45d&filtro=todos', {redirect:'follow'}).then(r => r.json()),
       fetch(url + '?action=getFlujo&periodo=all&filtro=programados', {redirect:'follow'}).then(r => r.json()),
       fetch(url + '?action=getSaldoSummary', {redirect:'follow'}).then(r => r.json()).catch(() => ({}))
     ]);
@@ -350,8 +350,9 @@ async function syncFromSheet(){
     // Saldo autoritativo del backend (por posición de fila) — lo usa getSaldo() como base.
     if(rSaldo && typeof rSaldo.saldo_actual === 'number') STATE.saldoActual = rSaldo.saldo_actual;
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
-    // De la lista general: filtrar últimos 30 días. Fechas inválidas siempre pasan.
+    cutoff.setDate(cutoff.getDate() - 45);
+    // De la lista general: filtrar últimos 45 días (consistente con periodo=45d
+    // del server). Fechas inválidas siempre pasan.
     const recientes = rAll.movs.filter(m => {
       if(m.estado === 'programado') return false; // ya vienen en rProg, evita duplicados
       if(!m.fecha) return true;
