@@ -930,7 +930,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.33.0';
+var APP_VERSION='2.34.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -4227,13 +4227,12 @@ function renderLogCompras(el){
       const hasOverride=qtyOv>0;
       const isManual=(item.manual===true||item.manual==='TRUE'||item.manual==='true');
       // Para items manuales no aplica la lógica de override vs calc — solo es qty pura.
-      // effective_qty: si el chofer puso un ajuste manual, ESE gana (sube o baja) —
-      // permite comprar MENOS que lo calculado cuando hay inventario que el sistema
-      // no conoce (ej. espinaca en stock: calc=7 lb, pero solo hay que comprar 1).
-      // El badge `calcSuperaOverride` sigue avisando cuando el cálculo del sistema
-      // supera el ajuste, para que el chofer verifique que sí tiene el stock restante.
+      // effective_qty: si el chofer/JC puso un ajuste manual, ESE gana en silencio
+      // (sube o baja). NO se muestra warning aunque llegue un pedido nuevo que
+      // recalcularía más — el ajuste manual es LEY (decisión 10-sep-2026, JC).
+      // Antes existía badge CALC + warning que confundía al chofer con el espárrago
+      // cuando los pedidos llegaban después de la compra ya ajustada.
       const qtyEffective=isManual?qtyCalc:(hasOverride?qtyOv:qtyCalc);
-      const calcSuperaOverride=!isManual&&hasOverride&&qtyCalc>qtyOv;
       const unit=item.unit||'';
       const name=item.name||item.producto||'';
       const nameEsc=String(name).replace(/'/g,"\\'");
@@ -4247,12 +4246,10 @@ function renderLogCompras(el){
               <span ${hasOverride&&!isManual?'style="color:var(--amber)"':''}>${qtyEffective} ${unit}</span>
               ${!isBought?`<span style="font-size:11px;opacity:.6">✎</span>`:''}
               ${isManual?`<span style="font-size:9px;background:var(--info);color:#fff;padding:1px 5px;border-radius:3px;font-weight:700" title="Compra agregada manualmente">MANUAL</span>`:''}
-              ${hasOverride && !calcSuperaOverride && !isManual?`<span style="font-size:9px;background:#fff3e0;color:#7a4a00;padding:1px 5px;border-radius:3px;font-weight:700">AJUSTADO</span>`:''}
-              ${calcSuperaOverride?`<span style="font-size:9px;background:var(--danger);color:#fff;padding:1px 5px;border-radius:3px;font-weight:700" title="El sistema calculó ${qtyCalc} ${unit} — tú ajustaste a ${qtyOv}. Verifica que tengas el resto en inventario.">CALC ${qtyCalc}</span>`:''}
+              ${hasOverride && !isManual?`<span style="font-size:9px;background:#fff3e0;color:#7a4a00;padding:1px 5px;border-radius:3px;font-weight:700">AJUSTADO</span>`:''}
             </div>
             <div class="pedido-name">${name}</div>
-            ${hasOverride && !calcSuperaOverride && !isManual?`<div class="pedido-nota" style="color:var(--amber);font-size:11px">✎ Ajuste manual · calculado era ${qtyCalc}</div>`:''}
-            ${calcSuperaOverride?`<div class="pedido-nota" style="color:var(--danger);font-size:11px">⚠️ Tu ajuste era ${qtyOv}, pero llegó pedido nuevo. Comprar ${qtyCalc}.</div>`:''}
+            ${hasOverride && !isManual?`<div class="pedido-nota" style="color:var(--amber);font-size:11px">✎ Ajuste manual · calculado era ${qtyCalc}</div>`:''}
             ${manualNotas?`<div class="pedido-nota" style="color:var(--info);font-size:11px;white-space:pre-wrap">💬 ${escAttr(manualNotas)}</div>`:''}
             ${cambiadoPorChofer?`<div class="pedido-nota" style="color:var(--amber)">✎ Cambiado: ${currentSup}</div>`:''}
             ${nota?`<div class="pedido-nota" style="color:var(--info);white-space:pre-wrap">📝 ${escAttr(nota)}</div>`:''}
