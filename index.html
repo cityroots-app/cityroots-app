@@ -930,7 +930,7 @@ body:is(.role-logistica,.role-almacen,.role-produccion) .nav-badge{background:va
 
 <script>
 // Versión visible de la app (informativa — se muestra en selector de roles y topbar)
-var APP_VERSION='2.35.0';
+var APP_VERSION='2.36.0';
 // Aplica la versión a los elementos visibles (badge + topbar) cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.getElementById('role-version-badge');if(b)b.textContent='v'+APP_VERSION;
@@ -2076,6 +2076,7 @@ function siembraCard(l,today){
       <div class="sc-dato"><div class="sc-dato-label">Cosecha estimada</div><div class="sc-dato-val">${(typeof l.cosecha_estimada==='number'?l.cosecha_estimada:'')||'—'} g</div></div>
       ${l.cosecha_real?`<div class="sc-dato"><div class="sc-dato-label">Cosecha real</div><div class="sc-dato-val highlight">${l.cosecha_real} g</div></div>`:''}
       ${l.charolas_cosechadas?`<div class="sc-dato"><div class="sc-dato-label">Charolas cosechadas</div><div class="sc-dato-val highlight">${l.charolas_cosechadas}</div></div>`:''}
+      ${!l.cosecha_real && l.cosechas_parciales && l.cosechas_parciales.length ? `<div class="sc-dato" style="grid-column:span 2"><div class="sc-dato-label" style="color:var(--amber)">Cosecha parcial en curso</div><div class="sc-dato-val" style="color:var(--amber);font-weight:700">${l.charolas_cosechadas_parcial||0}/${charConf} charolas · ${l.cosecha_real_parcial||0} g</div></div>` : ''}
     </div>
     ${accionBtn}
   </div>`;
@@ -2607,27 +2608,50 @@ function registrarCosecha(id){
   const sid=String(id);
   const lote=getLotes().find(l=>String(l.id)===sid);if(!lote)return;
   const body=document.getElementById('modal-body');
+  const totalCharolas=Number(lote.charolas_confirmadas||lote.charolas_planificadas)||0;
+  // Cosechas parciales previas de este lote
+  const parciales=Array.isArray(lote.cosechas_parciales)?lote.cosechas_parciales:[];
+  const chAcum=parciales.reduce((s,p)=>s+(Number(p.charolas)||0),0);
+  const grAcum=parciales.reduce((s,p)=>s+(Number(p.gramos)||0),0);
+  const restantes=Math.max(0,totalCharolas-chAcum);
+  // Si ya hubo parciales, sugerir las charolas restantes; si no, todas.
+  const chDefault=parciales.length?restantes:totalCharolas;
   body.innerHTML=`
     <div class="modal-handle"></div>
     <div class="modal-title">✂️ Registrar cosecha</div>
     <div class="modal-sub">${lote.variedad} · ${lote.lote}</div>
     <div style="background:var(--bg2);border-radius:var(--radius);padding:12px;margin-bottom:14px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div><div style="font-size:10px;color:var(--text3)">Sembradas</div><div style="font-size:18px;font-weight:700;color:var(--text)">${lote.charolas_confirmadas||lote.charolas_planificadas} charolas</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Sembradas</div><div style="font-size:18px;font-weight:700;color:var(--text)">${totalCharolas} charolas</div></div>
         <div><div style="font-size:10px;color:var(--text3)">Cosecha estimada</div><div style="font-size:18px;font-weight:700;color:var(--green)">${lote.cosecha_estimada||'—'} g</div></div>
         <div><div style="font-size:10px;color:var(--text3)">Est. por charola</div><div style="font-size:14px;font-weight:600;color:var(--text)">${lote.cosecha_est_charola||'—'} g</div></div>
         <div><div style="font-size:10px;color:var(--text3)">Días de cultivo</div><div style="font-size:14px;font-weight:600;color:var(--text)">${lote.dias_cultivo||'—'} días</div></div>
       </div>
     </div>
-    <div class="field"><label>Charolas cosechadas <span style="color:var(--danger)">*</span></label>
-      <input id="rc-charolas" type="number" min="0" value="${lote.charolas_confirmadas||lote.charolas_planificadas}" oninput="calcPromedio()">
-      <div class="field-hint">Pon <strong>0</strong> si no hubo cosecha (marca lote como perdido)</div></div>
+    ${parciales.length?`
+    <div style="background:rgba(212,133,10,0.12);border:1px solid rgba(212,133,10,0.35);border-radius:var(--radius);padding:12px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--amber);font-weight:700;margin-bottom:6px">🔸 COSECHA PARCIAL EN CURSO (${parciales.length} evento${parciales.length>1?'s':''})</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div><div style="font-size:10px;color:var(--text3)">Cosechado</div><div style="font-size:16px;font-weight:700;color:var(--text)">${chAcum} charolas</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Gramos</div><div style="font-size:16px;font-weight:700;color:var(--text)">${grAcum} g</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">Restan</div><div style="font-size:16px;font-weight:700;color:var(--amber)">${restantes} charolas</div></div>
+      </div>
+    </div>`:''}
+    <div class="field"><label>Charolas cosechadas ahora <span style="color:var(--danger)">*</span></label>
+      <input id="rc-charolas" type="number" min="0" max="${restantes||totalCharolas}" value="${chDefault}" oninput="calcPromedio()">
+      <div class="field-hint">${parciales.length?`Máximo <strong>${restantes}</strong> charolas restantes. `:''}Pon <strong>0</strong> si no hubo cosecha (marca lote como perdido)</div></div>
     <div class="field"><label>Cosecha real en gramos <span style="color:var(--danger)">*</span></label>
-      <input id="rc-gramos" type="number" min="0" placeholder="Total gramos cosechados" oninput="calcPromedio()"></div>
+      <input id="rc-gramos" type="number" min="0" placeholder="Gramos cosechados en este evento" oninput="calcPromedio()"></div>
     <div class="field"><label>Promedio por charola</label>
       <div class="field-val" id="rc-promedio">— g/charola</div></div>
     <div class="field"><label>Contenedores 50g</label>
       <div class="field-val" id="rc-contenedores">—</div></div>
+    <div class="field" style="background:rgba(74,140,63,0.08);border:1px solid rgba(74,140,63,0.25);border-radius:var(--radius);padding:12px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+        <input type="checkbox" id="rc-parcial" style="width:20px;height:20px;cursor:pointer">
+        <span style="font-weight:600">Cosecha parcial (quedan charolas por cosechar)</span>
+      </label>
+      <div class="field-hint" style="margin-top:6px">Marca esto si <strong>NO</strong> es la última cosecha del lote. El lote sigue activo y podrás registrar más cosechas después. Déjalo sin marcar para cerrar el lote.</div></div>
     <div class="field"><label>Responsable <span style="color:var(--danger)">*</span></label>
       <select id="rc-responsable">
         <option value="">Seleccionar...</option>
@@ -2660,27 +2684,55 @@ async function guardarCosecha(id){
   if(charolasRaw===''||charolasRaw==null||gramosRaw===''||gramosRaw==null||!resp){toast('Completa todos los campos');return;}
   const ch=parseFloat(charolasRaw),gr=parseFloat(gramosRaw);
   if(isNaN(ch)||isNaN(gr)||ch<0||gr<0){toast('Valores inválidos');return;}
+  const esParcial=!!document.getElementById('rc-parcial')?.checked;
   const lotes=getLotes();
   const idx=lotes.findIndex(l=>String(l.id)===String(id));if(idx<0)return;
   _savingCosecha=true;
   const perdido=ch===0||gr===0;
-  lotes[idx].cosecha_real=gr;
-  lotes[idx].charolas_cosechadas=ch;
-  lotes[idx].promedio_cosecha=ch>0?Math.round(gr/ch):0;
-  lotes[idx].contenedores_50g=Math.round(gr/50);
-  lotes[idx].responsable_cosecha=resp;
-  lotes[idx].comentarios_cosecha=document.getElementById('rc-comentarios')?.value||'';
-  lotes[idx].fecha_cosecha_real=new Date().toISOString();
-  if(perdido){lotes[idx].cancelado=true;lotes[idx].motivo_cancelado='perdido en cosecha';}
+  const comentarios=document.getElementById('rc-comentarios')?.value||'';
+  // Acumulado histórico de este lote (parciales previas + este evento)
+  const prevParciales=Array.isArray(lotes[idx].cosechas_parciales)?lotes[idx].cosechas_parciales:[];
+  const nuevaParcial={fecha:new Date().toISOString(),charolas:ch,gramos:gr,responsable:resp,comentarios,parcial:esParcial};
+  const totalCh=prevParciales.reduce((s,p)=>s+(Number(p.charolas)||0),0)+ch;
+  const totalGr=prevParciales.reduce((s,p)=>s+(Number(p.gramos)||0),0)+gr;
+  if(esParcial && !perdido){
+    // Cosecha parcial: agrega al array, NO cierra el lote. cosecha_real queda null.
+    lotes[idx].cosechas_parciales=prevParciales.concat([nuevaParcial]);
+    lotes[idx].charolas_cosechadas_parcial=totalCh;
+    lotes[idx].cosecha_real_parcial=totalGr;
+    lotes[idx].fecha_ultima_parcial=nuevaParcial.fecha;
+  } else {
+    // Cierre del lote: consolida todos los parciales + este evento.
+    lotes[idx].cosechas_parciales=prevParciales.concat([nuevaParcial]);
+    lotes[idx].cosecha_real=totalGr;
+    lotes[idx].charolas_cosechadas=totalCh;
+    lotes[idx].promedio_cosecha=totalCh>0?Math.round(totalGr/totalCh):0;
+    lotes[idx].contenedores_50g=Math.round(totalGr/50);
+    lotes[idx].responsable_cosecha=resp;
+    lotes[idx].comentarios_cosecha=comentarios;
+    lotes[idx].fecha_cosecha_real=new Date().toISOString();
+    if(perdido){lotes[idx].cancelado=true;lotes[idx].motivo_cancelado='perdido en cosecha';}
+  }
   setLotes(lotes);
-  // Guardar como registro de cosecha semanal
-  const rec={id:Date.now().toString(),tipo:'cosecha',fecha:new Date().toISOString(),datos:{variedad:lotes[idx].variedad,lote:lotes[idx].lote,charolas:ch,gramos_real:gr,promedio:lotes[idx].promedio_cosecha,contenedores_50g:lotes[idx].contenedores_50g,responsable:resp,comentarios:lotes[idx].comentarios_cosecha}};
+  // Guardar cada evento como registro cosecha_semanal (incluye flag parcial para trazabilidad)
+  const rec={id:Date.now().toString(),tipo:'cosecha',fecha:new Date().toISOString(),datos:{
+    variedad:lotes[idx].variedad,lote:lotes[idx].lote,
+    charolas:ch,gramos_real:gr,
+    promedio:ch>0?Math.round(gr/ch):0,
+    contenedores_50g:Math.round(gr/50),
+    responsable:resp,comentarios,
+    parcial:esParcial?'SI':'NO',
+    acumulado_charolas:totalCh,acumulado_gramos:totalGr
+  }};
   const recs=getRecs();recs.unshift(rec);setRecs(recs);
   const syncedC=await pushToSheet(rec,'cosecha_semanal');
   if(!syncedC&&getURL()){const p=getPend();p.push(rec);setPend(p);updatePendBadge();}
   _savingCosecha=false;
   closeModal();
-  toast(perdido?'Lote marcado como perdido (0 cosecha)':('Cosecha registrada: '+gr+'g ✓'));
+  const msg=perdido?'Lote marcado como perdido (0 cosecha)':
+            esParcial?`Parcial registrada: ${gr}g (${ch} charolas) ✓ · Quedan por cosechar`:
+            `Cosecha registrada: ${totalGr}g ✓ · Lote cerrado`;
+  toast(msg);
   goTo('produccion');
 }
 
